@@ -1,4 +1,7 @@
 // Copyright 2021 Kava Labs, Inc.
+// Copyright 2020 Coinbase, Inc.
+//
+// Derived from github.com/coinbase/rosetta-ethereum@f81889b
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
