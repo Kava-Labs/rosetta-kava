@@ -1,6 +1,8 @@
 /*
 Copyright © 2021 Kava Labs, Inc.
 
+Derived and modified from github.com/coinbase/rosetta-ethereum
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -27,6 +29,6 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute adds commands to rootCmd and executes it
-func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+func Execute() error {
+	return rootCmd.Execute()
 }
