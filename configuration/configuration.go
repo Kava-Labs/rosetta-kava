@@ -21,6 +21,7 @@ package configuration
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
@@ -46,6 +47,9 @@ const (
 
 	// NetworkEnv specifies the environment variable to read Network/ChainId from
 	NetworkEnv = "NETWORK"
+
+	// PortEnv specifies the environment variable to read server port from
+	PortEnv = "PORT"
 
 	// Blockchain specifies the blockchain name used for the Network
 	Blockchain = "Kava"
@@ -87,6 +91,7 @@ func (l *EnvLoader) Get(key string) string {
 type Configuration struct {
 	Mode              Mode
 	NetworkIdentifier *types.NetworkIdentifier
+	Port              int
 }
 
 // LoadConfig loads keys from a provided loader and returns a
@@ -114,8 +119,20 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 		Network:    networkEnv,
 	}
 
+	portEnv := loader.Get(PortEnv)
+
+	if portEnv == "" {
+		return nil, fmt.Errorf("%s must be set", PortEnv)
+	}
+
+	portNum, err := strconv.Atoi(portEnv)
+	if err != nil || portNum <= 0 {
+		return nil, fmt.Errorf("invalid port '%s'", portEnv)
+	}
+
 	return &Configuration{
 		Mode:              mode,
 		NetworkIdentifier: networkIdentifier,
+		Port:              portNum,
 	}, nil
 }

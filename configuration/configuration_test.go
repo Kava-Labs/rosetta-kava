@@ -20,6 +20,7 @@ package configuration
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -43,6 +44,9 @@ func (l *testEnvLoader) Get(key string) string {
 func TestLoadConfig_Mode(t *testing.T) {
 	blockchain := "Kava"
 	testChainId := "kava-testnet-9999"
+	testPort := "8001"
+	testPortNum, err := strconv.Atoi(testPort)
+	assert.NoError(t, err)
 
 	tests := map[string]struct {
 		Env            map[string]string
@@ -59,16 +63,48 @@ func TestLoadConfig_Mode(t *testing.T) {
 			},
 			ExpectedErr: fmt.Errorf("%s must be set", NetworkEnv),
 		},
+		"port not set": {
+			Env: map[string]string{
+				ModeEnv:    Online.String(),
+				NetworkEnv: testChainId,
+			},
+			ExpectedErr: fmt.Errorf("%s must be set", PortEnv),
+		},
 		"invalid mode set": {
 			Env: map[string]string{
 				ModeEnv: "sync",
 			},
 			ExpectedErr: fmt.Errorf("invalid mode sync, must be one of [%s,%s]", Online, Offline),
 		},
+		"invalid port set - not a number": {
+			Env: map[string]string{
+				ModeEnv:    Offline.String(),
+				NetworkEnv: testChainId,
+				PortEnv:    "invalid number",
+			},
+			ExpectedErr: fmt.Errorf("invalid port 'invalid number'"),
+		},
+		"invalid port set - equal to zero": {
+			Env: map[string]string{
+				ModeEnv:    Offline.String(),
+				NetworkEnv: testChainId,
+				PortEnv:    "0",
+			},
+			ExpectedErr: fmt.Errorf("invalid port '0'"),
+		},
+		"invalid port set - negative": {
+			Env: map[string]string{
+				ModeEnv:    Offline.String(),
+				NetworkEnv: testChainId,
+				PortEnv:    "-8000",
+			},
+			ExpectedErr: fmt.Errorf("invalid port '-8000'"),
+		},
 		"env set with online mode": {
 			Env: map[string]string{
 				ModeEnv:    Online.String(),
 				NetworkEnv: testChainId,
+				PortEnv:    testPort,
 			},
 			ExpectedConfig: &Configuration{
 				Mode: Online,
@@ -76,12 +112,14 @@ func TestLoadConfig_Mode(t *testing.T) {
 					Blockchain: blockchain,
 					Network:    testChainId,
 				},
+				Port: testPortNum,
 			},
 		},
 		"env set with offline mode": {
 			Env: map[string]string{
 				ModeEnv:    Offline.String(),
 				NetworkEnv: testChainId,
+				PortEnv:    testPort,
 			},
 			ExpectedConfig: &Configuration{
 				Mode: Offline,
@@ -89,6 +127,7 @@ func TestLoadConfig_Mode(t *testing.T) {
 					Blockchain: blockchain,
 					Network:    testChainId,
 				},
+				Port: testPortNum,
 			},
 		},
 	}
