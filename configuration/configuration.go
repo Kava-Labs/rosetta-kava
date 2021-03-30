@@ -21,6 +21,8 @@ package configuration
 import (
 	"fmt"
 	"os"
+
+	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
 // Mode identifies if the service is running in an 'online' or 'offline'
@@ -41,6 +43,12 @@ const (
 
 	// ModeEnv specifies the environment variable read to set the Mode
 	ModeEnv = "MODE"
+
+	// NetworkEnv specifies the environment variable to read Network/ChainId from
+	NetworkEnv = "NETWORK"
+
+	// Blockchain specifies the blockchain name used for the Network
+	Blockchain = "Kava"
 )
 
 // ModeFromString returns a Mode from a string value
@@ -77,7 +85,8 @@ func (l *EnvLoader) Get(key string) string {
 // Configuration represents values to configure behavior of
 // rosetta-kava and network to communicate with.
 type Configuration struct {
-	Mode Mode
+	Mode              Mode
+	NetworkIdentifier *types.NetworkIdentifier
 }
 
 // LoadConfig loads keys from a provided loader and returns a
@@ -94,7 +103,19 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 		return nil, err
 	}
 
+	networkEnv := loader.Get(NetworkEnv)
+
+	if networkEnv == "" {
+		return nil, fmt.Errorf("%s must be set", NetworkEnv)
+	}
+
+	networkIdentifier := &types.NetworkIdentifier{
+		Blockchain: Blockchain,
+		Network:    networkEnv,
+	}
+
 	return &Configuration{
-		Mode: mode,
+		Mode:              mode,
+		NetworkIdentifier: networkIdentifier,
 	}, nil
 }
