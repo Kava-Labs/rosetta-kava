@@ -23,6 +23,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/kava-labs/rosetta-kava/kava"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
@@ -50,9 +52,6 @@ const (
 
 	// PortEnv specifies the environment variable to read server port from
 	PortEnv = "PORT"
-
-	// Blockchain specifies the blockchain name used for the Network
-	Blockchain = "Kava"
 )
 
 // ModeFromString returns a Mode from a string value
@@ -115,7 +114,7 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 	}
 
 	networkIdentifier := &types.NetworkIdentifier{
-		Blockchain: Blockchain,
+		Blockchain: kava.Blockchain,
 		Network:    networkEnv,
 	}
 
