@@ -27,7 +27,11 @@ var rootCmd = &cobra.Command{
 	Short: "Kava implementation of the Rosetta API",
 }
 
-// Execute adds commands to rootCmd and executes it
+// Execute executes the root commadn
 func Execute() error {
 	return rootCmd.Execute()
+}
+
+func init() {
+	rootCmd.AddCommand(runCmd)
 }
