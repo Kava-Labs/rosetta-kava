@@ -18,6 +18,11 @@ build:
 test:
 	go test -v ./...
 
+.PHONY: cover
+cover:
+	go test -coverprofile=c.out ./...
+	go tool cover -html=c.out -o coverage.html
+
 .PHONY: watch
 watch:
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -v ./...; done
