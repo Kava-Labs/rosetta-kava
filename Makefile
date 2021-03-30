@@ -25,7 +25,7 @@ cover:
 
 .PHONY: watch
 watch:
-	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -v ./...; done
+	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test ./...; done
 
 .PHONY: gen-mocks
 gen-mocks:
