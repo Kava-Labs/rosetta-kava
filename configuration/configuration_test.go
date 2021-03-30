@@ -43,7 +43,7 @@ func (l *testEnvLoader) Get(key string) string {
 
 func TestLoadConfig_Mode(t *testing.T) {
 	blockchain := "Kava"
-	testChainId := "kava-testnet-9999"
+	testChainID := "kava-testnet-9999"
 	testPort := "8001"
 	testPortNum, err := strconv.Atoi(testPort)
 	assert.NoError(t, err)
@@ -66,7 +66,7 @@ func TestLoadConfig_Mode(t *testing.T) {
 		"port not set": {
 			Env: map[string]string{
 				ModeEnv:    Online.String(),
-				NetworkEnv: testChainId,
+				NetworkEnv: testChainID,
 			},
 			ExpectedErr: fmt.Errorf("%s must be set", PortEnv),
 		},
@@ -79,7 +79,7 @@ func TestLoadConfig_Mode(t *testing.T) {
 		"invalid port set - not a number": {
 			Env: map[string]string{
 				ModeEnv:    Offline.String(),
-				NetworkEnv: testChainId,
+				NetworkEnv: testChainID,
 				PortEnv:    "invalid number",
 			},
 			ExpectedErr: fmt.Errorf("invalid port 'invalid number'"),
@@ -87,7 +87,7 @@ func TestLoadConfig_Mode(t *testing.T) {
 		"invalid port set - equal to zero": {
 			Env: map[string]string{
 				ModeEnv:    Offline.String(),
-				NetworkEnv: testChainId,
+				NetworkEnv: testChainID,
 				PortEnv:    "0",
 			},
 			ExpectedErr: fmt.Errorf("invalid port '0'"),
@@ -95,7 +95,7 @@ func TestLoadConfig_Mode(t *testing.T) {
 		"invalid port set - negative": {
 			Env: map[string]string{
 				ModeEnv:    Offline.String(),
-				NetworkEnv: testChainId,
+				NetworkEnv: testChainID,
 				PortEnv:    "-8000",
 			},
 			ExpectedErr: fmt.Errorf("invalid port '-8000'"),
@@ -103,14 +103,14 @@ func TestLoadConfig_Mode(t *testing.T) {
 		"env set with online mode": {
 			Env: map[string]string{
 				ModeEnv:    Online.String(),
-				NetworkEnv: testChainId,
+				NetworkEnv: testChainID,
 				PortEnv:    testPort,
 			},
 			ExpectedConfig: &Configuration{
 				Mode: Online,
 				NetworkIdentifier: &types.NetworkIdentifier{
 					Blockchain: blockchain,
-					Network:    testChainId,
+					Network:    testChainID,
 				},
 				Port: testPortNum,
 			},
@@ -118,14 +118,14 @@ func TestLoadConfig_Mode(t *testing.T) {
 		"env set with offline mode": {
 			Env: map[string]string{
 				ModeEnv:    Offline.String(),
-				NetworkEnv: testChainId,
+				NetworkEnv: testChainID,
 				PortEnv:    testPort,
 			},
 			ExpectedConfig: &Configuration{
 				Mode: Offline,
 				NetworkIdentifier: &types.NetworkIdentifier{
 					Blockchain: blockchain,
-					Network:    testChainId,
+					Network:    testChainID,
 				},
 				Port: testPortNum,
 			},
