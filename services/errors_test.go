@@ -1,7 +1,4 @@
 // Copyright 2021 Kava Labs, Inc.
-// Copyright 2020 Coinbase, Inc.
-//
-// Derived from github.com/coinbase/rosetta-ethereum@f81889b
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,20 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package services
 
 import (
-	"os"
+	"errors"
+	"testing"
 
-	"github.com/kava-labs/rosetta-kava/cmd"
-
-	"github.com/fatih/color"
+	"github.com/stretchr/testify/assert"
 )
 
-func main() {
-	err := cmd.Execute()
-	if err != nil {
-		color.Red(err.Error())
-		os.Exit(1)
+func TestWrapErr(t *testing.T) {
+	for _, rosettaError := range Errors {
+		t.Run(rosettaError.Message, func(t *testing.T) {
+			originalError := errors.New("some internal error")
+			wrappedErr := wrapErr(rosettaError, originalError)
+
+			assert.Equal(t, rosettaError.Code, rosettaError.Code)
+			assert.Equal(t, rosettaError.Message, rosettaError.Message)
+			assert.Equal(t, rosettaError.Retriable, rosettaError.Retriable)
+
+			errContext := wrappedErr.Details["context"]
+			assert.Equal(t, originalError.Error(), errContext)
+		})
 	}
 }

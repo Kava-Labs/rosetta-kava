@@ -15,20 +15,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package services
 
 import (
-	"os"
+	"context"
+	"testing"
 
-	"github.com/kava-labs/rosetta-kava/cmd"
-
-	"github.com/fatih/color"
+	"github.com/stretchr/testify/assert"
 )
 
-func main() {
-	err := cmd.Execute()
-	if err != nil {
-		color.Red(err.Error())
-		os.Exit(1)
-	}
+func TestMempoolEndpoints(t *testing.T) {
+	servicer := NewMempoolAPIService()
+	ctx := context.Background()
+
+	mem, err := servicer.Mempool(ctx, nil)
+	assert.Nil(t, mem)
+	assert.Equal(t, ErrUnimplemented.Code, err.Code)
+	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+
+	memTransaction, err := servicer.MempoolTransaction(ctx, nil)
+	assert.Nil(t, memTransaction)
+	assert.Equal(t, ErrUnimplemented.Code, err.Code)
+	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 }

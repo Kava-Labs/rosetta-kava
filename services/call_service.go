@@ -15,20 +15,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package services
 
 import (
-	"os"
+	"context"
 
-	"github.com/kava-labs/rosetta-kava/cmd"
+	"github.com/kava-labs/rosetta-kava/configuration"
 
-	"github.com/fatih/color"
+	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
-func main() {
-	err := cmd.Execute()
-	if err != nil {
-		color.Red(err.Error())
-		os.Exit(1)
+// CallAPIService implements the server.CallAPIServicer interface.
+type CallAPIService struct {
+	config *configuration.Configuration
+	client Client
+}
+
+// NewCallAPIService creates a new instance of a CallAPIService.
+func NewCallAPIService(cfg *configuration.Configuration, client Client) *CallAPIService {
+	return &CallAPIService{
+		config: cfg,
+		client: client,
 	}
+}
+
+// Call implements the /call endpoint.
+func (s *CallAPIService) Call(
+	ctx context.Context,
+	request *types.CallRequest,
+) (*types.CallResponse, *types.Error) {
+	return nil, ErrUnimplemented
 }

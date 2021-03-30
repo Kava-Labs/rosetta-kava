@@ -15,20 +15,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package services
 
-import (
-	"os"
+import ()
 
-	"github.com/kava-labs/rosetta-kava/cmd"
-
-	"github.com/fatih/color"
-)
-
-func main() {
-	err := cmd.Execute()
-	if err != nil {
-		color.Red(err.Error())
-		os.Exit(1)
-	}
+// Client is used services to get blockchain
+// data and submit transactions.
+type Client interface {
 }
