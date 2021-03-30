@@ -1,6 +1,6 @@
 package kava
 
-// Client implements services.Client interface for communcating with the kava chain
+// Client implements services.Client interface for communicating with the kava chain
 type Client struct {
 }
 
