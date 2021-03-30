@@ -22,14 +22,24 @@ import (
 	"testing"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/kava"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
+	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	networkIdentifier = &types.NetworkIdentifier{
+		Blockchain: kava.Blockchain,
+		Network:    "kava-testnet-1",
+	}
 )
 
 func TestNetworkEndpoints_Offline(t *testing.T) {
 	cfg := &configuration.Configuration{
-		Mode: configuration.Offline,
+		Mode:              configuration.Offline,
+		NetworkIdentifier: networkIdentifier,
 	}
 
 	mockClient := &mocks.Client{}
@@ -37,9 +47,12 @@ func TestNetworkEndpoints_Offline(t *testing.T) {
 	ctx := context.Background()
 
 	networkList, err := servicer.NetworkList(ctx, nil)
-	assert.Nil(t, networkList)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+	assert.Nil(t, err)
+	assert.Equal(t, &types.NetworkListResponse{
+		NetworkIdentifiers: []*types.NetworkIdentifier{
+			networkIdentifier,
+		},
+	}, networkList)
 
 	networkStatus, err := servicer.NetworkStatus(ctx, nil)
 	assert.Nil(t, networkStatus)
@@ -56,16 +69,20 @@ func TestNetworkEndpoints_Offline(t *testing.T) {
 
 func TestNetworkEndpoints_Online(t *testing.T) {
 	cfg := &configuration.Configuration{
-		Mode: configuration.Online,
+		Mode:              configuration.Online,
+		NetworkIdentifier: networkIdentifier,
 	}
 	mockClient := &mocks.Client{}
 	servicer := NewNetworkAPIService(cfg, mockClient)
 	ctx := context.Background()
 
 	networkList, err := servicer.NetworkList(ctx, nil)
-	assert.Nil(t, networkList)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+	assert.Nil(t, err)
+	assert.Equal(t, &types.NetworkListResponse{
+		NetworkIdentifiers: []*types.NetworkIdentifier{
+			networkIdentifier,
+		},
+	}, networkList)
 
 	networkStatus, err := servicer.NetworkStatus(ctx, nil)
 	assert.Nil(t, networkStatus)

@@ -47,7 +47,11 @@ func (s *NetworkAPIService) NetworkList(
 	ctx context.Context,
 	request *types.MetadataRequest,
 ) (*types.NetworkListResponse, *types.Error) {
-	return nil, ErrUnimplemented
+	return &types.NetworkListResponse{
+		NetworkIdentifiers: []*types.NetworkIdentifier{
+			s.config.NetworkIdentifier,
+		},
+	}, nil
 }
 
 // NetworkOptions implements the /network/options endpoint.

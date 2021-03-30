@@ -1,0 +1,91 @@
+# Copyright 2021 Kava Labs, Inc.
+# Copyright 2020 Coinbase, Inc.
+#
+# Derived from github.com/coinbase/rosetta-specifications@c820407
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+openapi: 3.0.2
+info:
+  version: 0.0.1
+  title: Kava Rosetta
+  description: |
+    Integrate Kava Blockchain using the Rosetta API
+
+    Supports version 1.4.10 of the Rosetta API Specification
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+servers:
+  - url: http://localhost:8000
+paths:
+  /network/list:
+    post:
+      summary: Get List of Available Networks
+      description: |
+        This endpoint returns a list of NetworkIdentifiers that the Kava Rosetta
+        server supports.
+      operationId: networkList
+      tags:
+        - Network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetadataRequest'
+      responses:
+        '200':
+          description: A list of supported networks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkListResponse'
+        '500':
+          description: An unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    # Identifiers
+    NetworkIdentifier:
+      $ref: 'models/NetworkIdentifier.yaml'
+
+    # Request/Responses
+    MetadataRequest:
+      description: |
+        A MetadataRequest is utilized in any request where
+        the only argument is optional metadata.
+      type: object
+      properties:
+        metadata:
+          type: object
+          example: {}
+    NetworkListResponse:
+      description: |
+        A NetworkListResponse contains all NetworkIdentifiers
+        that the node can serve information for.
+      type: object
+      required:
+        - network_identifiers
+      properties:
+        network_identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkIdentifier'
+
+    # Miscellaneous
+    Error:
+      $ref: 'models/Error.yaml'
