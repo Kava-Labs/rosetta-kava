@@ -34,6 +34,23 @@ var (
 		Blockchain: kava.Blockchain,
 		Network:    "kava-testnet-1",
 	}
+
+	expectedNetworkOptions = &types.NetworkOptionsResponse{
+		Version: &types.Version{
+			RosettaVersion:    types.RosettaAPIVersion,
+			NodeVersion:       kava.NodeVersion,
+			MiddlewareVersion: &configuration.MiddlewareVersion,
+		},
+		Allow: &types.Allow{
+			OperationStatuses:       kava.OperationStatuses,
+			OperationTypes:          kava.OperationTypes,
+			Errors:                  Errors,
+			HistoricalBalanceLookup: kava.HistoricalBalanceSupported,
+			CallMethods:             kava.CallMethods,
+			BalanceExemptions:       kava.BalanceExemptions,
+			MempoolCoins:            kava.IncludeMempoolCoins,
+		},
+	}
 )
 
 func TestNetworkEndpoints_Offline(t *testing.T) {
@@ -54,15 +71,14 @@ func TestNetworkEndpoints_Offline(t *testing.T) {
 		},
 	}, networkList)
 
+	networkOptions, err := servicer.NetworkOptions(ctx, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedNetworkOptions, networkOptions)
+
 	networkStatus, err := servicer.NetworkStatus(ctx, nil)
 	assert.Nil(t, networkStatus)
 	assert.Equal(t, ErrUnavailableOffline.Code, err.Code)
 	assert.Equal(t, ErrUnavailableOffline.Message, err.Message)
-
-	networkOptions, err := servicer.NetworkOptions(ctx, nil)
-	assert.Nil(t, networkOptions)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	mockClient.AssertExpectations(t)
 }
@@ -84,13 +100,12 @@ func TestNetworkEndpoints_Online(t *testing.T) {
 		},
 	}, networkList)
 
+	networkOptions, err := servicer.NetworkOptions(ctx, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedNetworkOptions, networkOptions)
+
 	networkStatus, err := servicer.NetworkStatus(ctx, nil)
 	assert.Nil(t, networkStatus)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	networkOptions, err := servicer.NetworkOptions(ctx, nil)
-	assert.Nil(t, networkOptions)
 	assert.Equal(t, ErrUnimplemented.Code, err.Code)
 	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 

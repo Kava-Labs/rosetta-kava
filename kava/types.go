@@ -22,6 +22,9 @@ import (
 )
 
 const (
+	// NodeVersion is the version of kvd we are using
+	NodeVersion = "v0.14.0"
+
 	// Blockchain is always Kava
 	Blockchain = "Kava"
 
@@ -60,4 +63,7 @@ var (
 
 	// CallMethods are all supported call methods.
 	CallMethods = []string{}
+
+	// BalanceExemptions lists sub-accounts that are balance exempt
+	BalanceExemptions = []*types.BalanceExemption{}
 )

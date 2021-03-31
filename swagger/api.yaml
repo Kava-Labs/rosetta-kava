@@ -57,11 +57,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /network/options:
+    post:
+      summary: Get Network Options
+      description: |
+        This endpoint returns the version information and allowed
+        network-specific types for a NetworkIdentifiers returned
+        in /netwwork/list.
+      operationId: networkOptions
+      tags:
+        - Network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkRequest'
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkOptionsResponse'
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     # Identifiers
     NetworkIdentifier:
       $ref: 'models/NetworkIdentifier.yaml'
+
+    # Models
+    Allow:
+      $ref: 'models/Allow.yaml'
+    Version:
+      $ref: 'models/Version.yaml'
 
     # Request/Responses
     MetadataRequest:
@@ -73,6 +109,18 @@ components:
         metadata:
           type: object
           example: {}
+    NetworkRequest:
+      description: |
+        A NetworkRequest is utilized to retrieve some data specific exclusively
+        to a NetworkIdentifier.
+      type: object
+      required:
+        - network_identifier
+      properties:
+        network_identifier:
+          $ref: '#/components/schemas/NetworkIdentifier'
+        metadata:
+          type: object
     NetworkListResponse:
       description: |
         A NetworkListResponse contains all NetworkIdentifiers
@@ -85,6 +133,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NetworkIdentifier'
+    NetworkOptionsResponse:
+      description: |
+        NetworkOptionsResponse contains information about the versioning of the
+        node and the allowed operation statuses, operation types, and errors.
+      type: object
+      required:
+        - version
+        - allow
+      properties:
+        version:
+          $ref: '#/components/schemas/Version'
+        allow:
+          $ref: '#/components/schemas/Allow'
 
     # Miscellaneous
     Error:

@@ -28,6 +28,9 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
+// MiddlewareVersion represents the kava rosetta service version
+var MiddlewareVersion = "0.0.1"
+
 // Mode identifies if the service is running in an 'online' or 'offline'
 // capacity.  Ref: https://www.rosetta-api.org/docs/node_deployment.html#multiple-modes
 type Mode string

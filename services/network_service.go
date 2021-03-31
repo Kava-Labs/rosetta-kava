@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
@@ -59,7 +60,22 @@ func (s *NetworkAPIService) NetworkOptions(
 	ctx context.Context,
 	request *types.NetworkRequest,
 ) (*types.NetworkOptionsResponse, *types.Error) {
-	return nil, ErrUnimplemented
+	return &types.NetworkOptionsResponse{
+		Version: &types.Version{
+			RosettaVersion:    types.RosettaAPIVersion,
+			NodeVersion:       kava.NodeVersion,
+			MiddlewareVersion: &configuration.MiddlewareVersion,
+		},
+		Allow: &types.Allow{
+			OperationStatuses:       kava.OperationStatuses,
+			OperationTypes:          kava.OperationTypes,
+			Errors:                  Errors,
+			HistoricalBalanceLookup: kava.HistoricalBalanceSupported,
+			CallMethods:             kava.CallMethods,
+			BalanceExemptions:       kava.BalanceExemptions,
+			MempoolCoins:            kava.IncludeMempoolCoins,
+		},
+	}, nil
 }
 
 // NetworkStatus implements the /network/status endpoint.
