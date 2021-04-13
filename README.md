@@ -9,7 +9,7 @@ Written in Golang with the [Rosetta Go SDK](https://github.com/coinbase/rosetta-
 ```
 make install
 
-MODE=online NETWORK=kava-5.1 PORT=8000 rosetta-kava run
+MODE=online NETWORK=kava-7 PORT=8000 rosetta-kava run
 ```
 
 # Swagger

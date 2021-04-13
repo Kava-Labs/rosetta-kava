@@ -1,7 +1,4 @@
 // Copyright 2021 Kava Labs, Inc.
-// Copyright 2020 Coinbase, Inc.
-//
-// Derived from github.com/coinbase/rosetta-ethereum@f81889b
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,37 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package server
 
 import (
-	"fmt"
+	"testing"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
-	"github.com/kava-labs/rosetta-kava/server"
+	"github.com/kava-labs/rosetta-kava/kava"
 
-	"github.com/spf13/cobra"
+	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
-	runCmd = &cobra.Command{
-		Use:   "run",
-		Short: "Run rosetta-kava",
-		RunE:  runRunCmd,
+	networkIdentifier = &types.NetworkIdentifier{
+		Blockchain: kava.Blockchain,
+		Network:    "kava-testnet-1",
 	}
 )
 
-func runRunCmd(cmd *cobra.Command, args []string) error {
-	configLoader := &configuration.EnvLoader{}
-
-	config, err := configuration.LoadConfig(configLoader)
-	if err != nil {
-		return fmt.Errorf("%w: unable to load configuration", err)
+func TestRouter(t *testing.T) {
+	config := &configuration.Configuration{
+		Mode:              configuration.Offline,
+		NetworkIdentifier: networkIdentifier,
 	}
 
-	handler, err := server.NewRouter(config)
-	if err != nil {
-		return fmt.Errorf("%w: unable to initialize router", err)
-	}
-
-	return server.Run(config, handler)
+	_, err := NewRouter(config)
+	assert.NoError(t, err)
 }

@@ -16,11 +16,15 @@ build:
 
 .PHONY: run
 run:
-	MODE=online NETWORK=kava-5.1 PORT=8000 go run . run
+	MODE=online NETWORK=kava-7 PORT=8000 go run . run
 
 .PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: test-integration
+test-integration:
+	go test -v -tags=integration ./testing
 
 .PHONY: cover
 cover:
