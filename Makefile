@@ -24,7 +24,8 @@ test:
 
 .PHONY: test-integration
 test-integration:
-	go test -v -tags=integration ./testing
+	MODE=online go test -v -tags=integration ./testing
+	MODE=offline go test -v -tags=integration ./testing
 
 .PHONY: cover
 cover:
@@ -34,6 +35,10 @@ cover:
 .PHONY: watch
 watch:
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test ./...; done
+
+.PHONY: watch-integration
+watch-integration:
+	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration ./testing; done
 
 .PHONY: gen-mocks
 gen-mocks:
