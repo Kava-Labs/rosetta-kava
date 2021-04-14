@@ -19,6 +19,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
@@ -104,10 +105,67 @@ func TestNetworkEndpoints_Online(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expectedNetworkOptions, networkOptions)
 
-	networkStatus, err := servicer.NetworkStatus(ctx, nil)
+	currentBlock := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	currentTime := int64(1000000000000)
+	genesisBlock := &types.BlockIdentifier{
+		Index: 1,
+		Hash:  "ADB03E823AFC5F12DC02D984A7E1E0EC47E84FC323005B82FB0B3A9DC8F045B7",
+	}
+	syncStatus := &types.SyncStatus{}
+	peers := []*types.Peer{
+		{
+			PeerID: "e5d74b3f06226fb0798509e36021e81b7bce934d",
+		},
+	}
+
+	mockClient.On(
+		"Status",
+		ctx,
+	).Return(
+		currentBlock,
+		currentTime,
+		genesisBlock,
+		syncStatus,
+		peers,
+		nil,
+	).Once()
+
+	networkRequest := &types.NetworkRequest{
+		NetworkIdentifier: networkIdentifier,
+	}
+	networkStatus, err := servicer.NetworkStatus(ctx, networkRequest)
+	assert.Nil(t, err)
+
+	assert.Equal(t, &types.NetworkStatusResponse{
+		CurrentBlockIdentifier: currentBlock,
+		CurrentBlockTimestamp:  currentTime,
+		GenesisBlockIdentifier: genesisBlock,
+		SyncStatus:             syncStatus,
+		Peers:                  peers,
+	}, networkStatus)
+
+	kavaErr := errors.New("some client error")
+	mockClient.On(
+		"Status",
+		ctx,
+	).Return(
+		nil,
+		int64(-1),
+		nil,
+		nil,
+		nil,
+		kavaErr,
+	).Once()
+
+	networkStatus, err = servicer.NetworkStatus(ctx, networkRequest)
 	assert.Nil(t, networkStatus)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrKava.Code, err.Code)
+	assert.Equal(t, ErrKava.Message, err.Message)
+	assert.Equal(t, kavaErr.Error(), err.Details["context"])
 
 	mockClient.AssertExpectations(t)
 }

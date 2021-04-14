@@ -17,9 +17,21 @@
 
 package services
 
-import ()
+import (
+	"context"
+
+	"github.com/coinbase/rosetta-sdk-go/types"
+)
 
 // Client is used services to get blockchain
 // data and submit transactions.
 type Client interface {
+	Status(context.Context) (
+		*types.BlockIdentifier,
+		int64,
+		*types.BlockIdentifier,
+		*types.SyncStatus,
+		[]*types.Peer,
+		error,
+	)
 }

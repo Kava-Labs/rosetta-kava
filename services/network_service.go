@@ -87,5 +87,21 @@ func (s *NetworkAPIService) NetworkStatus(
 		return nil, ErrUnavailableOffline
 	}
 
-	return nil, ErrUnimplemented
+	currentBlock,
+		currentTime,
+		genesisBlock,
+		syncStatus,
+		peers,
+		err := s.client.Status(ctx)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
+
+	return &types.NetworkStatusResponse{
+		CurrentBlockIdentifier: currentBlock,
+		CurrentBlockTimestamp:  currentTime,
+		GenesisBlockIdentifier: genesisBlock,
+		SyncStatus:             syncStatus,
+		Peers:                  peers,
+	}, nil
 }
