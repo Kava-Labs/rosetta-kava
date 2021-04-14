@@ -30,4 +30,4 @@ properties:
       The chain-id for the Kava blockchain.  It is up to the client to
       determin if the chain-id represents the mainnet, testnet, or local net.
     type: string
-    example: "kava-5.1"
+    example: "kava-7"
