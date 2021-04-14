@@ -44,6 +44,7 @@ const (
 	idleTimeout = 30 * time.Second
 )
 
+// NewRouter returns an rossetta server handler with assertion, logging and cors support
 func NewRouter(config *configuration.Configuration) (http.Handler, error) {
 	client, err := kava.NewClient()
 	if err != nil {
@@ -70,6 +71,7 @@ func NewRouter(config *configuration.Configuration) (http.Handler, error) {
 	return corsRouter, nil
 }
 
+// Run starts a http server using the provided handler with read, write, and idle timeouts
 func Run(config *configuration.Configuration, handler http.Handler) error {
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", config.Port),
