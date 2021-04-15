@@ -65,6 +65,7 @@ func (c *Client) Status(ctx context.Context) (
 	syncInfo := resultStatus.SyncInfo
 	tmPeers := resultNetInfo.Peers
 
+	// TODO: update when indexer is implemented
 	currentBlock := &types.BlockIdentifier{
 		Index: syncInfo.LatestBlockHeight,
 		Hash:  syncInfo.LatestBlockHash.String(),
@@ -77,6 +78,7 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	synced := !syncInfo.CatchingUp
+	// TODO: update when indexer is implemented
 	syncStatus := &types.SyncStatus{
 		CurrentIndex: &syncInfo.LatestBlockHeight,
 		TargetIndex:  &syncInfo.LatestBlockHeight,
