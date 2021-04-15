@@ -4,7 +4,11 @@ install:
 
 .PHONY: lint
 lint:
-	go run golang.org/x/lint/golint  ./...
+	go run golang.org/x/lint/golint ./...
+
+.PHONY: golangci-lint
+golangci-lint:
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 .PHONY: vet
 vet:
