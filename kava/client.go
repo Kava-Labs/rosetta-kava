@@ -25,13 +25,7 @@ import (
 )
 
 func init() {
-	//
-	// bootstrap kava chain config
-	//
-	// sets a global cosmos sdk for bech32 prefix
-	//
-	// required before loading config
-	//
+	// bootstrap cosmos-sdk config for kava chain
 	kavaConfig := sdk.GetConfig()
 	kava.SetBech32AddressPrefixes(kavaConfig)
 	kava.SetBip44CoinType(kavaConfig)
@@ -50,6 +44,7 @@ func NewClient(rpc rpcclient.Client) (*Client, error) {
 	}, nil
 }
 
+// Status fetches latest status from a kava node and returns the results
 func (c *Client) Status(ctx context.Context) (
 	*types.BlockIdentifier,
 	int64,

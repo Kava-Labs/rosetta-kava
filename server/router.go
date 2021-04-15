@@ -47,7 +47,7 @@ const (
 
 // NewRouter returns an rossetta server handler with assertion, logging and cors support
 func NewRouter(config *configuration.Configuration) (http.Handler, error) {
-	http, err := rpchttpclient.New(config.KavaRpcUrl, "/websocket")
+	http, err := rpchttpclient.New(config.KavaRPCURL, "/websocket")
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not initialize http client", err)
 	}

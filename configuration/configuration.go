@@ -56,8 +56,8 @@ const (
 	// PortEnv specifies the environment variable to read server port from
 	PortEnv = "PORT"
 
-	// KavaRpcUrlEnv specifies the environment variable to read server port from
-	KavaRpcUrlEnv = "KAVA_RPC_URL"
+	// KavaRPCURLEnv specifies the environment variable to read server port from
+	KavaRPCURLEnv = "KAVA_RPC_URL"
 )
 
 // ModeFromString returns a Mode from a string value
@@ -97,7 +97,7 @@ type Configuration struct {
 	Mode              Mode
 	NetworkIdentifier *types.NetworkIdentifier
 	Port              int
-	KavaRpcUrl        string
+	KavaRPCURL        string
 }
 
 // LoadConfig loads keys from a provided loader and returns a
@@ -136,16 +136,16 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 		return nil, fmt.Errorf("invalid port '%s'", port)
 	}
 
-	kavaRpcUrl := loader.Get(KavaRpcUrlEnv)
+	kavaRPCURL := loader.Get(KavaRPCURLEnv)
 
-	if kavaRpcUrl == "" {
-		return nil, fmt.Errorf("%s must be set", KavaRpcUrlEnv)
+	if kavaRPCURL == "" {
+		return nil, fmt.Errorf("%s must be set", KavaRPCURLEnv)
 	}
 
 	return &Configuration{
 		Mode:              mode,
 		NetworkIdentifier: networkIdentifier,
 		Port:              portNum,
-		KavaRpcUrl:        kavaRpcUrl,
+		KavaRPCURL:        kavaRPCURL,
 	}, nil
 }

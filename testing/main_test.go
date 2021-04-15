@@ -74,7 +74,7 @@ func TestMain(m *testing.M) {
 
 	client = rclient.NewAPIClient(clientConfig)
 
-	rpc, err = rpchttpclient.New(config.KavaRpcUrl, "/websocket")
+	rpc, err = rpchttpclient.New(config.KavaRPCURL, "/websocket")
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w: could not initialize http client", err))
 		os.Exit(1)

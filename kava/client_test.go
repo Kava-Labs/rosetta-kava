@@ -58,11 +58,11 @@ func TestCosmosSDKConfig(t *testing.T) {
 
 func TestStatus(t *testing.T) {
 	ctx := context.Background()
-	mockRpcClient := &mocks.Client{}
-	client, err := NewClient(mockRpcClient)
+	mockRPCClient := &mocks.Client{}
+	client, err := NewClient(mockRPCClient)
 
 	rpcErr := errors.New("unable to contact node")
-	mockRpcClient.On(
+	mockRPCClient.On(
 		"Status",
 	).Return(
 		nil,
@@ -104,7 +104,7 @@ func TestStatus(t *testing.T) {
 		CatchingUp:          false,
 	}
 
-	mockRpcClient.On(
+	mockRPCClient.On(
 		"Status",
 	).Return(
 		&ctypes.ResultStatus{
@@ -115,7 +115,7 @@ func TestStatus(t *testing.T) {
 		nil,
 	)
 
-	mockRpcClient.On(
+	mockRPCClient.On(
 		"NetInfo",
 	).Return(
 		nil,
@@ -148,7 +148,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	tmPeers := []ctypes.Peer{tmPeer}
-	mockRpcClient.On(
+	mockRPCClient.On(
 		"NetInfo",
 	).Return(
 		&ctypes.ResultNetInfo{
@@ -197,5 +197,5 @@ func TestStatus(t *testing.T) {
 		},
 	}, peers)
 
-	mockRpcClient.AssertExpectations(t)
+	mockRPCClient.AssertExpectations(t)
 }
