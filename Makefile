@@ -8,7 +8,7 @@ lint:
 
 .PHONY: golangci-lint
 golangci-lint:
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
+	golangci-lint run
 
 .PHONY: vet
 vet:
