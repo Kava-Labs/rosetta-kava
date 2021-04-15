@@ -23,7 +23,7 @@ import (
 
 const (
 	// NodeVersion is the version of kvd we are using
-	NodeVersion = "v0.14.0"
+	NodeVersion = "v0.14.1"
 
 	// Blockchain is always Kava
 	Blockchain = "Kava"
