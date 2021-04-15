@@ -24,7 +24,7 @@ test:
 
 .PHONY: test-integration
 test-integration:
-	MODE=online go test -v -tags=integration ./testing
+	MODE=online go test -v -tags=integration -count=1 ./testing
 	MODE=offline go test -v -tags=integration ./testing
 
 .PHONY: cover
