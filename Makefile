@@ -4,7 +4,7 @@ install:
 
 .PHONY: lint
 lint:
-	golint ./...
+	go run golang.org/x/lint/golint  ./...
 
 .PHONY: vet
 vet:
