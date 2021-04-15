@@ -35,6 +35,8 @@ func TestRouter(t *testing.T) {
 	config := &configuration.Configuration{
 		Mode:              configuration.Offline,
 		NetworkIdentifier: networkIdentifier,
+		Port:              8000,
+		KavaRpcUrl:        "https://rpc.testnet.kava.io:443",
 	}
 
 	_, err := NewRouter(config)

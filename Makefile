@@ -16,7 +16,7 @@ build:
 
 .PHONY: run
 run:
-	MODE=online NETWORK=kava-7 PORT=8000 go run . run
+	MODE=online NETWORK=kava-7 PORT=8000 KAVA_RPC_URL=https://rpc.kava.io:443 go run . run
 
 .PHONY: test
 test:
@@ -43,6 +43,7 @@ watch-integration:
 .PHONY: gen-mocks
 gen-mocks:
 	mockery --dir services --all --case underscore --outpkg services --output mocks/services;
+	mockery --srcpkg github.com/tendermint/tendermint/rpc/client --name Client --case underscore --outpkg tendermint --output mocks/tendermint
 
 .PHONY: clean-mocks
 clean-mocks:

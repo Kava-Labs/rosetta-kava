@@ -27,6 +27,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	sdkserver "github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/coinbase/rosetta-sdk-go/types"
+	rpchttpclient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const (
@@ -46,7 +47,12 @@ const (
 
 // NewRouter returns an rossetta server handler with assertion, logging and cors support
 func NewRouter(config *configuration.Configuration) (http.Handler, error) {
-	client, err := kava.NewClient()
+	http, err := rpchttpclient.New(config.KavaRpcUrl, "/websocket")
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not initialize http client", err)
+	}
+
+	client, err := kava.NewClient(http)
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not initialize kava client", err)
 	}

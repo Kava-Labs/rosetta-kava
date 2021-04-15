@@ -16,11 +16,12 @@ package kava
 
 import (
 	"context"
-	"errors"
+	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	kava "github.com/kava-labs/kava/app"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 func init() {
@@ -39,11 +40,14 @@ func init() {
 
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
+	rpc rpcclient.Client
 }
 
-// NewClient initialized a new Kava Client
-func NewClient() (*Client, error) {
-	return &Client{}, nil
+// NewClient initialized a new Client with the provided rpc client
+func NewClient(rpc rpcclient.Client) (*Client, error) {
+	return &Client{
+		rpc: rpc,
+	}, nil
 }
 
 func (c *Client) Status(ctx context.Context) (
@@ -54,5 +58,50 @@ func (c *Client) Status(ctx context.Context) (
 	[]*types.Peer,
 	error,
 ) {
-	return nil, int64(-1), nil, nil, nil, errors.New("not implemented")
+	resultStatus, err := c.rpc.Status()
+	if err != nil {
+		return nil, int64(-1), nil, nil, nil, err
+	}
+	resultNetInfo, err := c.rpc.NetInfo()
+	if err != nil {
+		return nil, int64(-1), nil, nil, nil, err
+	}
+
+	syncInfo := resultStatus.SyncInfo
+	tmPeers := resultNetInfo.Peers
+
+	currentBlock := &types.BlockIdentifier{
+		Index: syncInfo.LatestBlockHeight,
+		Hash:  syncInfo.LatestBlockHash.String(),
+	}
+	currentTime := syncInfo.LatestBlockTime.UnixNano() / int64(time.Millisecond)
+
+	genesisBlock := &types.BlockIdentifier{
+		Index: syncInfo.EarliestBlockHeight,
+		Hash:  syncInfo.EarliestBlockHash.String(),
+	}
+
+	synced := !syncInfo.CatchingUp
+	syncStatus := &types.SyncStatus{
+		CurrentIndex: &syncInfo.LatestBlockHeight,
+		TargetIndex:  &syncInfo.LatestBlockHeight,
+		Synced:       &synced,
+	}
+
+	peers := []*types.Peer{}
+	for _, tmPeer := range tmPeers {
+		peers = append(peers, &types.Peer{
+			PeerID: string(tmPeer.NodeInfo.DefaultNodeID),
+			Metadata: map[string]interface{}{
+				"Moniker":    tmPeer.NodeInfo.Moniker,
+				"Network":    tmPeer.NodeInfo.Network,
+				"Version":    tmPeer.NodeInfo.Version,
+				"ListenAddr": tmPeer.NodeInfo.ListenAddr,
+				"IsOutbound": tmPeer.IsOutbound,
+				"RemoteIP":   tmPeer.RemoteIP,
+			},
+		})
+	}
+
+	return currentBlock, currentTime, genesisBlock, syncStatus, peers, nil
 }

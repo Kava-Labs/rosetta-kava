@@ -46,6 +46,7 @@ func TestLoadConfig_Mode(t *testing.T) {
 	testChainID := "kava-testnet-9999"
 	testPort := "8001"
 	testPortNum, err := strconv.Atoi(testPort)
+	testKavaRpcUrl := "https://rpc.testnet.kava.io:443"
 	assert.NoError(t, err)
 
 	tests := map[string]struct {
@@ -84,14 +85,6 @@ func TestLoadConfig_Mode(t *testing.T) {
 			},
 			ExpectedErr: fmt.Errorf("invalid port 'invalid number'"),
 		},
-		"invalid port set - equal to zero": {
-			Env: map[string]string{
-				ModeEnv:    Offline.String(),
-				NetworkEnv: testChainID,
-				PortEnv:    "0",
-			},
-			ExpectedErr: fmt.Errorf("invalid port '0'"),
-		},
 		"invalid port set - negative": {
 			Env: map[string]string{
 				ModeEnv:    Offline.String(),
@@ -100,11 +93,20 @@ func TestLoadConfig_Mode(t *testing.T) {
 			},
 			ExpectedErr: fmt.Errorf("invalid port '-8000'"),
 		},
+		"kavaRpcUrl not set": {
+			Env: map[string]string{
+				ModeEnv:    Offline.String(),
+				NetworkEnv: testChainID,
+				PortEnv:    "8000",
+			},
+			ExpectedErr: fmt.Errorf("%s must be set", KavaRpcUrlEnv),
+		},
 		"env set with online mode": {
 			Env: map[string]string{
-				ModeEnv:    Online.String(),
-				NetworkEnv: testChainID,
-				PortEnv:    testPort,
+				ModeEnv:       Online.String(),
+				NetworkEnv:    testChainID,
+				PortEnv:       testPort,
+				KavaRpcUrlEnv: testKavaRpcUrl,
 			},
 			ExpectedConfig: &Configuration{
 				Mode: Online,
@@ -112,14 +114,16 @@ func TestLoadConfig_Mode(t *testing.T) {
 					Blockchain: blockchain,
 					Network:    testChainID,
 				},
-				Port: testPortNum,
+				Port:       testPortNum,
+				KavaRpcUrl: testKavaRpcUrl,
 			},
 		},
 		"env set with offline mode": {
 			Env: map[string]string{
-				ModeEnv:    Offline.String(),
-				NetworkEnv: testChainID,
-				PortEnv:    testPort,
+				ModeEnv:       Offline.String(),
+				NetworkEnv:    testChainID,
+				PortEnv:       testPort,
+				KavaRpcUrlEnv: testKavaRpcUrl,
 			},
 			ExpectedConfig: &Configuration{
 				Mode: Offline,
@@ -127,7 +131,8 @@ func TestLoadConfig_Mode(t *testing.T) {
 					Blockchain: blockchain,
 					Network:    testChainID,
 				},
-				Port: testPortNum,
+				Port:       testPortNum,
+				KavaRpcUrl: testKavaRpcUrl,
 			},
 		},
 	}

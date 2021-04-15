@@ -55,6 +55,9 @@ const (
 
 	// PortEnv specifies the environment variable to read server port from
 	PortEnv = "PORT"
+
+	// KavaRpcUrlEnv specifies the environment variable to read server port from
+	KavaRpcUrlEnv = "KAVA_RPC_URL"
 )
 
 // ModeFromString returns a Mode from a string value
@@ -94,6 +97,7 @@ type Configuration struct {
 	Mode              Mode
 	NetworkIdentifier *types.NetworkIdentifier
 	Port              int
+	KavaRpcUrl        string
 }
 
 // LoadConfig loads keys from a provided loader and returns a
@@ -110,31 +114,38 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 		return nil, err
 	}
 
-	networkEnv := loader.Get(NetworkEnv)
+	network := loader.Get(NetworkEnv)
 
-	if networkEnv == "" {
+	if network == "" {
 		return nil, fmt.Errorf("%s must be set", NetworkEnv)
 	}
 
 	networkIdentifier := &types.NetworkIdentifier{
 		Blockchain: kava.Blockchain,
-		Network:    networkEnv,
+		Network:    network,
 	}
 
-	portEnv := loader.Get(PortEnv)
+	port := loader.Get(PortEnv)
 
-	if portEnv == "" {
+	if port == "" {
 		return nil, fmt.Errorf("%s must be set", PortEnv)
 	}
 
-	portNum, err := strconv.Atoi(portEnv)
+	portNum, err := strconv.Atoi(port)
 	if err != nil || portNum <= 0 {
-		return nil, fmt.Errorf("invalid port '%s'", portEnv)
+		return nil, fmt.Errorf("invalid port '%s'", port)
+	}
+
+	kavaRpcUrl := loader.Get(KavaRpcUrlEnv)
+
+	if kavaRpcUrl == "" {
+		return nil, fmt.Errorf("%s must be set", KavaRpcUrlEnv)
 	}
 
 	return &Configuration{
 		Mode:              mode,
 		NetworkIdentifier: networkIdentifier,
 		Port:              portNum,
+		KavaRpcUrl:        kavaRpcUrl,
 	}, nil
 }
