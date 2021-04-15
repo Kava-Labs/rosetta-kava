@@ -59,7 +59,7 @@ func TestCosmosSDKConfig(t *testing.T) {
 func TestStatus(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient := &mocks.Client{}
-	client, err := NewClient(mockRPCClient)
+	client, _ := NewClient(mockRPCClient)
 
 	rpcErr := errors.New("unable to contact node")
 	mockRPCClient.On(
