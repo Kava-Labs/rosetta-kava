@@ -26,11 +26,14 @@ import (
 	rclient "github.com/coinbase/rosetta-sdk-go/client"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	router "github.com/kava-labs/rosetta-kava/server"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	rpchttpclient "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 var config *configuration.Configuration
 var server *httptest.Server
 var client *rclient.APIClient
+var rpc rpcclient.Client
 
 func TestMain(m *testing.M) {
 	configLoader := &configuration.EnvLoader{}
@@ -55,6 +58,7 @@ func TestMain(m *testing.M) {
 	handler, err := router.NewRouter(config)
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w: unable to initialize router", err))
+		os.Exit(1)
 	}
 
 	server = httptest.NewServer(handler)
@@ -69,6 +73,12 @@ func TestMain(m *testing.M) {
 	)
 
 	client = rclient.NewAPIClient(clientConfig)
+
+	rpc, err = rpchttpclient.New(config.KavaRpcUrl, "/websocket")
+	if err != nil {
+		fmt.Println(fmt.Errorf("%w: could not initialize http client", err))
+		os.Exit(1)
+	}
 
 	os.Exit(m.Run())
 }

@@ -76,6 +76,14 @@ func TestNetworkStatus(t *testing.T) {
 
 		err = asserter.NetworkStatusResponse(networkStatus)
 		require.NoError(t, err)
+
+		resultStatus, err := rpc.Status()
+		require.NoError(t, err)
+
+		assert.Equal(t, &types.BlockIdentifier{
+			Index: resultStatus.SyncInfo.EarliestBlockHeight,
+			Hash:  resultStatus.SyncInfo.EarliestBlockHash.String(),
+		}, networkStatus.GenesisBlockIdentifier)
 	} else {
 		require.Error(t, err)
 		require.NotNil(t, rosettaErr)
