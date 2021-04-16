@@ -59,7 +59,8 @@ func TestCosmosSDKConfig(t *testing.T) {
 func TestStatus(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient := &mocks.Client{}
-	client, _ := NewClient(mockRPCClient)
+	client, err := NewClient(mockRPCClient)
+	require.NoError(t, err)
 
 	rpcErr := errors.New("unable to contact node")
 	mockRPCClient.On(
@@ -198,4 +199,20 @@ func TestStatus(t *testing.T) {
 	}, peers)
 
 	mockRPCClient.AssertExpectations(t)
+}
+
+func TestBalance(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient := &mocks.Client{}
+	client, err := NewClient(mockRPCClient)
+	require.NoError(t, err)
+
+	accountResponse, err := client.Balance(
+		ctx,
+		&types.AccountIdentifier{},
+		&types.PartialBlockIdentifier{},
+		[]*types.Currency{},
+	)
+	assert.Nil(t, accountResponse)
+	assert.Error(t, err)
 }

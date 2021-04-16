@@ -51,7 +51,17 @@ func (s *AccountAPIService) AccountBalance(
 		return nil, ErrUnavailableOffline
 	}
 
-	return nil, ErrUnimplemented
+	response, err := s.client.Balance(
+		ctx,
+		request.AccountIdentifier,
+		request.BlockIdentifier,
+		request.Currencies,
+	)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
+
+	return response, nil
 }
 
 // AccountCoins implements /account/coins.

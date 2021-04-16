@@ -34,4 +34,11 @@ type Client interface {
 		[]*types.Peer,
 		error,
 	)
+
+	Balance(
+		context.Context,
+		*types.AccountIdentifier,
+		*types.PartialBlockIdentifier,
+		[]*types.Currency,
+	) (*types.AccountBalanceResponse, error)
 }

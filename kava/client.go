@@ -16,6 +16,7 @@ package kava
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -101,4 +102,13 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	return currentBlock, currentTime, genesisBlock, syncStatus, peers, nil
+}
+
+func (c *Client) Balance(
+	ctx context.Context,
+	accountIdentifier *types.AccountIdentifier,
+	blockIdentifer *types.PartialBlockIdentifier,
+	currencies []*types.Currency,
+) (*types.AccountBalanceResponse, error) {
+	return nil, errors.New("not implemented")
 }
