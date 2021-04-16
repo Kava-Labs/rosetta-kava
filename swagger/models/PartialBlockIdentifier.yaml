@@ -27,37 +27,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-description: |
-  Currency is composed of a canonical Symbol and
-  Decimals. This Decimals value is used to convert
-  an Amount.Value from atomic units (ukava) to standard units
-  (kava).
 type: object
-required:
-  - symbol
-  - decimals
+description: |
+  When fetching data by BlockIdentifier, it may be possible to only specify the
+  index or hash. If neither property is specified, it is assumed that the
+  client is making a request at the current block.
 properties:
-  symbol:
-    description: |
-      Canonical symbol associated with a currency.
-    type: string
-    example: "KAVA"
-  decimals:
-    description: |
-      Number of decimal places in the standard unit representation of the amount.
-
-      For example, KAVA has 6 decimals. Note that it is not possible to represent
-      the value of some currency in atomic units that is not base 10.
+  index:
     type: integer
-    format: int32
-    minimum: 0
-    example: 6
-  metadata:
-    description: |
-      Any additional information related to the currency itself.
-
-      For example, it would be useful to populate this object with the contract address
-      of an ERC-20 token.
-    type: object
-    example:
-      Issuer: "Satoshi"
+    format: int64
+    example: 1123941
+  hash:
+    type: string
+    example: "29AF1BAB3254C2B6835AE147C86CC01E48A5B41E5CB52FF6F2EEF0FD383C3068"

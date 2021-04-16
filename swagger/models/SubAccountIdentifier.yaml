@@ -28,36 +28,24 @@
 # limitations under the License.
 
 description: |
-  Currency is composed of a canonical Symbol and
-  Decimals. This Decimals value is used to convert
-  an Amount.Value from atomic units (ukava) to standard units
-  (kava).
+  An account may have state specific to a contract address (ERC-20 token)
+  and/or a stake (delegated balance). The sub_account_identifier should
+  specify which state (if applicable) an account instantiation refers to.
 type: object
 required:
-  - symbol
-  - decimals
+  - address 
 properties:
-  symbol:
+  address:
     description: |
-      Canonical symbol associated with a currency.
+      The SubAccount address may be a cryptographic value or some
+      other identifier (ex: bonded) that uniquely specifies a SubAccount.
     type: string
-    example: "KAVA"
-  decimals:
-    description: |
-      Number of decimal places in the standard unit representation of the amount.
-
-      For example, KAVA has 6 decimals. Note that it is not possible to represent
-      the value of some currency in atomic units that is not base 10.
-    type: integer
-    format: int32
-    minimum: 0
-    example: 6
+    example: "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
   metadata:
     description: |
-      Any additional information related to the currency itself.
+      If the SubAccount address is not sufficient to uniquely specify a SubAccount,
+      any other identifying information can be stored here.
 
-      For example, it would be useful to populate this object with the contract address
-      of an ERC-20 token.
+      It is important to note that two SubAccounts with identical addresses but
+      differing metadata will not be considered equal by clients.
     type: object
-    example:
-      Issuer: "Satoshi"
