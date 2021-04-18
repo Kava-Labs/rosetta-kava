@@ -19,6 +19,9 @@ package kava
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
+
+	tmclient "github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 const (
@@ -67,3 +70,10 @@ var (
 	// BalanceExemptions lists sub-accounts that are balance exempt
 	BalanceExemptions = []*types.BalanceExemption{}
 )
+
+// RPCClient represents a tendermint http client with ability to get block by hash
+type RPCClient interface {
+	tmclient.Client
+
+	BlockByHash([]byte) (*ctypes.ResultBlock, error)
+}

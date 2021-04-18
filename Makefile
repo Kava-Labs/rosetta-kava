@@ -47,7 +47,7 @@ watch-integration:
 .PHONY: gen-mocks
 gen-mocks:
 	mockery --dir services --all --case underscore --outpkg services --output mocks/services;
-	mockery --srcpkg github.com/tendermint/tendermint/rpc/client --name Client --case underscore --outpkg tendermint --output mocks/tendermint
+	mockery --dir kava --name RPCClient --structname Client --case underscore --outpkg tendermint --output mocks/tendermint
 
 .PHONY: clean-mocks
 clean-mocks:
