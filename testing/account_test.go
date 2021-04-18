@@ -69,6 +69,32 @@ func TestAccountBalanceOnline(t *testing.T) {
 	err = asserter.AccountBalanceResponse(&types.PartialBlockIdentifier{Index: &accountBalance.BlockIdentifier.Index}, accountBalance)
 	require.NoError(t, err)
 
+	accountBalanceByIndex, rosettaErr, err := client.AccountAPI.AccountBalance(ctx, &types.AccountBalanceRequest{
+		NetworkIdentifier: config.NetworkIdentifier,
+		AccountIdentifier: &types.AccountIdentifier{
+			Address: testAccountAddress,
+		},
+		BlockIdentifier: &types.PartialBlockIdentifier{
+			Index: &accountBalance.BlockIdentifier.Index,
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, rosettaErr)
+	require.Equal(t, accountBalance, accountBalanceByIndex)
+
+	accountBalanceByHash, rosettaErr, err := client.AccountAPI.AccountBalance(ctx, &types.AccountBalanceRequest{
+		NetworkIdentifier: config.NetworkIdentifier,
+		AccountIdentifier: &types.AccountIdentifier{
+			Address: testAccountAddress,
+		},
+		BlockIdentifier: &types.PartialBlockIdentifier{
+			Hash: &accountBalance.BlockIdentifier.Hash,
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, rosettaErr)
+	require.Equal(t, accountBalance, accountBalanceByHash)
+
 	// TODO: return height and fetch block time
 	// to pass to spendable coins
 	account, err := GetAccount(testAccountAddress)
