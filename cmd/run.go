@@ -15,23 +15,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package services
+package cmd
 
 import (
-	"context"
+	"fmt"
 
-	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/server"
+
+	"github.com/spf13/cobra"
 )
 
-// Client is used services to get blockchain
-// data and submit transactions.
-type Client interface {
-	Status(context.Context) (
-		*types.BlockIdentifier,
-		int64,
-		*types.BlockIdentifier,
-		*types.SyncStatus,
-		[]*types.Peer,
-		error,
-	)
+var (
+	runCmd = &cobra.Command{
+		Use:   "run",
+		Short: "Run rosetta-kava",
+		RunE:  runRunCmd,
+	}
+)
+
+func runRunCmd(cmd *cobra.Command, args []string) error {
+	configLoader := &configuration.EnvLoader{}
+
+	config, err := configuration.LoadConfig(configLoader)
+	if err != nil {
+		return fmt.Errorf("%w: unable to load configuration", err)
+	}
+
+	handler, err := server.NewRouter(config)
+	if err != nil {
+		return fmt.Errorf("%w: unable to initialize router", err)
+	}
+
+	return server.Run(config, handler)
 }

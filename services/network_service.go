@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
@@ -47,7 +48,11 @@ func (s *NetworkAPIService) NetworkList(
 	ctx context.Context,
 	request *types.MetadataRequest,
 ) (*types.NetworkListResponse, *types.Error) {
-	return nil, ErrUnimplemented
+	return &types.NetworkListResponse{
+		NetworkIdentifiers: []*types.NetworkIdentifier{
+			s.config.NetworkIdentifier,
+		},
+	}, nil
 }
 
 // NetworkOptions implements the /network/options endpoint.
@@ -55,7 +60,22 @@ func (s *NetworkAPIService) NetworkOptions(
 	ctx context.Context,
 	request *types.NetworkRequest,
 ) (*types.NetworkOptionsResponse, *types.Error) {
-	return nil, ErrUnimplemented
+	return &types.NetworkOptionsResponse{
+		Version: &types.Version{
+			RosettaVersion:    types.RosettaAPIVersion,
+			NodeVersion:       kava.NodeVersion,
+			MiddlewareVersion: &configuration.MiddlewareVersion,
+		},
+		Allow: &types.Allow{
+			OperationStatuses:       kava.OperationStatuses,
+			OperationTypes:          kava.OperationTypes,
+			Errors:                  Errors,
+			HistoricalBalanceLookup: kava.HistoricalBalanceSupported,
+			CallMethods:             kava.CallMethods,
+			BalanceExemptions:       kava.BalanceExemptions,
+			MempoolCoins:            kava.IncludeMempoolCoins,
+		},
+	}, nil
 }
 
 // NetworkStatus implements the /network/status endpoint.
@@ -67,5 +87,21 @@ func (s *NetworkAPIService) NetworkStatus(
 		return nil, ErrUnavailableOffline
 	}
 
-	return nil, ErrUnimplemented
+	currentBlock,
+		currentTime,
+		genesisBlock,
+		syncStatus,
+		peers,
+		err := s.client.Status(ctx)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
+
+	return &types.NetworkStatusResponse{
+		CurrentBlockIdentifier: currentBlock,
+		CurrentBlockTimestamp:  currentTime,
+		GenesisBlockIdentifier: genesisBlock,
+		SyncStatus:             syncStatus,
+		Peers:                  peers,
+	}, nil
 }

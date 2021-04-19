@@ -33,7 +33,7 @@ var (
 	// ErrUnimplemented is returned when an endpoint
 	// is called that is not implemented.
 	ErrUnimplemented = &types.Error{
-		Code:    99,
+		Code:    0,
 		Message: "Endpoint not implemented",
 	}
 

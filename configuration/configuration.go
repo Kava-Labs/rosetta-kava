@@ -21,7 +21,15 @@ package configuration
 import (
 	"fmt"
 	"os"
+	"strconv"
+
+	"github.com/kava-labs/rosetta-kava/kava"
+
+	"github.com/coinbase/rosetta-sdk-go/types"
 )
+
+// MiddlewareVersion represents the kava rosetta service version
+var MiddlewareVersion = "0.0.1"
 
 // Mode identifies if the service is running in an 'online' or 'offline'
 // capacity.  Ref: https://www.rosetta-api.org/docs/node_deployment.html#multiple-modes
@@ -41,6 +49,15 @@ const (
 
 	// ModeEnv specifies the environment variable read to set the Mode
 	ModeEnv = "MODE"
+
+	// NetworkEnv specifies the environment variable to read Network/ChainId from
+	NetworkEnv = "NETWORK"
+
+	// PortEnv specifies the environment variable to read server port from
+	PortEnv = "PORT"
+
+	// KavaRPCURLEnv specifies the environment variable to read server port from
+	KavaRPCURLEnv = "KAVA_RPC_URL"
 )
 
 // ModeFromString returns a Mode from a string value
@@ -77,7 +94,10 @@ func (l *EnvLoader) Get(key string) string {
 // Configuration represents values to configure behavior of
 // rosetta-kava and network to communicate with.
 type Configuration struct {
-	Mode Mode
+	Mode              Mode
+	NetworkIdentifier *types.NetworkIdentifier
+	Port              int
+	KavaRPCURL        string
 }
 
 // LoadConfig loads keys from a provided loader and returns a
@@ -94,7 +114,38 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 		return nil, err
 	}
 
+	network := loader.Get(NetworkEnv)
+
+	if network == "" {
+		return nil, fmt.Errorf("%s must be set", NetworkEnv)
+	}
+
+	networkIdentifier := &types.NetworkIdentifier{
+		Blockchain: kava.Blockchain,
+		Network:    network,
+	}
+
+	port := loader.Get(PortEnv)
+
+	if port == "" {
+		return nil, fmt.Errorf("%s must be set", PortEnv)
+	}
+
+	portNum, err := strconv.Atoi(port)
+	if err != nil || portNum <= 0 {
+		return nil, fmt.Errorf("invalid port '%s'", port)
+	}
+
+	kavaRPCURL := loader.Get(KavaRPCURLEnv)
+
+	if kavaRPCURL == "" {
+		return nil, fmt.Errorf("%s must be set", KavaRPCURLEnv)
+	}
+
 	return &Configuration{
-		Mode: mode,
+		Mode:              mode,
+		NetworkIdentifier: networkIdentifier,
+		Port:              portNum,
+		KavaRPCURL:        kavaRPCURL,
 	}, nil
 }

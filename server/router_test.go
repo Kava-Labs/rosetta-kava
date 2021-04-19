@@ -1,7 +1,4 @@
 // Copyright 2021 Kava Labs, Inc.
-// Copyright 2020 Coinbase, Inc.
-//
-// Derived from github.com/coinbase/rosetta-ethereum@f81889b
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,23 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package services
+package server
 
 import (
-	"context"
+	"testing"
+
+	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/stretchr/testify/assert"
 )
 
-// Client is used services to get blockchain
-// data and submit transactions.
-type Client interface {
-	Status(context.Context) (
-		*types.BlockIdentifier,
-		int64,
-		*types.BlockIdentifier,
-		*types.SyncStatus,
-		[]*types.Peer,
-		error,
-	)
+var (
+	networkIdentifier = &types.NetworkIdentifier{
+		Blockchain: kava.Blockchain,
+		Network:    "kava-testnet-1",
+	}
+)
+
+func TestRouter(t *testing.T) {
+	config := &configuration.Configuration{
+		Mode:              configuration.Offline,
+		NetworkIdentifier: networkIdentifier,
+		Port:              8000,
+		KavaRPCURL:        "https://rpc.testnet.kava.io:443",
+	}
+
+	_, err := NewRouter(config)
+	assert.NoError(t, err)
 }

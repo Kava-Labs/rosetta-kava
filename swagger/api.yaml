@@ -1,0 +1,227 @@
+# Copyright 2021 Kava Labs, Inc.
+# Copyright 2020 Coinbase, Inc.
+#
+# Derived from github.com/coinbase/rosetta-specifications@c820407
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+openapi: 3.0.2
+info:
+  version: 0.0.1
+  title: Kava Rosetta
+  description: |
+    Integrate Kava Blockchain using the Rosetta API
+
+    Supports version 1.4.10 of the Rosetta API Specification
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+servers:
+  - url: http://localhost:8000
+paths:
+  /network/list:
+    post:
+      summary: Get List of Available Networks
+      description: |
+        This endpoint returns a list of NetworkIdentifiers that the Kava Rosetta
+        server supports.
+      operationId: networkList
+      tags:
+        - Network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetadataRequest'
+      responses:
+        '200':
+          description: A list of supported networks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkListResponse'
+        '500':
+          description: An unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /network/options:
+    post:
+      summary: Get Network Options
+      description: |
+        This endpoint returns the version information and allowed
+        network-specific types for a NetworkIdentifiers returned
+        in /netwwork/list.
+      operationId: networkOptions
+      tags:
+        - Network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkRequest'
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkOptionsResponse'
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /network/status:
+    post:
+      summary: Get Network Status
+      description: |
+        This endpoint returns the current status of the network requested. Any
+        NetworkIdentifier returned by /network/list should be accessible here.
+      operationId: networkStatus 
+      tags:
+        - Network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkRequest'
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkStatusResponse'
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    # Identifiers
+    NetworkIdentifier:
+      $ref: 'models/NetworkIdentifier.yaml'
+    BlockIdentifier:
+      $ref: 'models/BlockIdentifier.yaml'
+
+    # Models
+    Allow:
+      $ref: 'models/Allow.yaml'
+    Version:
+      $ref: 'models/Version.yaml'
+    SyncStatus:
+      $ref: 'models/SyncStatus.yaml'
+    Peer:
+      $ref: 'models/Peer.yaml'
+    Timestamp:
+      $ref: 'models/Timestamp.yaml'
+
+    # Request/Responses
+    MetadataRequest:
+      description: |
+        A MetadataRequest is utilized in any request where
+        the only argument is optional metadata.
+      type: object
+      properties:
+        metadata:
+          type: object
+          example: {}
+    NetworkRequest:
+      description: |
+        A NetworkRequest is utilized to retrieve some data specific exclusively
+        to a NetworkIdentifier.
+      type: object
+      required:
+        - network_identifier
+      properties:
+        network_identifier:
+          $ref: '#/components/schemas/NetworkIdentifier'
+        metadata:
+          type: object
+    NetworkListResponse:
+      description: |
+        A NetworkListResponse contains all NetworkIdentifiers
+        that the node can serve information for.
+      type: object
+      required:
+        - network_identifiers
+      properties:
+        network_identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkIdentifier'
+    NetworkOptionsResponse:
+      description: |
+        NetworkOptionsResponse contains information about the versioning of the
+        node and the allowed operation statuses, operation types, and errors.
+      type: object
+      required:
+        - version
+        - allow
+      properties:
+        version:
+          $ref: '#/components/schemas/Version'
+        allow:
+          $ref: '#/components/schemas/Allow'
+    NetworkStatusResponse:
+      description: |
+        NetworkStatusResponse contains basic information about the node's
+        view of a blockchain network. It is assumed that any BlockIdentifier.Index
+        less than or equal to CurrentBlockIdentifier.Index can be queried.
+
+        If a Rosetta implementation prunes historical state, it should
+        populate the optional `oldest_block_identifier` field with the
+        oldest block available to query. If this is not populated,
+        it is assumed that the `genesis_block_identifier` is the oldest
+        queryable block.
+
+        If a Rosetta implementation performs some pre-sync before it is
+        possible to query blocks, sync_status should be populated so that
+        clients can still monitor healthiness. Without this field, it may
+        appear that the implementation is stuck syncing and needs to be
+        terminated.
+      type: object
+      required:
+        - current_block_identifier
+        - current_block_timestamp
+        - genesis_block_identifier
+        - peers
+      properties:
+        current_block_identifier:
+          $ref: '#/components/schemas/BlockIdentifier'
+        current_block_timestamp:
+          $ref: '#/components/schemas/Timestamp'
+        genesis_block_identifier:
+          $ref: '#/components/schemas/BlockIdentifier'
+        oldest_block_identifier:
+          $ref: '#/components/schemas/BlockIdentifier'
+        sync_status:
+          $ref: '#/components/schemas/SyncStatus'
+        peers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Peer'
+
+    # Miscellaneous
+    Error:
+      $ref: 'models/Error.yaml'
