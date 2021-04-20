@@ -1,7 +1,17 @@
 package kava
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	kava "github.com/kava-labs/kava/app"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/tendermint/tendermint/libs/bytes"
+	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
 	tmhttp "github.com/tendermint/tendermint/rpc/client/http"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
@@ -11,6 +21,7 @@ import (
 type HTTPClient struct {
 	*tmhttp.HTTP
 	caller *tmclient.Client
+	cdc    *codec.Codec
 }
 
 // NewHTTPClient returns a new HTTPClient with BlockByHash capabilities
@@ -29,13 +40,18 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	// set codec for tendermint rpc
 	cdc := rpc.Codec()
 	ctypes.RegisterAmino(cdc)
 	rpc.SetCodec(cdc)
 
+	// codec for cosmos-sdk/app level (Account, etc)
+	kavaCdc := kava.MakeCodec()
+
 	return &HTTPClient{
 		HTTP:   http,
 		caller: rpc,
+		cdc:    kavaCdc,
 	}, nil
 }
 
@@ -44,7 +60,54 @@ func (c *HTTPClient) BlockByHash(hash []byte) (*ctypes.ResultBlock, error) {
 	result := new(ctypes.ResultBlock)
 	_, err := c.caller.Call("block_by_hash", map[string]interface{}{"hash": hash}, result)
 	if err != nil {
-		return nil, errors.Wrap(err, "BlockByHash")
+		return nil, pkgerrors.Wrap(err, "BlockByHash")
 	}
 	return result, nil
+}
+
+// Account returns the Account for a given address
+func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authexported.Account, error) {
+	bz, err := c.cdc.MarshalJSON(authtypes.NewQueryAccountParams(addr))
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
+
+	data, err := c.abciQuery(path, bz, height)
+	if err != nil {
+		return nil, err
+	}
+
+	var account authexported.Account
+	err = c.cdc.UnmarshalJSON(data, &account)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func (c *HTTPClient) abciQuery(path string, data bytes.HexBytes, height int64) ([]byte, error) {
+	opts := tmrpcclient.ABCIQueryOptions{Height: height, Prove: false}
+	result, err := c.ABCIQueryWithOptions(path, data, opts)
+	return parseABCIResult(result, err)
+}
+
+func parseABCIResult(result *ctypes.ResultABCIQuery, err error) ([]byte, error) {
+	if err != nil {
+		return []byte{}, err
+	}
+
+	resp := result.Response
+	if !resp.IsOK() {
+		return []byte{}, errors.New(resp.Log)
+	}
+
+	value := result.Response.GetValue()
+	if value == nil {
+		return []byte{}, nil
+	}
+
+	return value, nil
 }
