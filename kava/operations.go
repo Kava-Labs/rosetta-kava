@@ -23,19 +23,14 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank"
 )
 
-// Questions
-// 1. Harmony implements transfers as subtraction first, then addition, with the addition operation having a related operation. Is that correct? Cosmos-sdk doesn't seem to relate the operations at all.
-// 2. In operation, Status seems to be a string in cosmos-sdk implementation, but *string in this. Was there a change?
-// 3. In operation, cosmos-sdk doesn't seem to use an index - do we need to?
-
-func msgSendToOperations(msg banktypes.MsgSend, status *string, startingOpIndex *int64) []*types.Operation {
-	return transferToRosettaOperations(msg.FromAddress, msg.ToAddress, msg.Amount, status, startingOpIndex)
+func msgSendToOperations(msg banktypes.MsgSend, status OperationStatus, startingOpIndex *int64) []*types.Operation {
+	return transferToRosettaOperations(msg.FromAddress, msg.ToAddress, msg.Amount, string(status), startingOpIndex)
 }
 
 // transferToRosettaOperations converts a transfer from cosmos-sdk types to rosetta operations
 // only accounts for ukava, hard, and usdx
 // creates two operations per input coin, so if 2 coins are being transferred, 4 operations will be created
-func transferToRosettaOperations(from, to sdk.AccAddress, amount sdk.Coins, status *string, startingOpIndex *int64) []*types.Operation {
+func transferToRosettaOperations(from, to sdk.AccAddress, amount sdk.Coins, status string, startingOpIndex *int64) []*types.Operation {
 	var opIndex int64
 	if startingOpIndex != nil {
 		opIndex = *startingOpIndex
@@ -53,13 +48,13 @@ func transferToRosettaOperations(from, to sdk.AccAddress, amount sdk.Coins, stat
 		}
 		subOp := &types.Operation{
 			Type:    banktypes.EventTypeTransfer,
-			Status:  status,
+			Status:  &status,
 			Account: &types.AccountIdentifier{Address: to.String()},
 			Amount: &types.Amount{
 				Value: "-" + coin.Amount.String(), // use negative amount for sub-op
 				Currency: &types.Currency{
 					Symbol:   coin.Denom,
-					Decimals: 0,
+					Decimals: 6,
 				},
 			},
 			OperationIdentifier: subOperationID,
@@ -69,13 +64,13 @@ func transferToRosettaOperations(from, to sdk.AccAddress, amount sdk.Coins, stat
 		}
 		addOp := &types.Operation{
 			Type:    banktypes.EventTypeTransfer,
-			Status:  status,
+			Status:  &status,
 			Account: &types.AccountIdentifier{Address: to.String()},
 			Amount: &types.Amount{
 				Value: coin.Amount.String(),
 				Currency: &types.Currency{
 					Symbol:   coin.Denom,
-					Decimals: 0,
+					Decimals: 6,
 				},
 			},
 			OperationIdentifier: addOperationID,

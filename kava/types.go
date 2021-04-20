@@ -18,7 +18,10 @@
 package kava
 
 import (
+	"fmt"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 const (
@@ -33,11 +36,11 @@ const (
 
 	// SuccessStatus is the status of any
 	// Kava operation considered successful.
-	SuccessStatus = "SUCCESS"
+	SuccessStatus OperationStatus = "SUCCESS"
 
 	// FailureStatus is the status of any
 	// Kava operation considered unsuccessful.
-	FailureStatus = "FAILURE"
+	FailureStatus OperationStatus = "FAILURE"
 
 	// IncludeMempoolCoins does not apply to rosetta-kava as it is not UTXO-based.
 	IncludeMempoolCoins = false
@@ -47,16 +50,17 @@ var (
 	// OperationTypes are all suppoorted operation types.
 	OperationTypes = []string{
 		"noop", // TODO: temp to satisfy asserter until we support operations
+		banktypes.EventTypeTransfer,
 	}
 
 	// OperationStatuses are all supported operation statuses.
 	OperationStatuses = []*types.OperationStatus{
 		{
-			Status:     SuccessStatus,
+			Status:     string(SuccessStatus),
 			Successful: true,
 		},
 		{
-			Status:     FailureStatus,
+			Status:     string(FailureStatus),
 			Successful: false,
 		},
 	}
@@ -67,3 +71,14 @@ var (
 	// BalanceExemptions lists sub-accounts that are balance exempt
 	BalanceExemptions = []*types.BalanceExemption{}
 )
+
+type OperationStatus string
+
+// IsValid checks if the input is one of the expected strings
+func (os OperationStatus) IsValid() error {
+	switch os {
+	case SuccessStatus, FailureStatus:
+		return nil
+	}
+	return fmt.Errorf("invalid operation status: %s", os)
+}
