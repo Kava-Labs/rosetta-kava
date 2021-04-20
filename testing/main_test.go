@@ -114,7 +114,7 @@ func TestMain(m *testing.M) {
 }
 
 // GetAccount gets an account
-func GetAccount(address string) (authexported.Account, error) {
+func GetAccount(address string, height int64) (authexported.Account, error) {
 	addr, err := sdktypes.AccAddressFromBech32(address)
 	if err != nil {
 		return nil, err
@@ -126,8 +126,9 @@ func GetAccount(address string) (authexported.Account, error) {
 	}
 
 	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
+	opts := rpcclient.ABCIQueryOptions{Height: height, Prove: false}
 
-	result, err := ParseABCIResult(rpc.ABCIQuery(path, bz))
+	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(path, bz, opts))
 	if err != nil {
 		return nil, err
 	}

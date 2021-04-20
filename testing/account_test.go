@@ -19,7 +19,6 @@ import (
 	"context"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -64,7 +63,7 @@ func TestAccountBalanceOnline(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.NotNil(t, rosettaErr)
+	require.Nil(t, rosettaErr)
 
 	err = asserter.AccountBalanceResponse(&types.PartialBlockIdentifier{Index: &accountBalance.BlockIdentifier.Index}, accountBalance)
 	require.NoError(t, err)
@@ -79,7 +78,7 @@ func TestAccountBalanceOnline(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.NotNil(t, rosettaErr)
+	require.Nil(t, rosettaErr)
 	require.Equal(t, accountBalance, accountBalanceByIndex)
 
 	accountBalanceByHash, rosettaErr, err := client.AccountAPI.AccountBalance(ctx, &types.AccountBalanceRequest{
@@ -92,14 +91,15 @@ func TestAccountBalanceOnline(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.NotNil(t, rosettaErr)
+	require.Nil(t, rosettaErr)
 	require.Equal(t, accountBalance, accountBalanceByHash)
 
-	// TODO: return height and fetch block time
-	// to pass to spendable coins
-	account, err := GetAccount(testAccountAddress)
+	block, err := rpc.Block(&accountBalance.BlockIdentifier.Index)
 	require.NoError(t, err)
-	spendableCoins := account.SpendableCoins(time.Now())
+
+	account, err := GetAccount(testAccountAddress, accountBalance.BlockIdentifier.Index)
+	require.NoError(t, err)
+	spendableCoins := account.SpendableCoins(block.Block.Header.Time)
 
 	for _, amount := range accountBalance.Balances {
 		rosettaSymbol := amount.Currency.Symbol
@@ -111,7 +111,7 @@ func TestAccountBalanceOnline(t *testing.T) {
 		}
 
 		spendableAmount := spendableCoins.AmountOf(kavaSymbol)
-		assert.Equal(t, amount.Value, spendableAmount)
+		assert.Equal(t, amount.Value, spendableAmount.String())
 
 		decimals := amount.Currency.Decimals
 		if kavaSymbol == "ukava" || kavaSymbol == "hard" || kavaSymbol == "usdx" {
