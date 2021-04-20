@@ -501,6 +501,12 @@ func TestBalance_BlockFilter(t *testing.T) {
 	accountResponse, err = client.Balance(ctx, acc, blockFilter, nil)
 	assert.Nil(t, accountResponse)
 	assert.EqualError(t, err, "some block hash error")
+
+	invalidHash := "invalid hash"
+	blockFilter = &types.PartialBlockIdentifier{Hash: &invalidHash}
+	accountResponse, err = client.Balance(ctx, acc, blockFilter, nil)
+	assert.Nil(t, accountResponse)
+	assert.Contains(t, err.Error(), "invalid byte")
 }
 
 func TestBalance_CurrencyFilter(t *testing.T) {
