@@ -16,6 +16,7 @@
 package testing
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -24,17 +25,39 @@ import (
 	"time"
 
 	rclient "github.com/coinbase/rosetta-sdk-go/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	router "github.com/kava-labs/rosetta-kava/server"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	rpchttpclient "github.com/tendermint/tendermint/rpc/client/http"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
+//
+// Rosetta Server
+//
 var config *configuration.Configuration
 var server *httptest.Server
+
+//
+// Rosetta Client
+//
 var client *rclient.APIClient
+
+//
+// Tendermint RPC
+//
+var cdc *codec.Codec
 var rpc rpcclient.Client
 
+// Test Settings
+var testAccountAddress string
+
+// TestMain loads integration env and runs test
 func TestMain(m *testing.M) {
 	configLoader := &configuration.EnvLoader{}
 
@@ -72,6 +95,8 @@ func TestMain(m *testing.M) {
 		},
 	)
 
+	cdc = kava.MakeCodec()
+
 	client = rclient.NewAPIClient(clientConfig)
 
 	rpc, err = rpchttpclient.New(config.KavaRPCURL, "/websocket")
@@ -80,5 +105,57 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	testAccountAddress = os.Getenv("TEST_KAVA_ADDRESS")
+	if testAccountAddress == "" {
+		testAccountAddress = "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
+	}
+
 	os.Exit(m.Run())
+}
+
+// GetAccount gets an account
+func GetAccount(address string, height int64) (authexported.Account, error) {
+	addr, err := sdktypes.AccAddressFromBech32(address)
+	if err != nil {
+		return nil, err
+	}
+
+	bz, err := cdc.MarshalJSON(authtypes.NewQueryAccountParams(addr))
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
+	opts := rpcclient.ABCIQueryOptions{Height: height, Prove: false}
+
+	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(path, bz, opts))
+	if err != nil {
+		return nil, err
+	}
+
+	var account authexported.Account
+	err = cdc.UnmarshalJSON(result, &account)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func ParseABCIResult(result *ctypes.ResultABCIQuery, err error) ([]byte, error) {
+	if err != nil {
+		return []byte{}, err
+	}
+
+	resp := result.Response
+	if !resp.IsOK() {
+		return []byte{}, errors.New(resp.Log)
+	}
+
+	value := result.Response.GetValue()
+	if value == nil {
+		return []byte{}, nil
+	}
+
+	return value, nil
 }

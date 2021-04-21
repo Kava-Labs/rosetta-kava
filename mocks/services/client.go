@@ -15,6 +15,29 @@ type Client struct {
 	mock.Mock
 }
 
+// Balance provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *Client) Balance(_a0 context.Context, _a1 *types.AccountIdentifier, _a2 *types.PartialBlockIdentifier, _a3 []*types.Currency) (*types.AccountBalanceResponse, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
+
+	var r0 *types.AccountBalanceResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *types.AccountIdentifier, *types.PartialBlockIdentifier, []*types.Currency) *types.AccountBalanceResponse); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.AccountBalanceResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *types.AccountIdentifier, *types.PartialBlockIdentifier, []*types.Currency) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Status provides a mock function with given fields: _a0
 func (_m *Client) Status(_a0 context.Context) (*types.BlockIdentifier, int64, *types.BlockIdentifier, *types.SyncStatus, []*types.Peer, error) {
 	ret := _m.Called(_a0)
