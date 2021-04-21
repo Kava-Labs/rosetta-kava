@@ -16,12 +16,13 @@ package kava
 
 import (
 	"context"
+	"encoding/hex"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	kava "github.com/kava-labs/kava/app"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 func init() {
@@ -34,11 +35,11 @@ func init() {
 
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
-	rpc rpcclient.Client
+	rpc RPCClient
 }
 
 // NewClient initialized a new Client with the provided rpc client
-func NewClient(rpc rpcclient.Client) (*Client, error) {
+func NewClient(rpc RPCClient) (*Client, error) {
 	return &Client{
 		rpc: rpc,
 	}, nil
@@ -101,4 +102,77 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	return currentBlock, currentTime, genesisBlock, syncStatus, peers, nil
+}
+
+// Balance fetches and returns the account balance for an account
+func (c *Client) Balance(
+	ctx context.Context,
+	accountIdentifier *types.AccountIdentifier,
+	blockIdentifer *types.PartialBlockIdentifier,
+	currencies []*types.Currency,
+) (*types.AccountBalanceResponse, error) {
+	addr, err := sdk.AccAddressFromBech32(accountIdentifier.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	var block *ctypes.ResultBlock
+	switch {
+	case blockIdentifer == nil:
+		block, err = c.rpc.Block(nil)
+	case blockIdentifer.Index != nil:
+		block, err = c.rpc.Block(blockIdentifer.Index)
+	case blockIdentifer.Hash != nil:
+		hashBytes, decodeErr := hex.DecodeString(*blockIdentifer.Hash)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+		block, err = c.rpc.BlockByHash(hashBytes)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	acc, err := c.rpc.Account(addr, block.Block.Header.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	spendableCoins := acc.SpendableCoins(block.Block.Header.Time)
+	var currencyLookup map[string]*types.Currency
+
+	if currencies == nil {
+		currencyLookup = Currencies
+	} else {
+		currencyLookup = make(map[string]*types.Currency)
+
+		for _, currency := range currencies {
+			denom, ok := Denoms[currency.Symbol]
+
+			if ok {
+				currencyLookup[denom] = Currencies[denom]
+			}
+		}
+	}
+
+	balances := []*types.Amount{}
+	for _, coin := range spendableCoins {
+		currency, ok := currencyLookup[coin.Denom]
+		if !ok {
+			continue
+		}
+
+		balances = append(balances, &types.Amount{
+			Value:    coin.Amount.String(),
+			Currency: currency,
+		})
+	}
+
+	return &types.AccountBalanceResponse{
+		BlockIdentifier: &types.BlockIdentifier{
+			Index: block.Block.Header.Height,
+			Hash:  block.BlockID.Hash.String(),
+		},
+		Balances: balances,
+	}, nil
 }

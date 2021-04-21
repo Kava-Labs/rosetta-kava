@@ -28,36 +28,21 @@
 # limitations under the License.
 
 description: |
-  Currency is composed of a canonical Symbol and
-  Decimals. This Decimals value is used to convert
-  an Amount.Value from atomic units (ukava) to standard units
-  (kava).
+  Amount is some Value of a Currency.
+  It is considered invalid to specify a Value without a Currency.
 type: object
 required:
-  - symbol
-  - decimals
+  - value
+  - currency
 properties:
-  symbol:
+  value:
     description: |
-      Canonical symbol associated with a currency.
+      Value of the transaction in atomic units represented as an arbitrary-sized signed integer.
+
+      For example, 1 KAVA  would be represented by a value of 1000000.
     type: string
-    example: "KAVA"
-  decimals:
-    description: |
-      Number of decimal places in the standard unit representation of the amount.
-
-      For example, KAVA has 6 decimals. Note that it is not possible to represent
-      the value of some currency in atomic units that is not base 10.
-    type: integer
-    format: int32
-    minimum: 0
-    example: 6
+    example: "1238089899992"
+  currency:
+    $ref: 'Currency.yaml'
   metadata:
-    description: |
-      Any additional information related to the currency itself.
-
-      For example, it would be useful to populate this object with the contract address
-      of an ERC-20 token.
     type: object
-    example:
-      Issuer: "Satoshi"

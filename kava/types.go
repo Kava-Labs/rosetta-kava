@@ -20,6 +20,11 @@ package kava
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	tmclient "github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 const (
@@ -69,3 +74,34 @@ var (
 	// BalanceExemptions lists sub-accounts that are balance exempt
 	BalanceExemptions = []*types.BalanceExemption{}
 )
+
+// Currencies represents supported kava denom to rosetta currencies
+var Currencies = map[string]*types.Currency{
+	"ukava": &types.Currency{
+		Symbol:   "KAVA",
+		Decimals: 6,
+	},
+	"hard": &types.Currency{
+		Symbol:   "HARD",
+		Decimals: 6,
+	},
+	"usdx": &types.Currency{
+		Symbol:   "USDX",
+		Decimals: 6,
+	},
+}
+
+// Denoms represents rosetta symbol to kava denom conversion
+var Denoms = map[string]string{
+	"KAVA": "ukava",
+	"HARD": "hard",
+	"USDX": "usdx",
+}
+
+// RPCClient represents a tendermint http client with ability to get block by hash
+type RPCClient interface {
+	tmclient.Client
+
+	BlockByHash([]byte) (*ctypes.ResultBlock, error)
+	Account(addr sdk.AccAddress, height int64) (authexported.Account, error)
+}
