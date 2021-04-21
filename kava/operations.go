@@ -18,10 +18,29 @@
 package kava
 
 import (
+	"fmt"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank"
+
+	"github.com/tendermint/tendermint/crypto"
 )
+
+var (
+	feeCollectorAddress = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
+)
+
+func getMsgOps(msg sdk.Msg, status *string, index *int64) ([]*types.Operation, error) {
+	switch message := msg.(type) {
+	case banktypes.MsgSend:
+		ops := msgSendToOperations(message, status, index)
+		return ops, nil
+	default:
+		return []*types.Operation{}, fmt.Errorf("unsupported message: %T", message)
+	}
+}
 
 func msgSendToOperations(msg banktypes.MsgSend, status *string, startingOpIndex *int64) []*types.Operation {
 	return transferToRosettaOperations(msg.FromAddress, msg.ToAddress, msg.Amount, status, startingOpIndex)
@@ -82,6 +101,57 @@ func transferToRosettaOperations(from, to sdk.AccAddress, amount sdk.Coins, stat
 	}
 	return operations
 
+}
+
+func getFeeOps(tx authtypes.StdTx, status *string, startingOpIndex *int64) ([]*types.Operation, error) {
+	var opIndex int64
+	if startingOpIndex != nil {
+		opIndex = *startingOpIndex
+	} else {
+		opIndex = 0
+	}
+	transferAmount := getRosettaCoins(tx.Fee.Amount)
+
+	operations := []*types.Operation{}
+	for _, coin := range transferAmount {
+		subOperationID := &types.OperationIdentifier{
+			Index: opIndex,
+		}
+		subOp := &types.Operation{
+			Type:    banktypes.EventTypeTransfer,
+			Status:  status,
+			Account: &types.AccountIdentifier{Address: tx.FeePayer().String()},
+			Amount: &types.Amount{
+				Value: "-" + coin.Amount.String(), // use negative amount for sub-op
+				Currency: &types.Currency{
+					Symbol:   coin.Denom,
+					Decimals: 6,
+				},
+			},
+			OperationIdentifier: subOperationID,
+		}
+		addOperationID := &types.OperationIdentifier{
+			Index: opIndex + 1,
+		}
+		addOp := &types.Operation{
+			Type:    banktypes.EventTypeTransfer,
+			Status:  status,
+			Account: &types.AccountIdentifier{Address: feeCollectorAddress.String()},
+			Amount: &types.Amount{
+				Value: coin.Amount.String(),
+				Currency: &types.Currency{
+					Symbol:   coin.Denom,
+					Decimals: 6,
+				},
+			},
+			OperationIdentifier: addOperationID,
+			RelatedOperations: []*types.OperationIdentifier{
+				subOperationID,
+			},
+		}
+		operations = append(operations, subOp, addOp)
+	}
+	return operations, nil
 }
 
 // getRosettaCoins filters input coins for native assets (ukava, hard, usdx)
