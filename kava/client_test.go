@@ -765,4 +765,14 @@ func TestBlock(t *testing.T) {
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
 	assert.Equal(t, genesisBlockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
 	assert.Nil(t, blockResponse.OtherTransactions)
+
+	invalidHash := "invalid hash"
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Hash: &invalidHash,
+		},
+	)
+	assert.Nil(t, blockResponse)
+	assert.Contains(t, err.Error(), "invalid byte")
 }
