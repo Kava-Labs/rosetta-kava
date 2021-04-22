@@ -97,6 +97,7 @@ func TestBlockOnline(t *testing.T) {
 
 	assert.Equal(t, resultBlock.Block.Header.Height, blockResponseByIndex.Block.BlockIdentifier.Index)
 	assert.Equal(t, resultBlock.BlockID.Hash.String(), blockResponseByIndex.Block.BlockIdentifier.Hash)
+	assert.Equal(t, resultBlock.Block.Header.Time.UnixNano()/int64(1e6), blockResponseByIndex.Block.Timestamp)
 
 	request = &types.BlockRequest{
 		NetworkIdentifier: config.NetworkIdentifier,
@@ -114,6 +115,29 @@ func TestBlockOnline(t *testing.T) {
 
 	assert.Equal(t, resultBlock.Block.Header.Height, blockResponseByHash.Block.BlockIdentifier.Index)
 	assert.Equal(t, resultBlock.BlockID.Hash.String(), blockResponseByHash.Block.BlockIdentifier.Hash)
+	assert.Equal(t, resultBlock.Block.Header.Time.UnixNano()/int64(1e6), blockResponseByIndex.Block.Timestamp)
 
 	assert.Equal(t, blockResponseByHash, blockResponseByIndex)
+
+	genesisBlockHeight := int64(1)
+	genesisResultBlock, err := rpc.Block(&genesisBlockHeight)
+	require.NoError(t, err)
+
+	genesisRequest := &types.BlockRequest{
+		NetworkIdentifier: config.NetworkIdentifier,
+		BlockIdentifier: &types.PartialBlockIdentifier{
+			Index: &genesisBlockHeight,
+		},
+	}
+
+	genesisBlockResponse, rosettaErr, err := client.BlockAPI.Block(ctx, genesisRequest)
+	require.NoError(t, err)
+	require.Nil(t, rosettaErr)
+
+	err = asserter.Block(genesisBlockResponse.Block)
+	assert.NoError(t, err)
+
+	assert.Equal(t, genesisResultBlock.Block.Header.Height, genesisBlockResponse.Block.BlockIdentifier.Index)
+	assert.Equal(t, genesisResultBlock.BlockID.Hash.String(), genesisBlockResponse.Block.BlockIdentifier.Hash)
+	assert.Equal(t, genesisResultBlock.Block.Header.Time.UnixNano()/int64(1e6), genesisBlockResponse.Block.Timestamp)
 }
