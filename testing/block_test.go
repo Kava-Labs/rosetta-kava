@@ -19,8 +19,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kava-labs/rosetta-kava/kava"
-
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
@@ -60,22 +58,28 @@ func TestBlockOnline(t *testing.T) {
 
 	ctx := context.Background()
 
-	asserter, err := asserter.NewServer(
-		kava.OperationTypes,
-		kava.HistoricalBalanceSupported,
-		[]*types.NetworkIdentifier{config.NetworkIdentifier},
-		kava.CallMethods,
-		kava.IncludeMempoolCoins,
-	)
-	require.NoError(t, err)
-
 	networkStatus, rosettaErr, err := client.NetworkAPI.NetworkStatus(
 		ctx,
 		&types.NetworkRequest{
 			NetworkIdentifier: config.NetworkIdentifier,
 		})
-	require.NoError(t, err)
 	require.Nil(t, rosettaErr)
+	require.NoError(t, err)
+
+	networkOptions, rosettaErr, err := client.NetworkAPI.NetworkOptions(
+		ctx,
+		&types.NetworkRequest{
+			NetworkIdentifier: config.NetworkIdentifier,
+		})
+	require.Nil(t, rosettaErr)
+	require.NoError(t, err)
+
+	asserter, err := asserter.NewClientWithResponses(
+		config.NetworkIdentifier,
+		networkStatus,
+		networkOptions,
+	)
+	require.NoError(t, err)
 
 	resultBlock, err := rpc.Block(&networkStatus.CurrentBlockIdentifier.Index)
 	require.NoError(t, err)
