@@ -223,6 +223,7 @@ func (c *Client) Block(
 			BlockIdentifier:       identifier,
 			ParentBlockIdentifier: parentIdentifier,
 			Timestamp:             block.Block.Header.Time.UnixNano() / int64(1e6),
+			Transactions:          []*types.Transaction{},
 		},
 	}, nil
 }
