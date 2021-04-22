@@ -597,84 +597,162 @@ func TestBlock(t *testing.T) {
 	client, err := NewClient(mockRPCClient)
 	require.NoError(t, err)
 
-	block := &types.BlockIdentifier{
+	genesisBlockIdentifier := &types.BlockIdentifier{
+		Index: 1,
+		Hash:  "ADB03E823AFC5F12DC02D984A7E1E0EC47E84FC323005B82FB0B3A9DC8F045B7",
+	}
+	genesisBlockTime := time.Now().Add(-800 * time.Second)
+	genesisHashBytes, err := hex.DecodeString(genesisBlockIdentifier.Hash)
+	require.NoError(t, err)
+
+	parentBlockIdentifier := &types.BlockIdentifier{
+		Index: 99,
+		Hash:  "8EA67B6F7927DB941F86501D1757AC6804C1D21B7A75B9DA3F16A3C81C397E50",
+	}
+	parentHashBytes, err := hex.DecodeString(parentBlockIdentifier.Hash)
+	require.NoError(t, err)
+
+	blockIdentifier := &types.BlockIdentifier{
 		Index: 100,
 		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
 	}
 	blockTime := time.Now()
-	hashBytes, err := hex.DecodeString(block.Hash)
+	hashBytes, err := hex.DecodeString(blockIdentifier.Hash)
 	require.NoError(t, err)
 
-	mockRPCClient.On("Block", (*int64)(nil)).Return(
-		&ctypes.ResultBlock{
-			BlockID: tmtypes.BlockID{
-				Hash: hashBytes,
+	mockGenesisResultBlock := &ctypes.ResultBlock{
+		BlockID: tmtypes.BlockID{
+			Hash: genesisHashBytes,
+		},
+		Block: &tmtypes.Block{
+			Header: tmtypes.Header{
+				Height: genesisBlockIdentifier.Index,
+				Time:   genesisBlockTime,
 			},
-			Block: &tmtypes.Block{
-				Header: tmtypes.Header{
-					Height: block.Index,
-					Time:   blockTime,
+		},
+	}
+
+	mockResultBlock := &ctypes.ResultBlock{
+		BlockID: tmtypes.BlockID{
+			Hash: hashBytes,
+		},
+		Block: &tmtypes.Block{
+			Header: tmtypes.Header{
+				Height: blockIdentifier.Index,
+				Time:   blockTime,
+				LastBlockID: tmtypes.BlockID{
+					Hash: parentHashBytes,
 				},
 			},
 		},
+	}
+
+	mockBlockErr := errors.New("some block error")
+
+	mockRPCClient.On("Block", (*int64)(nil)).Return(
+		mockResultBlock,
 		nil,
 	).Once()
 
-	blockResponse, err := client.Block(
-		ctx,
-		nil,
-	)
+	blockResponse, err := client.Block(ctx, nil)
 	require.NoError(t, err)
-	assert.Equal(t, block, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Nil(t, blockResponse.OtherTransactions)
 
-	mockRPCClient.On("Block", &block.Index).Return(
-		&ctypes.ResultBlock{
-			BlockID: tmtypes.BlockID{
-				Hash: hashBytes,
-			},
-			Block: &tmtypes.Block{
-				Header: tmtypes.Header{
-					Height: block.Index,
-					Time:   blockTime,
-				},
-			},
-		},
+	mockRPCClient.On("Block", (*int64)(nil)).Return(
+		nil,
+		mockBlockErr,
+	).Once()
+
+	blockResponse, err = client.Block(ctx, nil)
+	assert.Nil(t, blockResponse)
+	assert.Equal(t, err, mockBlockErr)
+
+	mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+		mockResultBlock,
 		nil,
 	).Once()
 
 	blockResponse, err = client.Block(
 		ctx,
 		&types.PartialBlockIdentifier{
-			Index: &block.Index,
+			Index: &blockIdentifier.Index,
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, block, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Nil(t, blockResponse.OtherTransactions)
+
+	mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+		nil,
+		mockBlockErr,
+	).Once()
+
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Index: &blockIdentifier.Index,
+		},
+	)
+	assert.Nil(t, blockResponse)
+	assert.Equal(t, err, mockBlockErr)
+
+	mockRPCClient.On("BlockByHash", hashBytes).Return(
+		mockResultBlock,
+		nil,
+	).Once()
+
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Hash: &blockIdentifier.Hash,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("BlockByHash", hashBytes).Return(
-		&ctypes.ResultBlock{
-			BlockID: tmtypes.BlockID{
-				Hash: hashBytes,
-			},
-			Block: &tmtypes.Block{
-				Header: tmtypes.Header{
-					Height: block.Index,
-					Time:   blockTime,
-				},
-			},
+		nil,
+		mockBlockErr,
+	).Once()
+
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Hash: &blockIdentifier.Hash,
 		},
+	)
+	assert.Nil(t, blockResponse)
+	assert.Equal(t, err, mockBlockErr)
+
+	mockRPCClient.On("Block", &genesisBlockIdentifier.Index).Return(
+		mockGenesisResultBlock,
 		nil,
 	).Once()
 
 	blockResponse, err = client.Block(
 		ctx,
 		&types.PartialBlockIdentifier{
-			Hash: &block.Hash,
+			Index: &genesisBlockIdentifier.Index,
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, block, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Nil(t, blockResponse.OtherTransactions)
+
+	mockRPCClient.On("BlockByHash", genesisHashBytes).Return(
+		mockGenesisResultBlock,
+		nil,
+	).Once()
+
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Hash: &genesisBlockIdentifier.Hash,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Nil(t, blockResponse.OtherTransactions)
 }
