@@ -657,6 +657,8 @@ func TestBlock(t *testing.T) {
 	blockResponse, err := client.Block(ctx, nil)
 	require.NoError(t, err)
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, parentBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
+	assert.Equal(t, blockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("Block", (*int64)(nil)).Return(
@@ -681,6 +683,8 @@ func TestBlock(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, parentBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
+	assert.Equal(t, blockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("Block", &blockIdentifier.Index).Return(
@@ -710,6 +714,8 @@ func TestBlock(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, parentBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
+	assert.Equal(t, blockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("BlockByHash", hashBytes).Return(
@@ -739,6 +745,8 @@ func TestBlock(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
+	assert.Equal(t, genesisBlockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("BlockByHash", genesisHashBytes).Return(
@@ -754,5 +762,7 @@ func TestBlock(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.BlockIdentifier)
+	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
+	assert.Equal(t, genesisBlockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
 	assert.Nil(t, blockResponse.OtherTransactions)
 }

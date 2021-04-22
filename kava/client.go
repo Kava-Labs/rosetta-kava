@@ -202,12 +202,27 @@ func (c *Client) Block(
 		return nil, err
 	}
 
+	height := block.Block.Header.Height
+	identifier := &types.BlockIdentifier{
+		Index: height,
+		Hash:  block.BlockID.Hash.String(),
+	}
+
+	var parentIdentifier *types.BlockIdentifier
+	if height == 1 {
+		parentIdentifier = identifier
+	} else {
+		parentIdentifier = &types.BlockIdentifier{
+			Index: height - 1,
+			Hash:  block.Block.Header.LastBlockID.Hash.String(),
+		}
+	}
+
 	return &types.BlockResponse{
 		Block: &types.Block{
-			BlockIdentifier: &types.BlockIdentifier{
-				Index: block.Block.Header.Height,
-				Hash:  block.BlockID.Hash.String(),
-			},
+			BlockIdentifier:       identifier,
+			ParentBlockIdentifier: parentIdentifier,
+			Timestamp:             block.Block.Header.Time.UnixNano() / int64(1e6),
 		},
 	}, nil
 }
