@@ -177,6 +177,7 @@ func (c *Client) Balance(
 	}, nil
 }
 
+// Block returns rosetta block for an index or hash
 func (c *Client) Block(
 	ctx context.Context,
 	blockIdentifier *types.PartialBlockIdentifier,
