@@ -51,7 +51,12 @@ func (s *BlockAPIService) Block(
 		return nil, ErrUnavailableOffline
 	}
 
-	return nil, ErrUnimplemented
+	blockReponse, err := s.client.Block(ctx, request.BlockIdentifier)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
+
+	return blockReponse, nil
 }
 
 // BlockTransaction implements the /block/transaction endpoint.
