@@ -590,3 +590,18 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 	assert.NotNil(t, getBalance(accountResponse.Balances, "HARD"))
 	assert.NotNil(t, getBalance(accountResponse.Balances, "USDX"))
 }
+
+func TestBlock(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient := &mocks.Client{}
+	client, err := NewClient(mockRPCClient)
+	require.NoError(t, err)
+
+	blockResponse, err := client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{},
+	)
+
+	assert.Error(t, err)
+	assert.Nil(t, blockResponse)
+}

@@ -38,6 +38,29 @@ func (_m *Client) Balance(_a0 context.Context, _a1 *types.AccountIdentifier, _a2
 	return r0, r1
 }
 
+// Block provides a mock function with given fields: _a0, _a1
+func (_m *Client) Block(_a0 context.Context, _a1 *types.PartialBlockIdentifier) (*types.BlockResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *types.BlockResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *types.PartialBlockIdentifier) *types.BlockResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.BlockResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *types.PartialBlockIdentifier) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Status provides a mock function with given fields: _a0
 func (_m *Client) Status(_a0 context.Context) (*types.BlockIdentifier, int64, *types.BlockIdentifier, *types.SyncStatus, []*types.Peer, error) {
 	ret := _m.Called(_a0)

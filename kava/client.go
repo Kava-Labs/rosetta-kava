@@ -17,6 +17,7 @@ package kava
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -175,4 +176,11 @@ func (c *Client) Balance(
 		},
 		Balances: balances,
 	}, nil
+}
+
+func (c *Client) Block(
+	ctx context.Context,
+	blockIdentifier *types.PartialBlockIdentifier,
+) (*types.BlockResponse, error) {
+	return nil, errors.New("not implemented")
 }
