@@ -95,7 +95,7 @@ func TestBlockOnline(t *testing.T) {
 	err = asserter.Block(blockResponseByIndex.Block)
 	assert.NoError(t, err)
 
-	assert.Equal(t, &resultBlock.Block.Header.Height, blockResponseByIndex.Block.BlockIdentifier.Index)
+	assert.Equal(t, resultBlock.Block.Header.Height, blockResponseByIndex.Block.BlockIdentifier.Index)
 	assert.Equal(t, resultBlock.BlockID.Hash.String(), blockResponseByIndex.Block.BlockIdentifier.Hash)
 
 	request = &types.BlockRequest{
@@ -112,7 +112,7 @@ func TestBlockOnline(t *testing.T) {
 	err = asserter.Block(blockResponseByHash.Block)
 	assert.NoError(t, err)
 
-	assert.Equal(t, &resultBlock.Block.Header.Height, blockResponseByHash.Block.BlockIdentifier.Index)
+	assert.Equal(t, resultBlock.Block.Header.Height, blockResponseByHash.Block.BlockIdentifier.Index)
 	assert.Equal(t, resultBlock.BlockID.Hash.String(), blockResponseByHash.Block.BlockIdentifier.Hash)
 
 	assert.Equal(t, blockResponseByHash, blockResponseByIndex)

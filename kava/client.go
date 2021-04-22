@@ -17,7 +17,6 @@ package kava
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -109,7 +108,7 @@ func (c *Client) Status(ctx context.Context) (
 func (c *Client) Balance(
 	ctx context.Context,
 	accountIdentifier *types.AccountIdentifier,
-	blockIdentifer *types.PartialBlockIdentifier,
+	blockIdentifier *types.PartialBlockIdentifier,
 	currencies []*types.Currency,
 ) (*types.AccountBalanceResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(accountIdentifier.Address)
@@ -119,12 +118,12 @@ func (c *Client) Balance(
 
 	var block *ctypes.ResultBlock
 	switch {
-	case blockIdentifer == nil:
+	case blockIdentifier == nil:
 		block, err = c.rpc.Block(nil)
-	case blockIdentifer.Index != nil:
-		block, err = c.rpc.Block(blockIdentifer.Index)
-	case blockIdentifer.Hash != nil:
-		hashBytes, decodeErr := hex.DecodeString(*blockIdentifer.Hash)
+	case blockIdentifier.Index != nil:
+		block, err = c.rpc.Block(blockIdentifier.Index)
+	case blockIdentifier.Hash != nil:
+		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
@@ -182,5 +181,33 @@ func (c *Client) Block(
 	ctx context.Context,
 	blockIdentifier *types.PartialBlockIdentifier,
 ) (*types.BlockResponse, error) {
-	return nil, errors.New("not implemented")
+	var (
+		block *ctypes.ResultBlock
+		err   error
+	)
+
+	switch {
+	case blockIdentifier == nil:
+		block, err = c.rpc.Block(nil)
+	case blockIdentifier.Index != nil:
+		block, err = c.rpc.Block(blockIdentifier.Index)
+	case blockIdentifier.Hash != nil:
+		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+		block, err = c.rpc.BlockByHash(hashBytes)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.BlockResponse{
+		Block: &types.Block{
+			BlockIdentifier: &types.BlockIdentifier{
+				Index: block.Block.Header.Height,
+				Hash:  block.BlockID.Hash.String(),
+			},
+		},
+	}, nil
 }

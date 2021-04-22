@@ -597,11 +597,84 @@ func TestBlock(t *testing.T) {
 	client, err := NewClient(mockRPCClient)
 	require.NoError(t, err)
 
+	block := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(block.Hash)
+	require.NoError(t, err)
+
+	mockRPCClient.On("Block", (*int64)(nil)).Return(
+		&ctypes.ResultBlock{
+			BlockID: tmtypes.BlockID{
+				Hash: hashBytes,
+			},
+			Block: &tmtypes.Block{
+				Header: tmtypes.Header{
+					Height: block.Index,
+					Time:   blockTime,
+				},
+			},
+		},
+		nil,
+	).Once()
+
 	blockResponse, err := client.Block(
 		ctx,
-		&types.PartialBlockIdentifier{},
+		nil,
 	)
+	require.NoError(t, err)
+	assert.Equal(t, block, blockResponse.Block.BlockIdentifier)
+	assert.Nil(t, blockResponse.OtherTransactions)
 
-	assert.Error(t, err)
-	assert.Nil(t, blockResponse)
+	mockRPCClient.On("Block", &block.Index).Return(
+		&ctypes.ResultBlock{
+			BlockID: tmtypes.BlockID{
+				Hash: hashBytes,
+			},
+			Block: &tmtypes.Block{
+				Header: tmtypes.Header{
+					Height: block.Index,
+					Time:   blockTime,
+				},
+			},
+		},
+		nil,
+	).Once()
+
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Index: &block.Index,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, block, blockResponse.Block.BlockIdentifier)
+	assert.Nil(t, blockResponse.OtherTransactions)
+
+	mockRPCClient.On("BlockByHash", hashBytes).Return(
+		&ctypes.ResultBlock{
+			BlockID: tmtypes.BlockID{
+				Hash: hashBytes,
+			},
+			Block: &tmtypes.Block{
+				Header: tmtypes.Header{
+					Height: block.Index,
+					Time:   blockTime,
+				},
+			},
+		},
+		nil,
+	).Once()
+
+	blockResponse, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Hash: &block.Hash,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, block, blockResponse.Block.BlockIdentifier)
+	assert.Nil(t, blockResponse.OtherTransactions)
 }
