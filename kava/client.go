@@ -116,19 +116,7 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	var block *ctypes.ResultBlock
-	switch {
-	case blockIdentifier == nil:
-		block, err = c.rpc.Block(nil)
-	case blockIdentifier.Index != nil:
-		block, err = c.rpc.Block(blockIdentifier.Index)
-	case blockIdentifier.Hash != nil:
-		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
-		if decodeErr != nil {
-			return nil, decodeErr
-		}
-		block, err = c.rpc.BlockByHash(hashBytes)
-	}
+	block, err := c.getBlockResult(blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -182,23 +170,7 @@ func (c *Client) Block(
 	ctx context.Context,
 	blockIdentifier *types.PartialBlockIdentifier,
 ) (*types.BlockResponse, error) {
-	var (
-		block *ctypes.ResultBlock
-		err   error
-	)
-
-	switch {
-	case blockIdentifier == nil:
-		block, err = c.rpc.Block(nil)
-	case blockIdentifier.Index != nil:
-		block, err = c.rpc.Block(blockIdentifier.Index)
-	case blockIdentifier.Hash != nil:
-		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
-		if decodeErr != nil {
-			return nil, decodeErr
-		}
-		block, err = c.rpc.BlockByHash(hashBytes)
-	}
+	block, err := c.getBlockResult(blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -227,4 +199,21 @@ func (c *Client) Block(
 			Transactions:          []*types.Transaction{},
 		},
 	}, nil
+}
+
+func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
+	switch {
+	case blockIdentifier == nil:
+		block, err = c.rpc.Block(nil)
+	case blockIdentifier.Index != nil:
+		block, err = c.rpc.Block(blockIdentifier.Index)
+	case blockIdentifier.Hash != nil:
+		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+		block, err = c.rpc.BlockByHash(hashBytes)
+	}
+
+	return
 }
