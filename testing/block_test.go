@@ -77,7 +77,7 @@ func TestBlockOnline(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, rosettaErr)
 
-	resultBlock, err := rpc.Block(networkStatus.CurrentBlockIdentifier.Index)
+	resultBlock, err := rpc.Block(&networkStatus.CurrentBlockIdentifier.Index)
 	require.NoError(t, err)
 
 	currentBlock := networkStatus.CurrentBlockIdentifier
