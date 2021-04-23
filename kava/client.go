@@ -25,6 +25,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
+	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
@@ -198,14 +199,26 @@ func (c *Client) Block(
 		}
 	}
 
+	deliverResults, err := c.rpc.BlockResults(&height)
+	if err != nil {
+		return nil, err
+	}
+
 	transactions := []*types.Transaction{}
-	for _, rawTx := range block.Block.Data.Txs {
+	for i, rawTx := range block.Block.Data.Txs {
 		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
 
 		var tx authtypes.StdTx
 		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
 		if err != nil {
 			return nil, err
+		}
+
+		var status string
+		if deliverResults.TxsResults[i].Code == abci.CodeTypeOK {
+			status = SuccessStatus
+		} else {
+			status = FailureStatus
 		}
 
 		operations := []*types.Operation{}
@@ -216,12 +229,14 @@ func (c *Client) Block(
 				OperationIdentifier: &types.OperationIdentifier{
 					Index: operationIndex,
 				},
+				Status: &status,
 			})
 
 			operations = append(operations, &types.Operation{
 				OperationIdentifier: &types.OperationIdentifier{
 					Index: operationIndex + 1,
 				},
+				Status: &status,
 			})
 
 			operationIndex += 2

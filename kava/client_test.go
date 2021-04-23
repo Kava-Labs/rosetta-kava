@@ -32,6 +32,7 @@ import (
 	kava "github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -657,6 +658,11 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 		nil,
 	).Once()
 
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+		&ctypes.ResultBlockResults{},
+		nil,
+	)
+
 	blockResponse, err := client.Block(ctx, nil)
 	require.NoError(t, err)
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
@@ -743,6 +749,11 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 		nil,
 	).Once()
 
+	mockRPCClient.On("BlockResults", &genesisBlockIdentifier.Index).Return(
+		&ctypes.ResultBlockResults{},
+		nil,
+	)
+
 	blockResponse, err = client.Block(
 		ctx,
 		&types.PartialBlockIdentifier{
@@ -810,6 +821,9 @@ func TestBlock_Transactions(t *testing.T) {
 	var rawMockTx1 tmtypes.Tx
 	rawMockTx1, err = cdc.MarshalBinaryLengthPrefixed(&mockTx1)
 	require.NoError(t, err)
+	mockDeliverTx1 := &abci.ResponseDeliverTx{
+		Code: 0,
+	}
 
 	mockTx2 := &authtypes.StdTx{
 		Msgs: []sdk.Msg{
@@ -833,6 +847,9 @@ func TestBlock_Transactions(t *testing.T) {
 	var rawMockTx2 tmtypes.Tx
 	rawMockTx2, err = cdc.MarshalBinaryLengthPrefixed(&mockTx2)
 	require.NoError(t, err)
+	mockDeliverTx2 := &abci.ResponseDeliverTx{
+		Code: 1,
+	}
 
 	parentBlockIdentifier := &types.BlockIdentifier{
 		Index: 99,
@@ -849,7 +866,6 @@ func TestBlock_Transactions(t *testing.T) {
 	hashBytes, err := hex.DecodeString(blockIdentifier.Hash)
 	require.NoError(t, err)
 
-	//mockTransactions := []*authtypes.StdTx{mockTx1, mockTx2}
 	mockRawTransactions := []tmtypes.Tx{rawMockTx1, rawMockTx2}
 	mockResultBlock := &ctypes.ResultBlock{
 		BlockID: tmtypes.BlockID{
@@ -869,7 +885,15 @@ func TestBlock_Transactions(t *testing.T) {
 		},
 	}
 
+	mockDeliverTxs := []*abci.ResponseDeliverTx{mockDeliverTx1, mockDeliverTx2}
+	mockResultBlockResults := &ctypes.ResultBlockResults{
+		TxsResults:       mockDeliverTxs,
+		BeginBlockEvents: []abci.Event{},
+		EndBlockEvents:   []abci.Event{},
+	}
+
 	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
 
 	blockResponse, err := client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	require.NoError(t, err)
@@ -877,6 +901,7 @@ func TestBlock_Transactions(t *testing.T) {
 
 	for i, tx := range blockResponse.Block.Transactions {
 		mockRawTx := mockRawTransactions[i]
+		mockDeliverTx := mockDeliverTxs[i]
 
 		expectedHash := strings.ToUpper(hex.EncodeToString(mockRawTx.Hash()))
 		assert.Equal(t, expectedHash, tx.TransactionIdentifier.Hash)
@@ -886,16 +911,31 @@ func TestBlock_Transactions(t *testing.T) {
 		for index, operation := range tx.Operations {
 			assert.Equal(t, int64(index), operation.OperationIdentifier.Index)
 
+			if mockDeliverTx.Code == 0 {
+				assert.Equal(t, SuccessStatus, *operation.Status)
+			} else {
+				assert.Equal(t, FailureStatus, *operation.Status)
+			}
+
 			for _, relatedOperation := range operation.RelatedOperations {
 				assert.Greater(t, relatedOperation.Index, index)
 			}
 		}
 	}
 
+	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	rpcErr := errors.New("block results error")
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(nil, rpcErr).Once()
+
+	blockResponse, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	assert.Nil(t, blockResponse)
+	assert.Error(t, err)
+	assert.Equal(t, rpcErr, err)
+
 	badTx := tmtypes.Tx("invalid tx")
 	mockResultBlock.Block.Data.Txs = []tmtypes.Tx{badTx}
-
 	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
 
 	blockResponse, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	assert.Nil(t, blockResponse)
