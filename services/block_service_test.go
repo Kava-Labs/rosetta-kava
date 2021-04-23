@@ -17,6 +17,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBlockService_Offline(t *testing.T) {
@@ -55,10 +57,73 @@ func TestBlockService_Online(t *testing.T) {
 	servicer := NewBlockAPIService(cfg, mockClient)
 	ctx := context.Background()
 
-	block, err := servicer.Block(ctx, &types.BlockRequest{})
+	blockResponse := &types.BlockResponse{
+		Block: &types.Block{
+			BlockIdentifier: &types.BlockIdentifier{
+				Index: 100,
+				Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+			},
+		},
+	}
+
+	blockIdentifier := &types.PartialBlockIdentifier{
+		Index: &blockResponse.Block.BlockIdentifier.Index,
+	}
+
+	mockClient.On(
+		"Block",
+		ctx,
+		blockIdentifier,
+	).Return(
+		blockResponse,
+		nil,
+	).Once()
+
+	block, err := servicer.Block(ctx, &types.BlockRequest{
+		NetworkIdentifier: networkIdentifier,
+		BlockIdentifier:   blockIdentifier,
+	})
+	require.Nil(t, err)
+	assert.Equal(t, blockResponse, block)
+
+	blockIdentifier = &types.PartialBlockIdentifier{
+		Hash: &blockResponse.Block.BlockIdentifier.Hash,
+	}
+
+	mockClient.On(
+		"Block",
+		ctx,
+		blockIdentifier,
+	).Return(
+		blockResponse,
+		nil,
+	).Once()
+
+	block, err = servicer.Block(ctx, &types.BlockRequest{
+		NetworkIdentifier: networkIdentifier,
+		BlockIdentifier:   blockIdentifier,
+	})
+	require.Nil(t, err)
+	assert.Equal(t, blockResponse, block)
+
+	kavaErr := errors.New("some client error")
+	mockClient.On(
+		"Block",
+		ctx,
+		blockIdentifier,
+	).Return(
+		nil,
+		kavaErr,
+	).Once()
+
+	block, err = servicer.Block(ctx, &types.BlockRequest{
+		NetworkIdentifier: networkIdentifier,
+		BlockIdentifier:   blockIdentifier,
+	})
 	assert.Nil(t, block)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+	assert.Equal(t, ErrKava.Code, err.Code)
+	assert.Equal(t, ErrKava.Message, err.Message)
+	assert.Equal(t, kavaErr.Error(), err.Details["context"])
 
 	blockTransaction, err := servicer.BlockTransaction(ctx, &types.BlockTransactionRequest{})
 	assert.Nil(t, blockTransaction)

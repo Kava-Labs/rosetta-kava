@@ -41,4 +41,9 @@ type Client interface {
 		*types.PartialBlockIdentifier,
 		[]*types.Currency,
 	) (*types.AccountBalanceResponse, error)
+
+	Block(
+		context.Context,
+		*types.PartialBlockIdentifier,
+	) (*types.BlockResponse, error)
 }

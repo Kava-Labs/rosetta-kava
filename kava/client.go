@@ -108,7 +108,7 @@ func (c *Client) Status(ctx context.Context) (
 func (c *Client) Balance(
 	ctx context.Context,
 	accountIdentifier *types.AccountIdentifier,
-	blockIdentifer *types.PartialBlockIdentifier,
+	blockIdentifier *types.PartialBlockIdentifier,
 	currencies []*types.Currency,
 ) (*types.AccountBalanceResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(accountIdentifier.Address)
@@ -116,19 +116,7 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	var block *ctypes.ResultBlock
-	switch {
-	case blockIdentifer == nil:
-		block, err = c.rpc.Block(nil)
-	case blockIdentifer.Index != nil:
-		block, err = c.rpc.Block(blockIdentifer.Index)
-	case blockIdentifer.Hash != nil:
-		hashBytes, decodeErr := hex.DecodeString(*blockIdentifer.Hash)
-		if decodeErr != nil {
-			return nil, decodeErr
-		}
-		block, err = c.rpc.BlockByHash(hashBytes)
-	}
+	block, err := c.getBlockResult(blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -175,4 +163,60 @@ func (c *Client) Balance(
 		},
 		Balances: balances,
 	}, nil
+}
+
+// Block returns rosetta block for an index or hash
+func (c *Client) Block(
+	ctx context.Context,
+	blockIdentifier *types.PartialBlockIdentifier,
+) (*types.BlockResponse, error) {
+	block, err := c.getBlockResult(blockIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
+	height := block.Block.Header.Height
+	identifier := &types.BlockIdentifier{
+		Index: height,
+		Hash:  block.BlockID.Hash.String(),
+	}
+
+	var parentIdentifier *types.BlockIdentifier
+	if height == 1 {
+		parentIdentifier = identifier
+	} else {
+		parentIdentifier = &types.BlockIdentifier{
+			Index: height - 1,
+			Hash:  block.Block.Header.LastBlockID.Hash.String(),
+		}
+	}
+
+	return &types.BlockResponse{
+		Block: &types.Block{
+			BlockIdentifier:       identifier,
+			ParentBlockIdentifier: parentIdentifier,
+			Timestamp:             block.Block.Header.Time.UnixNano() / int64(1e6),
+			Transactions:          []*types.Transaction{},
+		},
+	}, nil
+}
+
+// getBlockResult returns the specified block by Index or Hash. If the
+// block identifier is not provided, then the latest block is returned
+func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
+	switch {
+	case blockIdentifier == nil:
+		// fetch the latest block by passing (*int64)(nil) to tendermint rpc
+		block, err = c.rpc.Block(nil)
+	case blockIdentifier.Index != nil:
+		block, err = c.rpc.Block(blockIdentifier.Index)
+	case blockIdentifier.Hash != nil:
+		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+		block, err = c.rpc.BlockByHash(hashBytes)
+	}
+
+	return
 }

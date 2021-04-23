@@ -160,33 +160,111 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /block:
+    post:
+      summary: Get a Block
+      description: |
+        Get a block by its Block Identifier. If transactions are returned in
+        the same call to the node as fetching the block, the response should
+        include these transactions in the Block object. If not, an array of
+        Transaction Identifiers should be returned so /block/transaction
+        fetches can be done to get all transaction information.
+
+        When requesting a block by the hash component of the BlockIdentifier,
+        this request MUST be idempotent: repeated invocations for the same
+        hash-identified block must return the exact same block contents.
+
+        No such restriction is imposed when requesting a block by height,
+        given that a chain reorg event might cause the specific block at
+        height `n` to be set to a different one.
+      operationId: block
+      tags:
+        - Block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     # Identifiers
-    AccountIdentifier:
-      $ref: 'models/AccountIdentifier.yaml'
     NetworkIdentifier:
       $ref: 'models/NetworkIdentifier.yaml'
+    SubNetworkIdentifier:
+      $ref: 'models/SubNetworkIdentifier.yaml'
     BlockIdentifier:
       $ref: 'models/BlockIdentifier.yaml'
     PartialBlockIdentifier:
       $ref: 'models/PartialBlockIdentifier.yaml'
+    TransactionIdentifier:
+      $ref: 'models/TransactionIdentifier.yaml'
+    OperationIdentifier:
+      $ref: 'models/OperationIdentifier.yaml'
+    AccountIdentifier:
+      $ref: 'models/AccountIdentifier.yaml'
+    SubAccountIdentifier:
+      $ref: 'models/SubAccountIdentifier.yaml'
 
     # Models
-    Allow:
-      $ref: 'models/Allow.yaml'
+    Block:
+      $ref: 'models/Block.yaml'
+    Transaction:
+      $ref: 'models/Transaction.yaml'
+    Operation:
+      $ref: 'models/Operation.yaml'
     Amount:
       $ref: 'models/Amount.yaml'
     Currency:
       $ref: 'models/Currency.yaml'
-    Version:
-      $ref: 'models/Version.yaml'
     SyncStatus:
       $ref: 'models/SyncStatus.yaml'
     Peer:
       $ref: 'models/Peer.yaml'
+    Version:
+      $ref: 'models/Version.yaml'
+    Allow:
+      $ref: 'models/Allow.yaml'
+    OperationStatus:
+      $ref: 'models/OperationStatus.yaml'
     Timestamp:
       $ref: 'models/Timestamp.yaml'
+    PublicKey:
+      $ref: 'models/PublicKey.yaml'
+    CurveType:
+      $ref: 'models/CurveType.yaml'
+    SigningPayload:
+      $ref: 'models/SigningPayload.yaml'
+    Signature:
+      $ref: 'models/Signature.yaml'
+    SignatureType:
+      $ref: 'models/SignatureType.yaml'
+    BalanceExemption:
+      $ref: 'models/BalanceExemption.yaml'
+    ExemptionType:
+      $ref: 'models/ExemptionType.yaml'
+    Operator:
+      $ref: 'models/Operator.yaml'
+    BlockTransaction:
+      $ref: 'models/BlockTransaction.yaml'
+    RelatedTransaction:
+      $ref: 'models/RelatedTransaction.yaml'
+    Direction:
+      $ref: 'models/Direction.yaml'
 
     # Request/Responses
     AccountBalanceRequest:
@@ -328,6 +406,48 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Peer'
+    BlockRequest:
+      description: |
+        A BlockRequest is utilized to make a block request on the
+        /block endpoint.
+      type: object
+      required:
+        - network_identifier
+        - block_identifier
+      properties:
+        network_identifier:
+          $ref: '#/components/schemas/NetworkIdentifier'
+        block_identifier:
+          $ref: '#/components/schemas/PartialBlockIdentifier'
+    BlockResponse:
+      description: |
+        A BlockResponse includes a fully-populated block or a partially-populated
+        block with a list of other transactions to fetch (other_transactions).
+
+        As a result of the consensus algorithm of some blockchains, blocks
+        can be omitted (i.e. certain block indices can be skipped). If a query
+        for one of these omitted indices is made, the response should not include
+        a `Block` object.
+
+        It is VERY important to note that blocks MUST still form a canonical,
+        connected chain of blocks where each block has a unique index. In other words,
+        the `PartialBlockIdentifier` of a block after an omitted block should
+        reference the last non-omitted block.
+      type: object
+      properties:
+        block:
+          $ref: '#/components/schemas/Block'
+        other_transactions:
+          description: |
+            Some blockchains may require additional transactions to be fetched
+            that weren't returned in the block response
+            (ex: block only returns transaction hashes). For blockchains with a
+            lot of transactions in each block, this
+            can be very useful as consumers can concurrently fetch all
+            transactions returned.
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionIdentifier'
 
     # Miscellaneous
     Error:
