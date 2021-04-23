@@ -17,10 +17,13 @@ package kava
 import (
 	"context"
 	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -36,12 +39,16 @@ func init() {
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
 	rpc RPCClient
+	cdc *codec.Codec
 }
 
 // NewClient initialized a new Client with the provided rpc client
 func NewClient(rpc RPCClient) (*Client, error) {
+	cdc := kava.MakeCodec()
+
 	return &Client{
 		rpc: rpc,
+		cdc: cdc,
 	}, nil
 }
 
@@ -191,12 +198,49 @@ func (c *Client) Block(
 		}
 	}
 
+	transactions := []*types.Transaction{}
+	for _, rawTx := range block.Block.Data.Txs {
+		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
+
+		var tx authtypes.StdTx
+		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
+		if err != nil {
+			return nil, err
+		}
+
+		operations := []*types.Operation{}
+		operationIndex := int64(0)
+
+		for range tx.GetMsgs() {
+			operations = append(operations, &types.Operation{
+				OperationIdentifier: &types.OperationIdentifier{
+					Index: operationIndex,
+				},
+			})
+
+			operations = append(operations, &types.Operation{
+				OperationIdentifier: &types.OperationIdentifier{
+					Index: operationIndex + 1,
+				},
+			})
+
+			operationIndex += 2
+		}
+
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: hash,
+			},
+			Operations: operations,
+		})
+	}
+
 	return &types.BlockResponse{
 		Block: &types.Block{
 			BlockIdentifier:       identifier,
 			ParentBlockIdentifier: parentIdentifier,
 			Timestamp:             block.Block.Header.Time.UnixNano() / int64(1e6),
-			Transactions:          []*types.Transaction{},
+			Transactions:          transactions,
 		},
 	}, nil
 }
