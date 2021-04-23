@@ -201,6 +201,8 @@ func (c *Client) Block(
 	}, nil
 }
 
+// getBlockResult returns the specified block by Index or Hash. If the
+// block identifier is not provided, then the latest block is returned
 func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
 	switch {
 	case blockIdentifier == nil:
