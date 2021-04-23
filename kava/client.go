@@ -204,6 +204,7 @@ func (c *Client) Block(
 func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
 	switch {
 	case blockIdentifier == nil:
+		// fetch the latest block by passing (*int64)(nil) to tendermint rpc
 		block, err = c.rpc.Block(nil)
 	case blockIdentifier.Index != nil:
 		block, err = c.rpc.Block(blockIdentifier.Index)
