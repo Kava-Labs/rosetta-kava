@@ -937,7 +937,7 @@ func TestBlock_Transactions(t *testing.T) {
 	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
 	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
 
-	blockResponse, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
-	assert.Nil(t, blockResponse)
-	assert.Error(t, err)
+	assert.Panics(t, func() {
+		client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	})
 }

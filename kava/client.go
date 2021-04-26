@@ -17,6 +17,7 @@ package kava
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 
@@ -204,51 +205,7 @@ func (c *Client) Block(
 		return nil, err
 	}
 
-	transactions := []*types.Transaction{}
-	for i, rawTx := range block.Block.Data.Txs {
-		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
-
-		var tx authtypes.StdTx
-		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
-		if err != nil {
-			return nil, err
-		}
-
-		var status string
-		if deliverResults.TxsResults[i].Code == abci.CodeTypeOK {
-			status = SuccessStatus
-		} else {
-			status = FailureStatus
-		}
-
-		operations := []*types.Operation{}
-		operationIndex := int64(0)
-
-		for range tx.GetMsgs() {
-			operations = append(operations, &types.Operation{
-				OperationIdentifier: &types.OperationIdentifier{
-					Index: operationIndex,
-				},
-				Status: &status,
-			})
-
-			operations = append(operations, &types.Operation{
-				OperationIdentifier: &types.OperationIdentifier{
-					Index: operationIndex + 1,
-				},
-				Status: &status,
-			})
-
-			operationIndex += 2
-		}
-
-		transactions = append(transactions, &types.Transaction{
-			TransactionIdentifier: &types.TransactionIdentifier{
-				Hash: hash,
-			},
-			Operations: operations,
-		})
-	}
+	transactions := c.getTransactionsForBlock(block, deliverResults)
 
 	return &types.BlockResponse{
 		Block: &types.Block{
@@ -278,4 +235,91 @@ func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (
 	}
 
 	return
+}
+
+func (c *Client) getTransactionsForBlock(
+	resultBlock *ctypes.ResultBlock,
+	resultBlockResults *ctypes.ResultBlockResults,
+) []*types.Transaction {
+	// returns transactions -- this will be number of txs + begin/end block (if there)
+	transactions := []*types.Transaction{}
+
+	// TODO: vesting account operations (must be before being blocker operations)
+	// TODO: begin blocker operations
+
+	// transaction loop
+	for i, rawTx := range resultBlock.Block.Data.Txs {
+		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
+
+		var tx authtypes.StdTx
+		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
+		if err != nil {
+			panic(fmt.Sprintf(
+				"unable to unmarshal transaction at index %d of block %d",
+				i, resultBlock.Block.Header.Height,
+			))
+		}
+
+		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: hash,
+			},
+			Operations: operations,
+		})
+	}
+
+	// TODO: end blocker operations
+
+	return transactions
+}
+
+func (c *Client) getOperationsForTransaction(
+	tx *authtypes.StdTx,
+	result *abci.ResponseDeliverTx,
+) []*types.Operation {
+	var status string
+
+	if result.Code == abci.CodeTypeOK {
+		status = SuccessStatus
+	} else {
+		status = FailureStatus
+	}
+
+	operations := []*types.Operation{}
+	operationIndex := int64(0)
+
+	// TODO: add operations to deduct tx fee from first signer
+
+	for _, msg := range tx.GetMsgs() {
+		operations = c.appendOperationsForMessage(operations, &msg, &status, &operationIndex)
+	}
+
+	return operations
+}
+
+func (c *Client) appendOperationsForMessage(
+	operations []*types.Operation,
+	msg *sdk.Msg,
+	status *string,
+	index *int64,
+) []*types.Operation {
+	operations = append(operations, &types.Operation{
+		OperationIdentifier: &types.OperationIdentifier{
+			Index: *index,
+		},
+		Status: status,
+	})
+
+	operations = append(operations, &types.Operation{
+		OperationIdentifier: &types.OperationIdentifier{
+			Index: *index + 1,
+		},
+		Status: status,
+	})
+
+	*index += 2
+
+	return operations
 }
