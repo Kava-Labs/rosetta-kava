@@ -20,7 +20,11 @@ build:
 
 .PHONY: run
 run:
-	MODE=online NETWORK=kava-7 PORT=8000 KAVA_RPC_URL=https://rpc.kava.io:443 go run . run
+	MODE=online NETWORK=kava-7 PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
+
+.PHONY: run-local
+run-local:
+	MODE=online NETWORK=kava-localnet PORT=8000 KAVA_RPC_URL=http://localhost:26657 go run . run
 
 .PHONY: test
 test:
