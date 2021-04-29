@@ -317,6 +317,8 @@ func (c *Client) getOperationsForTransaction(
 		status = FailureStatus
 	}
 
+	// TODO: handle log parsing error and send empty logs
+	// to transaction.  when a tx is rejected, log is a string
 	logs, err := sdk.ParseABCILogs(result.Log)
 	if err != nil {
 		return nil, err
