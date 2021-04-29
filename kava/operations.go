@@ -69,8 +69,8 @@ func MsgToOperations(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index 
 }
 
 func msgSendToOperations(msg bank.MsgSend, status *string, index int64) []*types.Operation {
-	sender := newAccountID(msg.ToAddress)
-	recipient := newAccountID(msg.FromAddress)
+	sender := newAccountID(msg.FromAddress)
+	recipient := newAccountID(msg.ToAddress)
 	amount := msg.Amount
 
 	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)

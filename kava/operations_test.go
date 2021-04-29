@@ -43,6 +43,30 @@ func getAccAddr(t *testing.T, addr string) sdk.AccAddress {
 	return accAddr
 }
 
+func accountEqual(a1 *types.AccountIdentifier, a2 *types.AccountIdentifier) bool {
+	if a1.Address != a2.Address {
+		return false
+	}
+
+	if a1.SubAccount == nil && a2.SubAccount == nil {
+		return true
+	}
+
+	if a1.SubAccount != nil && a2.SubAccount == nil {
+		return false
+	}
+
+	if a2.SubAccount != nil && a1.SubAccount == nil {
+		return false
+	}
+
+	if a1.SubAccount.Address != a2.SubAccount.Address {
+		return false
+	}
+
+	return true
+}
+
 func generateDefaultCoins() sdk.Coins {
 	denoms := []string{
 		// native
@@ -193,7 +217,7 @@ func assertTrackedBalance(
 
 		t.Run("coin operation amounts match for sender", func(t *testing.T) {
 			for _, op := range ops {
-				if op.Account != sender {
+				if !accountEqual(op.Account, sender) {
 					continue
 				}
 
@@ -211,7 +235,7 @@ func assertTrackedBalance(
 
 		t.Run("coin operation amounts match for recipient", func(t *testing.T) {
 			for _, op := range ops {
-				if op.Account != recipient {
+				if !accountEqual(op.Account, recipient) {
 					continue
 				}
 
@@ -235,7 +259,7 @@ func assertTrackedBalance(
 
 		t.Run("each sender op has no related ops", func(t *testing.T) {
 			for _, op := range ops {
-				if op.Account != sender {
+				if !accountEqual(op.Account, sender) {
 					continue
 				}
 
@@ -245,7 +269,7 @@ func assertTrackedBalance(
 
 		t.Run("each recipient op is related to a sender op", func(t *testing.T) {
 			for _, op := range ops {
-				if op.Account != recipient {
+				if !accountEqual(op.Account, recipient) {
 					continue
 				}
 
@@ -277,14 +301,14 @@ func TestEventsToOperations(t *testing.T) {
 
 func TestTxToOperations(t *testing.T) {
 	msg1 := bank.MsgSend{
-		ToAddress:   getAccAddr(t, testAddresses[0]),
-		FromAddress: getAccAddr(t, testAddresses[1]),
+		FromAddress: getAccAddr(t, testAddresses[0]),
+		ToAddress:   getAccAddr(t, testAddresses[1]),
 		Amount:      generateDefaultCoins(),
 	}
 
 	msg2 := bank.MsgSend{
-		ToAddress:   getAccAddr(t, testAddresses[0]),
-		FromAddress: getAccAddr(t, testAddresses[1]),
+		FromAddress: getAccAddr(t, testAddresses[0]),
+		ToAddress:   getAccAddr(t, testAddresses[1]),
 		Amount:      generateDefaultCoins(),
 	}
 
