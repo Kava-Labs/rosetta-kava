@@ -823,6 +823,9 @@ func TestBlock_Transactions(t *testing.T) {
 	require.NoError(t, err)
 	mockDeliverTx1 := &abci.ResponseDeliverTx{
 		Code: 0,
+		Log: sdk.ABCIMessageLogs{
+			sdk.NewABCIMessageLog(0, "", []sdk.Event{}),
+		}.String(),
 	}
 
 	mockTx2 := &authtypes.StdTx{
@@ -849,6 +852,10 @@ func TestBlock_Transactions(t *testing.T) {
 	require.NoError(t, err)
 	mockDeliverTx2 := &abci.ResponseDeliverTx{
 		Code: 1,
+		Log: sdk.ABCIMessageLogs{
+			sdk.NewABCIMessageLog(0, "", []sdk.Event{}),
+			sdk.NewABCIMessageLog(1, "", []sdk.Event{}),
+		}.String(),
 	}
 
 	parentBlockIdentifier := &types.BlockIdentifier{
@@ -888,8 +895,8 @@ func TestBlock_Transactions(t *testing.T) {
 	mockDeliverTxs := []*abci.ResponseDeliverTx{mockDeliverTx1, mockDeliverTx2}
 	mockResultBlockResults := &ctypes.ResultBlockResults{
 		TxsResults:       mockDeliverTxs,
-		BeginBlockEvents: []abci.Event{},
-		EndBlockEvents:   []abci.Event{},
+		BeginBlockEvents: []abci.Event{abci.Event{}},
+		EndBlockEvents:   []abci.Event{abci.Event{}},
 	}
 
 	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
@@ -909,16 +916,17 @@ func TestBlock_Transactions(t *testing.T) {
 		assert.Greater(t, len(tx.Operations), 1)
 
 		for index, operation := range tx.Operations {
-			assert.Equal(t, int64(index), operation.OperationIdentifier.Index)
+			currentIndex := int64(index)
+			assert.Equal(t, currentIndex, operation.OperationIdentifier.Index)
 
-			if mockDeliverTx.Code == 0 {
+			if mockDeliverTx.Code == 0 || operation.Type == FeeOpType {
 				assert.Equal(t, SuccessStatus, *operation.Status)
 			} else {
 				assert.Equal(t, FailureStatus, *operation.Status)
 			}
 
 			for _, relatedOperation := range operation.RelatedOperations {
-				assert.Greater(t, relatedOperation.Index, index)
+				assert.Greater(t, currentIndex, relatedOperation.Index)
 			}
 		}
 	}
@@ -938,6 +946,6 @@ func TestBlock_Transactions(t *testing.T) {
 	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
 
 	assert.Panics(t, func() {
-		client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+		_, _ = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	})
 }

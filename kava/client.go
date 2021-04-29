@@ -245,7 +245,21 @@ func (c *Client) getTransactionsForBlock(
 	transactions := []*types.Transaction{}
 
 	// TODO: vesting account operations (must be before being blocker operations)
-	// TODO: begin blocker operations
+	//	add them before begin blocker ops, and pass updated index to op method
+
+	beginBlockOps := EventsToOperations(
+		sdk.StringifyEvents(resultBlockResults.BeginBlockEvents),
+		0, // TODO: update index to be after vesting ops
+	)
+
+	if len(beginBlockOps) > 0 {
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: BeginBlockTxHash(resultBlock.BlockID.Hash),
+			},
+			Operations: beginBlockOps,
+		})
+	}
 
 	// transaction loop
 	for i, rawTx := range resultBlock.Block.Data.Txs {
@@ -255,12 +269,18 @@ func (c *Client) getTransactionsForBlock(
 		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
 		if err != nil {
 			panic(fmt.Sprintf(
-				"unable to unmarshal transaction at index %d of block %d",
-				i, resultBlock.Block.Header.Height,
+				"unable to unmarshal transaction at index %d of block %d: %s",
+				i, resultBlock.Block.Header.Height, err,
 			))
 		}
 
-		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+		operations, err := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+		if err != nil {
+			panic(fmt.Sprintf(
+				"unable to parse transaction logs at index %d of block %d: %s",
+				i, resultBlock.Block.Header.Height, err,
+			))
+		}
 
 		transactions = append(transactions, &types.Transaction{
 			TransactionIdentifier: &types.TransactionIdentifier{
@@ -270,7 +290,19 @@ func (c *Client) getTransactionsForBlock(
 		})
 	}
 
-	// TODO: end blocker operations
+	endBlockOps := EventsToOperations(
+		sdk.StringifyEvents(resultBlockResults.EndBlockEvents),
+		0,
+	)
+
+	if len(beginBlockOps) > 0 {
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: EndBlockTxHash(resultBlock.BlockID.Hash),
+			},
+			Operations: endBlockOps,
+		})
+	}
 
 	return transactions
 }
@@ -278,7 +310,7 @@ func (c *Client) getTransactionsForBlock(
 func (c *Client) getOperationsForTransaction(
 	tx *authtypes.StdTx,
 	result *abci.ResponseDeliverTx,
-) []*types.Operation {
+) ([]*types.Operation, error) {
 	var status string
 
 	if result.Code == abci.CodeTypeOK {
@@ -287,39 +319,10 @@ func (c *Client) getOperationsForTransaction(
 		status = FailureStatus
 	}
 
-	operations := []*types.Operation{}
-	operationIndex := int64(0)
-
-	// TODO: add operations to deduct tx fee from first signer
-
-	for _, msg := range tx.GetMsgs() {
-		operations = c.appendOperationsForMessage(operations, &msg, &status, &operationIndex)
+	logs, err := sdk.ParseABCILogs(result.Log)
+	if err != nil {
+		return nil, err
 	}
 
-	return operations
-}
-
-func (c *Client) appendOperationsForMessage(
-	operations []*types.Operation,
-	msg *sdk.Msg,
-	status *string,
-	index *int64,
-) []*types.Operation {
-	operations = append(operations, &types.Operation{
-		OperationIdentifier: &types.OperationIdentifier{
-			Index: *index,
-		},
-		Status: status,
-	})
-
-	operations = append(operations, &types.Operation{
-		OperationIdentifier: &types.OperationIdentifier{
-			Index: *index + 1,
-		},
-		Status: status,
-	})
-
-	*index += 2
-
-	return operations
+	return TxToOperations(tx, logs, &status), nil
 }
