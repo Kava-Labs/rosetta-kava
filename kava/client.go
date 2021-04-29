@@ -272,13 +272,7 @@ func (c *Client) getTransactionsForBlock(
 			))
 		}
 
-		operations, err := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
-		if err != nil {
-			panic(fmt.Sprintf(
-				"unable to parse transaction logs at index %d of block %d: %s",
-				i, resultBlock.Block.Header.Height, err,
-			))
-		}
+		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
 
 		transactions = append(transactions, &types.Transaction{
 			TransactionIdentifier: &types.TransactionIdentifier{
@@ -308,7 +302,7 @@ func (c *Client) getTransactionsForBlock(
 func (c *Client) getOperationsForTransaction(
 	tx *authtypes.StdTx,
 	result *abci.ResponseDeliverTx,
-) ([]*types.Operation, error) {
+) []*types.Operation {
 	var status string
 
 	if result.Code == abci.CodeTypeOK {
@@ -317,14 +311,12 @@ func (c *Client) getOperationsForTransaction(
 		status = FailureStatus
 	}
 
-	// TODO: handle log parsing error and send empty logs
-	// to transaction.  when a tx is rejected, log is a string
 	logs, err := sdk.ParseABCILogs(result.Log)
 	if err != nil {
-		return nil, err
+		logs = sdk.ABCIMessageLogs{}
 	}
 
-	return TxToOperations(tx, logs, &status), nil
+	return TxToOperations(tx, logs, &status)
 }
 
 func stringifyEvents(events []abci.Event) sdk.StringEvents {
