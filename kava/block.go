@@ -25,8 +25,10 @@ import (
 )
 
 const (
+	// BeginBlockHashStart represents the first byte of the begin blocker tx hash
 	BeginBlockHashStart = 0x0
-	EndBlockHashStart   = 0x1
+	// EndBlockHashStart represents the first byte of the end blocker tx hash
+	EndBlockHashStart = 0x1
 )
 
 // BeginBlockTxHash caluclates the begin blocker transaction hash
