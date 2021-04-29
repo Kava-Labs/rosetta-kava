@@ -58,6 +58,32 @@ func makeTestAccount(t *testing.T) *authtypes.BaseAccount {
 	}
 }
 
+func makeEmptyTestAccount(t *testing.T) *authtypes.BaseAccount {
+	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
+	require.NoError(t, err)
+
+	return &authtypes.BaseAccount{
+		Address:       addr,
+		Coins:         sdk.NewCoins(),
+		AccountNumber: 3,
+		Sequence:      6,
+	}
+}
+
+func makePartialTestAccount(t *testing.T) *authtypes.BaseAccount {
+	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
+	require.NoError(t, err)
+
+	return &authtypes.BaseAccount{
+		Address: addr,
+		Coins: sdk.NewCoins(
+			sdk.NewCoin("hard", sdk.NewInt(10)),
+		),
+		AccountNumber: 4,
+		Sequence:      7,
+	}
+}
+
 func makeTestVestingAccount(t *testing.T, endTime time.Time) *vestingtypes.DelayedVestingAccount {
 	baseAccount := makeTestAccount(t)
 	vestingAccount := vestingtypes.NewDelayedVestingAccount(baseAccount, endTime.Unix())
@@ -593,6 +619,67 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 	assert.NotNil(t, getBalance(accountResponse.Balances, "KAVA"))
 	assert.NotNil(t, getBalance(accountResponse.Balances, "HARD"))
 	assert.NotNil(t, getBalance(accountResponse.Balances, "USDX"))
+}
+
+func TestBalance_DefaultZeroCurrency(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient := &mocks.Client{}
+	client, err := NewClient(mockRPCClient)
+	require.NoError(t, err)
+
+	emptyTestAccount := makeEmptyTestAccount(t)
+	partialTestAccount := makePartialTestAccount(t)
+
+	block := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(block.Hash)
+	require.NoError(t, err)
+
+	mockRPCClient.On("Block", (*int64)(nil)).Return(
+		&ctypes.ResultBlock{
+			BlockID: tmtypes.BlockID{
+				Hash: hashBytes,
+			},
+			Block: &tmtypes.Block{
+				Header: tmtypes.Header{
+					Height: block.Index,
+					Time:   blockTime,
+				},
+			},
+		},
+		nil,
+	)
+
+	mockRPCClient.On("Account", emptyTestAccount.Address, block.Index).Return(
+		emptyTestAccount,
+		nil,
+	).Once()
+
+	// test that empty account returns supported coins with zero balances
+	acc := &types.AccountIdentifier{Address: emptyTestAccount.Address.String()}
+	accountResponse, err := client.Balance(ctx, acc, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, len(accountResponse.Balances), 3)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "KAVA").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
+
+	mockRPCClient.On("Account", partialTestAccount.Address, block.Index).Return(
+		partialTestAccount,
+		nil,
+	).Once()
+
+	// test that partial account returns zero balances for unspecified coins
+	acc = &types.AccountIdentifier{Address: partialTestAccount.Address.String()}
+	accountResponse, err = client.Balance(ctx, acc, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, len(accountResponse.Balances), 3)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "KAVA").Value)
+	assert.NotEqual(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
 }
 
 func TestBlock_Info_NoTransactions(t *testing.T) {

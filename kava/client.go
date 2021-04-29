@@ -153,14 +153,12 @@ func (c *Client) Balance(
 	}
 
 	balances := []*types.Amount{}
-	for _, coin := range spendableCoins {
-		currency, ok := currencyLookup[coin.Denom]
-		if !ok {
-			continue
-		}
+
+	for denom, currency := range currencyLookup {
+		spendableValue := spendableCoins.AmountOf(denom)
 
 		balances = append(balances, &types.Amount{
-			Value:    coin.Amount.String(),
+			Value:    spendableValue.String(),
 			Currency: currency,
 		})
 	}
