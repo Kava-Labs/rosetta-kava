@@ -50,11 +50,11 @@ watch-integration:
 
 .PHONY: rosetta-check-data
 rosetta-check-data:
-	rosetta-cli --configuration-file rosetta-cli-conf/kava-7.json check:data
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-7/config.json check:data
 
 .PHONY: rosetta-check-data-local
 rosetta-check-data-local:
-	rosetta-cli --configuration-file rosetta-cli-conf/kava-localnet.json check:data
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-localnet/config.json check:data
 
 .PHONY: gen-mocks
 gen-mocks:
