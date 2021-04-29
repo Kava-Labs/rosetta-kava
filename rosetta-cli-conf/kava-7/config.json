@@ -26,7 +26,7 @@
   "log_reconciliations": false,
   "ignore_reconciliation_error": false,
   "exempt_accounts": "",
-  "bootstrap_balances": "",
+  "bootstrap_balances": "bootstrap_balances.json",
   "interesting_accounts": "",
   "reconciliation_disabled": false,
   "reconciliation_drain_disabled": false,
