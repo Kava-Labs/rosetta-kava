@@ -43,6 +43,7 @@ func EventsToOperations(events sdk.StringEvents, index int64) []*types.Operation
 	return operations
 }
 
+// EventToOperations returns rosetta operations from a abci block event
 func EventToOperations(event sdk.StringEvent, status *string, index int64) []*types.Operation {
 	attributeMap := make(map[string]string)
 
@@ -91,7 +92,17 @@ func TxToOperations(tx *authtypes.StdTx, logs sdk.ABCIMessageLogs, status *strin
 	}
 
 	for msgIndex, msg := range tx.GetMsgs() {
-		msgOps := MsgToOperations(msg, logs[msgIndex], status, operationIndex)
+		var log sdk.ABCIMessageLog
+
+		if msgIndex < len(logs) {
+			log = logs[msgIndex]
+		} else {
+			log = sdk.ABCIMessageLog{
+				MsgIndex: uint16(msgIndex),
+			}
+		}
+
+		msgOps := MsgToOperations(msg, log, status, operationIndex)
 		operations = appendOperationsAndUpdateIndex(operations, msgOps, &operationIndex)
 	}
 
@@ -216,7 +227,7 @@ func recipientBalanceOps(
 			},
 		})
 
-		index += 1
+		index++
 	}
 
 	return operations

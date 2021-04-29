@@ -29,8 +29,7 @@ import (
 )
 
 const (
-	mintAddress         = "kava1m3h30wlvsf8llruxtpukdvsy0km2kum85yn938"
-	distributionAddress = "kava1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8m2splc"
+	mintAddress = "kava1m3h30wlvsf8llruxtpukdvsy0km2kum85yn938"
 )
 
 var (
@@ -472,8 +471,8 @@ func TestTxToOperations(t *testing.T) {
 		Amount:      generateDefaultCoins(),
 	}
 
+	// one less than message length
 	logs := sdk.ABCIMessageLogs{
-		sdk.ABCIMessageLog{},
 		sdk.ABCIMessageLog{},
 	}
 
