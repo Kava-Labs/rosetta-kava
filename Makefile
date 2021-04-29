@@ -67,4 +67,4 @@ validate-swagger:
 
 .PHONY: run-swagger
 run-swagger:
-	docker run -p 8080:8080 -e SWAGGER_JSON=/spec/api.yaml -v $(PWD)/swagger:/spec swaggerapi/swagger-ui
+	docker run -p 8081:8080 -e SWAGGER_JSON=/spec/api.yaml -v $(PWD)/swagger:/spec swaggerapi/swagger-ui
