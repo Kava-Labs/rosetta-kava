@@ -51,6 +51,9 @@ const (
 
 	// TransferOpType is used to reference transfer operations
 	TransferOpType = "TRANSFER"
+
+	// MintOpType is used to reference mint operations
+	MintOpType = "MINT"
 )
 
 var (
@@ -58,6 +61,7 @@ var (
 	OperationTypes = []string{
 		FeeOpType,
 		TransferOpType,
+		MintOpType,
 	}
 
 	// OperationStatuses are all supported operation statuses.

@@ -28,6 +28,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	mintAddress         = "kava1m3h30wlvsf8llruxtpukdvsy0km2kum85yn938"
+	distributionAddress = "kava1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8m2splc"
+)
+
 var (
 	testAddresses = []string{
 		"kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea",
@@ -195,6 +200,10 @@ func assertTrackedBalance(
 		}
 
 		t.Run("coin operations sum to zero", func(t *testing.T) {
+			if sender == nil || recipient == nil {
+				t.Skip("no sender or recipient to match operations")
+			}
+
 			coinSums := make(map[string]*big.Int)
 
 			for _, op := range ops {
@@ -216,6 +225,10 @@ func assertTrackedBalance(
 		})
 
 		t.Run("coin operation amounts match for sender", func(t *testing.T) {
+			if sender == nil {
+				t.Skip("no sender")
+			}
+
 			for _, op := range ops {
 				if !accountEqual(op.Account, sender) {
 					continue
@@ -234,6 +247,10 @@ func assertTrackedBalance(
 		})
 
 		t.Run("coin operation amounts match for recipient", func(t *testing.T) {
+			if recipient == nil {
+				t.Skip("no recipient")
+			}
+
 			for _, op := range ops {
 				if !accountEqual(op.Account, recipient) {
 					continue
@@ -253,11 +270,16 @@ func assertTrackedBalance(
 
 		t.Run("all operations are for sender or recipient", func(t *testing.T) {
 			for _, op := range ops {
+				assert.NotNil(t, op.Account)
 				assert.Contains(t, []*types.AccountIdentifier{sender, recipient}, op.Account)
 			}
 		})
 
 		t.Run("each sender op has no related ops", func(t *testing.T) {
+			if sender == nil {
+				t.Skip("no sender")
+			}
+
 			for _, op := range ops {
 				if !accountEqual(op.Account, sender) {
 					continue
@@ -268,6 +290,10 @@ func assertTrackedBalance(
 		})
 
 		t.Run("each recipient op is related to a sender op", func(t *testing.T) {
+			if sender == nil {
+				t.Skip("no sender")
+			}
+
 			for _, op := range ops {
 				if !accountEqual(op.Account, recipient) {
 					continue
@@ -296,7 +322,141 @@ func assertTrackedBalance(
 }
 
 func TestEventsToOperations(t *testing.T) {
-	assert.Equal(t, []*types.Operation{}, EventsToOperations(sdk.StringEvents{}, 0))
+	testEvent1 := sdk.StringEvent{
+		Type: bank.EventTypeTransfer,
+		Attributes: []sdk.Attribute{
+			{
+				Key:   bank.AttributeKeyRecipient,
+				Value: testAddresses[1],
+			},
+			{
+				Key:   bank.AttributeKeySender,
+				Value: testAddresses[0],
+			},
+			{
+				Key:   sdk.AttributeKeyAmount,
+				Value: generateDefaultCoins().String(),
+			},
+		},
+	}
+
+	testEvent2 := sdk.StringEvent{
+		Type: bank.EventTypeTransfer,
+		Attributes: []sdk.Attribute{
+			{
+				Key:   bank.AttributeKeyRecipient,
+				Value: testAddresses[2],
+			},
+			{
+				Key:   bank.AttributeKeySender,
+				Value: testAddresses[1],
+			},
+			{
+				Key:   sdk.AttributeKeyAmount,
+				Value: generateDefaultCoins().String(),
+			},
+		},
+	}
+
+	index := int64(0)
+	events := sdk.StringEvents{testEvent1, testEvent2}
+	ops := EventsToOperations(events, index)
+
+	assert.Greater(t, len(ops), 0)
+	for opIndex, op := range ops {
+		assert.Equal(t, int64(opIndex)+index, op.OperationIdentifier.Index)
+		assert.Equal(t, SuccessStatus, *op.Status)
+	}
+
+	index = int64(10)
+	events = sdk.StringEvents{testEvent1, testEvent2}
+	ops = EventsToOperations(events, index)
+
+	assert.Greater(t, len(ops), 0)
+	for opIndex, op := range ops {
+		assert.Equal(t, int64(opIndex)+index, op.OperationIdentifier.Index)
+		assert.Equal(t, SuccessStatus, *op.Status)
+	}
+}
+
+func TestEventToOperations(t *testing.T) {
+	tests := []struct {
+		name      string
+		createFn  func(coins sdk.Coins) sdk.StringEvent
+		opType    string
+		sender    *types.AccountIdentifier
+		recipient *types.AccountIdentifier
+	}{
+		{
+			name: "mint (transfer from mint module acct)",
+			createFn: func(coins sdk.Coins) sdk.StringEvent {
+				return sdk.StringEvent{
+					Type: bank.EventTypeTransfer,
+					Attributes: []sdk.Attribute{
+						{
+							Key:   bank.AttributeKeyRecipient,
+							Value: testAddresses[0],
+						},
+						{
+							Key:   bank.AttributeKeySender,
+							Value: mintAddress,
+						},
+						{
+							Key:   sdk.AttributeKeyAmount,
+							Value: coins.String(),
+						},
+					},
+				}
+			},
+			opType: MintOpType,
+			sender: nil, // no sender for mint operations
+			recipient: &types.AccountIdentifier{
+				Address: testAddresses[0],
+			},
+		},
+		{
+			name: "trackable transfer (not mint or burn)",
+			createFn: func(coins sdk.Coins) sdk.StringEvent {
+				return sdk.StringEvent{
+					Type: bank.EventTypeTransfer,
+					Attributes: []sdk.Attribute{
+						{
+							Key:   bank.AttributeKeyRecipient,
+							Value: testAddresses[1],
+						},
+						{
+							Key:   bank.AttributeKeySender,
+							Value: testAddresses[0],
+						},
+						{
+							Key:   sdk.AttributeKeyAmount,
+							Value: coins.String(),
+						},
+					},
+				}
+			},
+			opType: TransferOpType,
+			sender: &types.AccountIdentifier{
+				Address: testAddresses[0],
+			},
+			recipient: &types.AccountIdentifier{
+				Address: testAddresses[1],
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			runAndAssertOperationInvariants(t, tc.opType, func(otc *operationTestCase) []*types.Operation {
+				event := tc.createFn(otc.coins)
+				ops := EventToOperations(event, &otc.status, otc.index)
+
+				assertTrackedBalance(t, otc.name, ops, tc.sender, otc.coins, tc.recipient)
+
+				return ops
+			})
+		})
+	}
 }
 
 func TestTxToOperations(t *testing.T) {

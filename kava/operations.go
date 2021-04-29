@@ -15,20 +15,68 @@
 package kava
 
 import (
+	"fmt"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank"
+	mint "github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var (
 	feeCollectorAddress = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
+	mintModuleAddress   = sdk.AccAddress(crypto.AddressHash([]byte(mint.ModuleName)))
 )
 
 // EventsToOperations returns rosetta operations from abci block events
 func EventsToOperations(events sdk.StringEvents, index int64) []*types.Operation {
+	status := SuccessStatus
+	operations := []*types.Operation{}
+
+	for _, event := range events {
+		eventOps := EventToOperations(event, &status, index)
+		operations = appendOperationsAndUpdateIndex(operations, eventOps, &index)
+	}
+
+	return operations
+}
+
+func EventToOperations(event sdk.StringEvent, status *string, index int64) []*types.Operation {
+	attributeMap := make(map[string]string)
+
+	for _, attribute := range event.Attributes {
+		attributeMap[attribute.Key] = attribute.Value
+	}
+
+	switch event.Type {
+	case bank.EventTypeTransfer:
+		return bankTransferEventToOperations(attributeMap, status, index)
+	}
+
 	return []*types.Operation{}
+}
+
+func bankTransferEventToOperations(attributes map[string]string, status *string, index int64) []*types.Operation {
+	recipient := &types.AccountIdentifier{
+		Address: attributes[bank.AttributeKeyRecipient],
+	}
+
+	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	if err != nil {
+		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
+	}
+
+	if attributes[bank.AttributeKeySender] == mintModuleAddress.String() {
+		return recipientBalanceOps(MintOpType, amount, recipient, status, index)
+	}
+
+	sender := &types.AccountIdentifier{
+		Address: attributes[bank.AttributeKeySender],
+	}
+
+	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
 }
 
 // TxToOperations returns rosetta operations from a transaction
@@ -137,6 +185,38 @@ func balanceTrackingOps(
 		})
 
 		index += 2
+	}
+
+	return operations
+}
+
+func recipientBalanceOps(
+	opType string,
+	amount sdk.Coins,
+	recipient *types.AccountIdentifier,
+	status *string,
+	index int64,
+) []*types.Operation {
+	operations := []*types.Operation{}
+
+	for _, coin := range amount {
+		currency, ok := Currencies[coin.Denom]
+		if !ok {
+			continue
+		}
+
+		operations = append(operations, &types.Operation{
+			OperationIdentifier: newOpID(index),
+			Type:                opType,
+			Status:              status,
+			Account:             recipient,
+			Amount: &types.Amount{
+				Value:    coin.Amount.String(),
+				Currency: currency,
+			},
+		})
+
+		index += 1
 	}
 
 	return operations
