@@ -48,6 +48,14 @@ watch:
 watch-integration:
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration ./testing; done
 
+.PHONY: rosetta-check-data
+rosetta-check-data:
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-7.json check:data
+
+.PHONY: rosetta-check-data-local
+rosetta-check-data-local:
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-localnet.json check:data
+
 .PHONY: gen-mocks
 gen-mocks:
 	mockery --dir services --all --case underscore --outpkg services --output mocks/services;
