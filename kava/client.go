@@ -246,7 +246,7 @@ func (c *Client) getTransactionsForBlock(
 	//	add them before begin blocker ops, and pass updated index to op method
 
 	beginBlockOps := EventsToOperations(
-		sdk.StringifyEvents(resultBlockResults.BeginBlockEvents),
+		stringifyEvents(resultBlockResults.BeginBlockEvents),
 		0, // TODO: update index to be after vesting ops
 	)
 
@@ -289,7 +289,7 @@ func (c *Client) getTransactionsForBlock(
 	}
 
 	endBlockOps := EventsToOperations(
-		sdk.StringifyEvents(resultBlockResults.EndBlockEvents),
+		stringifyEvents(resultBlockResults.EndBlockEvents),
 		0,
 	)
 
@@ -323,4 +323,14 @@ func (c *Client) getOperationsForTransaction(
 	}
 
 	return TxToOperations(tx, logs, &status), nil
+}
+
+func stringifyEvents(events []abci.Event) sdk.StringEvents {
+	res := make(sdk.StringEvents, 0, len(events))
+
+	for _, e := range events {
+		res = append(res, sdk.StringifyEvent(e))
+	}
+
+	return res
 }
