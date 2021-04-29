@@ -293,7 +293,7 @@ func (c *Client) getTransactionsForBlock(
 		0,
 	)
 
-	if len(beginBlockOps) > 0 {
+	if len(endBlockOps) > 0 {
 		transactions = append(transactions, &types.Transaction{
 			TransactionIdentifier: &types.TransactionIdentifier{
 				Hash: EndBlockTxHash(resultBlock.BlockID.Hash),
