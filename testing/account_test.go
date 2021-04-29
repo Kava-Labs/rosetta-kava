@@ -17,6 +17,7 @@ package testing
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"testing"
 
@@ -68,6 +69,10 @@ func TestAccountBalanceOnline(t *testing.T) {
 	err = asserter.AccountBalanceResponse(&types.PartialBlockIdentifier{Index: &accountBalance.BlockIdentifier.Index}, accountBalance)
 	require.NoError(t, err)
 
+	sort.Slice(accountBalance.Balances, func(i, j int) bool {
+		return accountBalance.Balances[i].Currency.Symbol < accountBalance.Balances[j].Currency.Symbol
+	})
+
 	accountBalanceByIndex, rosettaErr, err := client.AccountAPI.AccountBalance(ctx, &types.AccountBalanceRequest{
 		NetworkIdentifier: config.NetworkIdentifier,
 		AccountIdentifier: &types.AccountIdentifier{
@@ -79,6 +84,9 @@ func TestAccountBalanceOnline(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Nil(t, rosettaErr)
+	sort.Slice(accountBalanceByIndex.Balances, func(i, j int) bool {
+		return accountBalanceByIndex.Balances[i].Currency.Symbol < accountBalanceByIndex.Balances[j].Currency.Symbol
+	})
 	require.Equal(t, accountBalance, accountBalanceByIndex)
 
 	accountBalanceByHash, rosettaErr, err := client.AccountAPI.AccountBalance(ctx, &types.AccountBalanceRequest{
@@ -92,6 +100,9 @@ func TestAccountBalanceOnline(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Nil(t, rosettaErr)
+	sort.Slice(accountBalanceByHash.Balances, func(i, j int) bool {
+		return accountBalanceByHash.Balances[i].Currency.Symbol < accountBalanceByHash.Balances[j].Currency.Symbol
+	})
 	require.Equal(t, accountBalance, accountBalanceByHash)
 
 	block, err := rpc.Block(&accountBalance.BlockIdentifier.Index)
