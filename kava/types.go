@@ -28,32 +28,37 @@ import (
 const (
 	// NodeVersion is the version of kvd we are using
 	NodeVersion = "v0.14.1"
-
 	// Blockchain is always Kava
 	Blockchain = "Kava"
-
 	// HistoricalBalanceSupported is whether historical balance is supported.
 	HistoricalBalanceSupported = true
-
-	// SuccessStatus is the status of any
-	// Kava operation considered successful.
-	SuccessStatus = "SUCCESS"
-
-	// FailureStatus is the status of any
-	// Kava operation considered unsuccessful.
-	FailureStatus = "FAILURE"
-
 	// IncludeMempoolCoins does not apply to rosetta-kava as it is not UTXO-based.
 	IncludeMempoolCoins = false
 
+	// SuccessStatus is the status of any
+	// Kava operation considered successful.
+	SuccessStatus = "success"
+	// FailureStatus is the status of any
+	// Kava operation considered unsuccessful.
+	FailureStatus = "failure"
+
 	// FeeOpType is used to reference fee operations
-	FeeOpType = "FEE"
-
+	FeeOpType = "fee"
 	// TransferOpType is used to reference transfer operations
-	TransferOpType = "TRANSFER"
-
+	TransferOpType = "transfer"
 	// MintOpType is used to reference mint operations
-	MintOpType = "MINT"
+	MintOpType = "mint"
+
+	// AccDelegated represents delgated spendable coins
+	AccDelegated = "delegated"
+	// AccUnbonding represents unbonding spendable coins
+	AccUnbonding = "unbonding"
+	// AccVesting represents vesting (non-spendable) coins
+	AccVesting = "vesting"
+	// AccVestingDelegated represents vesting coins that are delegated
+	AccVestingDelegated = "vesting_delegated"
+	// AccVestingUnbonding represents vesting coins that are unbonding
+	AccVestingUnbonding = "vesting_unbonding"
 )
 
 var (
