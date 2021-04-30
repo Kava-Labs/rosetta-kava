@@ -50,9 +50,9 @@ const (
 	MintOpType = "mint"
 
 	// AccDelegated represents delgated spendable coins
-	AccDelegated = "delegated"
+	AccLiquidDelegated = "liquid_delegated"
 	// AccUnbonding represents unbonding spendable coins
-	AccUnbonding = "unbonding"
+	AccLiquidUnbonding = "liquid_unbonding"
 	// AccVesting represents vesting (non-spendable) coins
 	AccVesting = "vesting"
 	// AccVestingDelegated represents vesting coins that are delegated
