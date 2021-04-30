@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,8 +28,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank"
+	kava "github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -51,6 +55,32 @@ func makeTestAccount(t *testing.T) *authtypes.BaseAccount {
 		),
 		AccountNumber: 2,
 		Sequence:      5,
+	}
+}
+
+func makeEmptyTestAccount(t *testing.T) *authtypes.BaseAccount {
+	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
+	require.NoError(t, err)
+
+	return &authtypes.BaseAccount{
+		Address:       addr,
+		Coins:         sdk.NewCoins(),
+		AccountNumber: 3,
+		Sequence:      6,
+	}
+}
+
+func makePartialTestAccount(t *testing.T) *authtypes.BaseAccount {
+	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
+	require.NoError(t, err)
+
+	return &authtypes.BaseAccount{
+		Address: addr,
+		Coins: sdk.NewCoins(
+			sdk.NewCoin("hard", sdk.NewInt(10)),
+		),
+		AccountNumber: 4,
+		Sequence:      7,
 	}
 }
 
@@ -591,7 +621,68 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 	assert.NotNil(t, getBalance(accountResponse.Balances, "USDX"))
 }
 
-func TestBlock(t *testing.T) {
+func TestBalance_DefaultZeroCurrency(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient := &mocks.Client{}
+	client, err := NewClient(mockRPCClient)
+	require.NoError(t, err)
+
+	emptyTestAccount := makeEmptyTestAccount(t)
+	partialTestAccount := makePartialTestAccount(t)
+
+	block := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(block.Hash)
+	require.NoError(t, err)
+
+	mockRPCClient.On("Block", (*int64)(nil)).Return(
+		&ctypes.ResultBlock{
+			BlockID: tmtypes.BlockID{
+				Hash: hashBytes,
+			},
+			Block: &tmtypes.Block{
+				Header: tmtypes.Header{
+					Height: block.Index,
+					Time:   blockTime,
+				},
+			},
+		},
+		nil,
+	)
+
+	mockRPCClient.On("Account", emptyTestAccount.Address, block.Index).Return(
+		emptyTestAccount,
+		nil,
+	).Once()
+
+	// test that empty account returns supported coins with zero balances
+	acc := &types.AccountIdentifier{Address: emptyTestAccount.Address.String()}
+	accountResponse, err := client.Balance(ctx, acc, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, len(accountResponse.Balances), 3)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "KAVA").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
+
+	mockRPCClient.On("Account", partialTestAccount.Address, block.Index).Return(
+		partialTestAccount,
+		nil,
+	).Once()
+
+	// test that partial account returns zero balances for unspecified coins
+	acc = &types.AccountIdentifier{Address: partialTestAccount.Address.String()}
+	accountResponse, err = client.Balance(ctx, acc, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, len(accountResponse.Balances), 3)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "KAVA").Value)
+	assert.NotEqual(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
+}
+
+func TestBlock_Info_NoTransactions(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient := &mocks.Client{}
 	client, err := NewClient(mockRPCClient)
@@ -654,11 +745,17 @@ func TestBlock(t *testing.T) {
 		nil,
 	).Once()
 
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+		&ctypes.ResultBlockResults{},
+		nil,
+	)
+
 	blockResponse, err := client.Block(ctx, nil)
 	require.NoError(t, err)
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Equal(t, parentBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
 	assert.Equal(t, blockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
+	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("Block", (*int64)(nil)).Return(
@@ -685,6 +782,7 @@ func TestBlock(t *testing.T) {
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Equal(t, parentBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
 	assert.Equal(t, blockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
+	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("Block", &blockIdentifier.Index).Return(
@@ -716,6 +814,7 @@ func TestBlock(t *testing.T) {
 	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Equal(t, parentBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
 	assert.Equal(t, blockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
+	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("BlockByHash", hashBytes).Return(
@@ -737,6 +836,11 @@ func TestBlock(t *testing.T) {
 		nil,
 	).Once()
 
+	mockRPCClient.On("BlockResults", &genesisBlockIdentifier.Index).Return(
+		&ctypes.ResultBlockResults{},
+		nil,
+	)
+
 	blockResponse, err = client.Block(
 		ctx,
 		&types.PartialBlockIdentifier{
@@ -747,6 +851,7 @@ func TestBlock(t *testing.T) {
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
 	assert.Equal(t, genesisBlockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
+	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	mockRPCClient.On("BlockByHash", genesisHashBytes).Return(
@@ -764,6 +869,7 @@ func TestBlock(t *testing.T) {
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.BlockIdentifier)
 	assert.Equal(t, genesisBlockIdentifier, blockResponse.Block.ParentBlockIdentifier)
 	assert.Equal(t, genesisBlockTime.UnixNano()/int64(1e6), blockResponse.Block.Timestamp)
+	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
 	invalidHash := "invalid hash"
@@ -775,4 +881,158 @@ func TestBlock(t *testing.T) {
 	)
 	assert.Nil(t, blockResponse)
 	assert.Contains(t, err.Error(), "invalid byte")
+}
+
+func TestBlock_Transactions(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient := &mocks.Client{}
+	client, err := NewClient(mockRPCClient)
+	require.NoError(t, err)
+
+	cdc := kava.MakeCodec()
+
+	mockTx1 := &authtypes.StdTx{
+		Msgs: []sdk.Msg{
+			bank.MsgSend{
+				FromAddress: sdk.AccAddress("test from address"),
+				ToAddress:   sdk.AccAddress("test to address"),
+				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(100))},
+			},
+		},
+		Fee: authtypes.StdFee{
+			Amount: sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}},
+			Gas:    100000,
+		},
+		Memo: "mock transaction 1",
+	}
+	var rawMockTx1 tmtypes.Tx
+	rawMockTx1, err = cdc.MarshalBinaryLengthPrefixed(&mockTx1)
+	require.NoError(t, err)
+	mockDeliverTx1 := &abci.ResponseDeliverTx{
+		Code: 0,
+		Log: sdk.ABCIMessageLogs{
+			sdk.NewABCIMessageLog(0, "", []sdk.Event{}),
+		}.String(),
+	}
+
+	mockTx2 := &authtypes.StdTx{
+		Msgs: []sdk.Msg{
+			bank.MsgSend{
+				FromAddress: sdk.AccAddress("test from address"),
+				ToAddress:   sdk.AccAddress("test to address"),
+				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
+			},
+			bank.MsgSend{
+				FromAddress: sdk.AccAddress("test from address"),
+				ToAddress:   sdk.AccAddress("test to address"),
+				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
+			},
+		},
+		Fee: authtypes.StdFee{
+			Amount: sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(10000)}},
+			Gas:    200000,
+		},
+		Memo: "mock transaction 2",
+	}
+	var rawMockTx2 tmtypes.Tx
+	rawMockTx2, err = cdc.MarshalBinaryLengthPrefixed(&mockTx2)
+	require.NoError(t, err)
+	mockDeliverTx2 := &abci.ResponseDeliverTx{
+		Code: 1,
+		Log: sdk.ABCIMessageLogs{
+			sdk.NewABCIMessageLog(0, "", []sdk.Event{}),
+			sdk.NewABCIMessageLog(1, "", []sdk.Event{}),
+		}.String(),
+	}
+
+	parentBlockIdentifier := &types.BlockIdentifier{
+		Index: 99,
+		Hash:  "8EA67B6F7927DB941F86501D1757AC6804C1D21B7A75B9DA3F16A3C81C397E50",
+	}
+	parentHashBytes, err := hex.DecodeString(parentBlockIdentifier.Hash)
+	require.NoError(t, err)
+
+	blockIdentifier := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(blockIdentifier.Hash)
+	require.NoError(t, err)
+
+	mockRawTransactions := []tmtypes.Tx{rawMockTx1, rawMockTx2}
+	mockResultBlock := &ctypes.ResultBlock{
+		BlockID: tmtypes.BlockID{
+			Hash: hashBytes,
+		},
+		Block: &tmtypes.Block{
+			Header: tmtypes.Header{
+				Height: blockIdentifier.Index,
+				Time:   blockTime,
+				LastBlockID: tmtypes.BlockID{
+					Hash: parentHashBytes,
+				},
+			},
+			Data: tmtypes.Data{
+				Txs: mockRawTransactions,
+			},
+		},
+	}
+
+	mockDeliverTxs := []*abci.ResponseDeliverTx{mockDeliverTx1, mockDeliverTx2}
+	mockResultBlockResults := &ctypes.ResultBlockResults{
+		TxsResults:       mockDeliverTxs,
+		BeginBlockEvents: []abci.Event{abci.Event{}},
+		EndBlockEvents:   []abci.Event{abci.Event{}},
+	}
+
+	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
+
+	blockResponse, err := client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(blockResponse.Block.Transactions))
+
+	for i, tx := range blockResponse.Block.Transactions {
+		mockRawTx := mockRawTransactions[i]
+		mockDeliverTx := mockDeliverTxs[i]
+
+		expectedHash := strings.ToUpper(hex.EncodeToString(mockRawTx.Hash()))
+		assert.Equal(t, expectedHash, tx.TransactionIdentifier.Hash)
+
+		assert.Greater(t, len(tx.Operations), 1)
+
+		for index, operation := range tx.Operations {
+			currentIndex := int64(index)
+			assert.Equal(t, currentIndex, operation.OperationIdentifier.Index)
+
+			if mockDeliverTx.Code == 0 || operation.Type == FeeOpType {
+				assert.Equal(t, SuccessStatus, *operation.Status)
+			} else {
+				assert.Equal(t, FailureStatus, *operation.Status)
+			}
+
+			for _, relatedOperation := range operation.RelatedOperations {
+				assert.Greater(t, currentIndex, relatedOperation.Index)
+			}
+		}
+	}
+
+	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	rpcErr := errors.New("block results error")
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(nil, rpcErr).Once()
+
+	blockResponse, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	assert.Nil(t, blockResponse)
+	assert.Error(t, err)
+	assert.Equal(t, rpcErr, err)
+
+	badTx := tmtypes.Tx("invalid tx")
+	mockResultBlock.Block.Data.Txs = []tmtypes.Tx{badTx}
+	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
+
+	assert.Panics(t, func() {
+		_, _ = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	})
 }

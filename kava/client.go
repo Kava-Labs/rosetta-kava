@@ -17,11 +17,16 @@ package kava
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
+	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
@@ -36,12 +41,16 @@ func init() {
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
 	rpc RPCClient
+	cdc *codec.Codec
 }
 
 // NewClient initialized a new Client with the provided rpc client
 func NewClient(rpc RPCClient) (*Client, error) {
+	cdc := kava.MakeCodec()
+
 	return &Client{
 		rpc: rpc,
+		cdc: cdc,
 	}, nil
 }
 
@@ -144,14 +153,12 @@ func (c *Client) Balance(
 	}
 
 	balances := []*types.Amount{}
-	for _, coin := range spendableCoins {
-		currency, ok := currencyLookup[coin.Denom]
-		if !ok {
-			continue
-		}
+
+	for denom, currency := range currencyLookup {
+		spendableValue := spendableCoins.AmountOf(denom)
 
 		balances = append(balances, &types.Amount{
-			Value:    coin.Amount.String(),
+			Value:    spendableValue.String(),
 			Currency: currency,
 		})
 	}
@@ -191,12 +198,19 @@ func (c *Client) Block(
 		}
 	}
 
+	deliverResults, err := c.rpc.BlockResults(&height)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := c.getTransactionsForBlock(block, deliverResults)
+
 	return &types.BlockResponse{
 		Block: &types.Block{
 			BlockIdentifier:       identifier,
 			ParentBlockIdentifier: parentIdentifier,
 			Timestamp:             block.Block.Header.Time.UnixNano() / int64(1e6),
-			Transactions:          []*types.Transaction{},
+			Transactions:          transactions,
 		},
 	}, nil
 }
@@ -219,4 +233,98 @@ func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (
 	}
 
 	return
+}
+
+func (c *Client) getTransactionsForBlock(
+	resultBlock *ctypes.ResultBlock,
+	resultBlockResults *ctypes.ResultBlockResults,
+) []*types.Transaction {
+	// returns transactions -- this will be number of txs + begin/end block (if there)
+	transactions := []*types.Transaction{}
+
+	// TODO: vesting account operations (must be before being blocker operations)
+	//	add them before begin blocker ops, and pass updated index to op method
+
+	beginBlockOps := EventsToOperations(
+		stringifyEvents(resultBlockResults.BeginBlockEvents),
+		0, // TODO: update index to be after vesting ops
+	)
+
+	if len(beginBlockOps) > 0 {
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: BeginBlockTxHash(resultBlock.BlockID.Hash),
+			},
+			Operations: beginBlockOps,
+		})
+	}
+
+	// transaction loop
+	for i, rawTx := range resultBlock.Block.Data.Txs {
+		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
+
+		var tx authtypes.StdTx
+		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
+		if err != nil {
+			panic(fmt.Sprintf(
+				"unable to unmarshal transaction at index %d of block %d: %s",
+				i, resultBlock.Block.Header.Height, err,
+			))
+		}
+
+		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: hash,
+			},
+			Operations: operations,
+		})
+	}
+
+	endBlockOps := EventsToOperations(
+		stringifyEvents(resultBlockResults.EndBlockEvents),
+		0,
+	)
+
+	if len(endBlockOps) > 0 {
+		transactions = append(transactions, &types.Transaction{
+			TransactionIdentifier: &types.TransactionIdentifier{
+				Hash: EndBlockTxHash(resultBlock.BlockID.Hash),
+			},
+			Operations: endBlockOps,
+		})
+	}
+
+	return transactions
+}
+
+func (c *Client) getOperationsForTransaction(
+	tx *authtypes.StdTx,
+	result *abci.ResponseDeliverTx,
+) []*types.Operation {
+	var status string
+
+	if result.Code == abci.CodeTypeOK {
+		status = SuccessStatus
+	} else {
+		status = FailureStatus
+	}
+
+	logs, err := sdk.ParseABCILogs(result.Log)
+	if err != nil {
+		logs = sdk.ABCIMessageLogs{}
+	}
+
+	return TxToOperations(tx, logs, &status)
+}
+
+func stringifyEvents(events []abci.Event) sdk.StringEvents {
+	res := make(sdk.StringEvents, 0, len(events))
+
+	for _, e := range events {
+		res = append(res, sdk.StringifyEvent(e))
+	}
+
+	return res
 }

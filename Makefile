@@ -20,7 +20,11 @@ build:
 
 .PHONY: run
 run:
-	MODE=online NETWORK=kava-7 PORT=8000 KAVA_RPC_URL=https://rpc.kava.io:443 go run . run
+	MODE=online NETWORK=kava-7 PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
+
+.PHONY: run-local
+run-local:
+	MODE=online NETWORK=kava-localnet PORT=8000 KAVA_RPC_URL=http://localhost:26657 go run . run
 
 .PHONY: test
 test:
@@ -44,6 +48,14 @@ watch:
 watch-integration:
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration ./testing; done
 
+.PHONY: rosetta-check-data
+rosetta-check-data:
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-7/config.json check:data
+
+.PHONY: rosetta-check-data-local
+rosetta-check-data-local:
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-localnet/config.json check:data
+
 .PHONY: gen-mocks
 gen-mocks:
 	mockery --dir services --all --case underscore --outpkg services --output mocks/services;
@@ -63,4 +75,4 @@ validate-swagger:
 
 .PHONY: run-swagger
 run-swagger:
-	docker run -p 8080:8080 -e SWAGGER_JSON=/spec/api.yaml -v $(PWD)/swagger:/spec swaggerapi/swagger-ui
+	docker run -p 8081:8080 -e SWAGGER_JSON=/spec/api.yaml -v $(PWD)/swagger:/spec swaggerapi/swagger-ui

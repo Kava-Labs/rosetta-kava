@@ -19,7 +19,6 @@ package kava
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
@@ -46,12 +45,23 @@ const (
 
 	// IncludeMempoolCoins does not apply to rosetta-kava as it is not UTXO-based.
 	IncludeMempoolCoins = false
+
+	// FeeOpType is used to reference fee operations
+	FeeOpType = "FEE"
+
+	// TransferOpType is used to reference transfer operations
+	TransferOpType = "TRANSFER"
+
+	// MintOpType is used to reference mint operations
+	MintOpType = "MINT"
 )
 
 var (
 	// OperationTypes are all suppoorted operation types.
 	OperationTypes = []string{
-		"noop", // TODO: temp to satisfy asserter until we support operations
+		FeeOpType,
+		TransferOpType,
+		MintOpType,
 	}
 
 	// OperationStatuses are all supported operation statuses.
