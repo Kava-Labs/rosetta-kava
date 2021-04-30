@@ -136,6 +136,21 @@ func (c *Client) Balance(
 	}
 
 	spendableCoins := acc.SpendableCoins(block.Block.Header.Time)
+	balances := c.getBalancesAndFilterByCurrency(spendableCoins, currencies)
+
+	return &types.AccountBalanceResponse{
+		BlockIdentifier: &types.BlockIdentifier{
+			Index: block.Block.Header.Height,
+			Hash:  block.BlockID.Hash.String(),
+		},
+		Balances: balances,
+	}, nil
+}
+
+func (c *Client) getBalancesAndFilterByCurrency(
+	coins sdk.Coins,
+	currencies []*types.Currency,
+) []*types.Amount {
 	var currencyLookup map[string]*types.Currency
 
 	if currencies == nil {
@@ -155,21 +170,15 @@ func (c *Client) Balance(
 	balances := []*types.Amount{}
 
 	for denom, currency := range currencyLookup {
-		spendableValue := spendableCoins.AmountOf(denom)
+		value := coins.AmountOf(denom)
 
 		balances = append(balances, &types.Amount{
-			Value:    spendableValue.String(),
+			Value:    value.String(),
 			Currency: currency,
 		})
 	}
 
-	return &types.AccountBalanceResponse{
-		BlockIdentifier: &types.BlockIdentifier{
-			Index: block.Block.Header.Height,
-			Hash:  block.BlockID.Hash.String(),
-		},
-		Balances: balances,
-	}, nil
+	return balances
 }
 
 // Block returns rosetta block for an index or hash
