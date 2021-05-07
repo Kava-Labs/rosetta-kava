@@ -30,27 +30,21 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-func init() {
-	// bootstrap cosmos-sdk config for kava chain
-	kavaConfig := sdk.GetConfig()
-	kava.SetBech32AddressPrefixes(kavaConfig)
-	kava.SetBip44CoinType(kavaConfig)
-	kavaConfig.Seal()
-}
-
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
-	rpc RPCClient
-	cdc *codec.Codec
+	rpc            RPCClient
+	cdc            *codec.Codec
+	balanceFactory BalanceServiceFactory
 }
 
 // NewClient initialized a new Client with the provided rpc client
-func NewClient(rpc RPCClient) (*Client, error) {
+func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
 	cdc := kava.MakeCodec()
 
 	return &Client{
-		rpc: rpc,
-		cdc: cdc,
+		rpc:            rpc,
+		cdc:            cdc,
+		balanceFactory: balanceServiceFactory,
 	}, nil
 }
 
@@ -130,13 +124,17 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	acc, err := c.rpc.Account(addr, block.Block.Header.Height)
+	balanceService, err := c.balanceFactory(addr, &block.Block.Header)
 	if err != nil {
 		return nil, err
 	}
 
-	spendableCoins := acc.SpendableCoins(block.Block.Header.Time)
-	balances := c.getBalancesAndFilterByCurrency(spendableCoins, currencies)
+	coins, err := balanceService.GetCoinsForSubAccount(accountIdentifier.SubAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	balances := c.getBalancesAndFilterByCurrency(coins, currencies)
 
 	return &types.AccountBalanceResponse{
 		BlockIdentifier: &types.BlockIdentifier{

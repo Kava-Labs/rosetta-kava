@@ -1,8 +1,7 @@
 // Copyright 2021 Kava Labs, Inc.
 // Copyright 2020 Coinbase, Inc.
 //
-// Derived from github.com/coinbase/rosetta-ethereum@f81889b
-//
+// Derived from github.com/coinbase/rosetta-ethereum@f81889b //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -21,6 +20,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -49,6 +49,8 @@ const (
 	// MintOpType is used to reference mint operations
 	MintOpType = "mint"
 
+	// AccLiquid represents spendable coins
+	AccLiquid = "liquid"
 	// AccDelegated represents delgated spendable coins
 	AccLiquidDelegated = "liquid_delegated"
 	// AccUnbonding represents unbonding spendable coins
@@ -117,4 +119,6 @@ type RPCClient interface {
 
 	BlockByHash([]byte) (*ctypes.ResultBlock, error)
 	Account(addr sdk.AccAddress, height int64) (authexported.Account, error)
+	Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error)
+	UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error)
 }
