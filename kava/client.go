@@ -69,7 +69,6 @@ func (c *Client) Status(ctx context.Context) (
 	syncInfo := resultStatus.SyncInfo
 	tmPeers := resultNetInfo.Peers
 
-	// TODO: update when indexer is implemented
 	currentBlock := &types.BlockIdentifier{
 		Index: syncInfo.LatestBlockHeight,
 		Hash:  syncInfo.LatestBlockHash.String(),
@@ -82,7 +81,6 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	synced := !syncInfo.CatchingUp
-	// TODO: update when indexer is implemented
 	syncStatus := &types.SyncStatus{
 		CurrentIndex: &syncInfo.LatestBlockHeight,
 		TargetIndex:  &syncInfo.LatestBlockHeight,
@@ -249,12 +247,9 @@ func (c *Client) getTransactionsForBlock(
 	// returns transactions -- this will be number of txs + begin/end block (if there)
 	transactions := []*types.Transaction{}
 
-	// TODO: vesting account operations (must be before being blocker operations)
-	//	add them before begin blocker ops, and pass updated index to op method
-
 	beginBlockOps := EventsToOperations(
 		stringifyEvents(resultBlockResults.BeginBlockEvents),
-		0, // TODO: update index to be after vesting ops
+		0,
 	)
 
 	if len(beginBlockOps) > 0 {
