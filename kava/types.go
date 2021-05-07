@@ -87,7 +87,32 @@ var (
 	CallMethods = []string{}
 
 	// BalanceExemptions lists sub-accounts that are balance exempt
-	BalanceExemptions = []*types.BalanceExemption{}
+	BalanceExemptions = []*types.BalanceExemption{
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccLiquid),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccVesting),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccLiquidDelegated),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccVestingDelegated),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccLiquidUnbonding),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccVestingUnbonding),
+			ExemptionType:     types.BalanceDynamic,
+		},
+	}
 )
 
 // Currencies represents supported kava denom to rosetta currencies
@@ -121,4 +146,8 @@ type RPCClient interface {
 	Account(addr sdk.AccAddress, height int64) (authexported.Account, error)
 	Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error)
 	UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error)
+}
+
+func strToPtr(s string) *string {
+	return &s
 }
