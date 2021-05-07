@@ -17,12 +17,10 @@ package kava_test
 import (
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,13 +67,6 @@ func newPartialTestAccount(t *testing.T) *authtypes.BaseAccount {
 		AccountNumber: 4,
 		Sequence:      7,
 	}
-}
-
-func newTestVestingAccount(t *testing.T, endTime time.Time) *vestingtypes.DelayedVestingAccount {
-	baseAccount := newTestAccount(t)
-	vestingAccount := vestingtypes.NewDelayedVestingAccount(baseAccount, endTime.Unix())
-
-	return vestingAccount
 }
 
 func getBalance(balances []*types.Amount, symbol string) *types.Amount {

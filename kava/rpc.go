@@ -155,6 +155,7 @@ func (c *HTTPClient) abciQuery(path string, data bytes.HexBytes, height int64) (
 	return ParseABCIResult(result, err)
 }
 
+// ParseABCIResult returns the Value of a ABCI Query
 func ParseABCIResult(result *ctypes.ResultABCIQuery, err error) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err

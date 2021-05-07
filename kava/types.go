@@ -51,9 +51,9 @@ const (
 
 	// AccLiquid represents spendable coins
 	AccLiquid = "liquid"
-	// AccDelegated represents delgated spendable coins
+	// AccLiquidDelegated represents delgated spendable coins
 	AccLiquidDelegated = "liquid_delegated"
-	// AccUnbonding represents unbonding spendable coins
+	// AccLiquidUnbonding represents unbonding spendable coins
 	AccLiquidUnbonding = "liquid_unbonding"
 	// AccVesting represents vesting (non-spendable) coins
 	AccVesting = "vesting"

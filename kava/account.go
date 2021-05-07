@@ -11,14 +11,14 @@ import (
 
 const stakingDenom = "ukava"
 
-// BalanceService provides an interface fetch a balance from an account subtype
+// AccountBalanceService provides an interface fetch a balance from an account subtype
 type AccountBalanceService interface {
 	GetCoinsForSubAccount(
 		subAccount *types.SubAccountIdentifier,
 	) (sdk.Coins, error)
 }
 
-// BalanceFactory provides an interface for creating a balance service for specifc a account and block
+// BalanceServiceFactory provides an interface for creating a balance service for specifc a account and block
 type BalanceServiceFactory func(addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error)
 
 // NewRPCBalanceFactory returns a balance service factory that uses an RPCClient to get an accounts balance
@@ -197,9 +197,9 @@ func sumUnbondingDelegations(unbondingDelegations staking.UnbondingDelegations) 
 
 	if totalBalance.GT(sdk.ZeroInt()) {
 		return sdk.NewCoins(newKavaCoin(totalBalance))
-	} else {
-		return sdk.Coins{}
 	}
+
+	return sdk.Coins{}
 }
 
 func newKavaCoin(amount sdk.Int) sdk.Coin {
