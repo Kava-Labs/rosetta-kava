@@ -377,10 +377,6 @@ components:
           endpoint.
         type: object
         properties:
-          address:
-            type: string
-            description: |
-              [DEPRECATED by `account_identifier` in `v1.4.4`] Address in network-specific format.
           account_identifier:
             $ref: '#/components/schemas/AccountIdentifier'
           metadata:
