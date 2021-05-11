@@ -46,7 +46,7 @@ watch:
 
 .PHONY: watch-integration
 watch-integration:
-	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration ./testing; done
+	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration -count=1 ./testing; done
 
 .PHONY: rosetta-check-data
 rosetta-check-data:

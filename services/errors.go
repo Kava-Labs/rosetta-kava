@@ -50,6 +50,12 @@ var (
 		Code:    2,
 		Message: "Kava error",
 	}
+
+	// ErrNoOperations is return when no operations are provided
+	ErrNoOperations = &types.Error{
+		Code:    3,
+		Message: "No operations provided",
+	}
 )
 
 // wrapErr adds details to the types.Error provided. We use a function

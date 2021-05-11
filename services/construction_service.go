@@ -50,15 +50,6 @@ func (s *ConstructionAPIService) ConstructionDerive(
 	return nil, ErrUnimplemented
 }
 
-// ConstructionPreprocess implements the /construction/preprocess
-// endpoint.
-func (s *ConstructionAPIService) ConstructionPreprocess(
-	ctx context.Context,
-	request *types.ConstructionPreprocessRequest,
-) (*types.ConstructionPreprocessResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
 // ConstructionMetadata implements the /construction/metadata endpoint.
 func (s *ConstructionAPIService) ConstructionMetadata(
 	ctx context.Context,
