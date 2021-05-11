@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupServicer() *ConstructionAPIService {
+func setupContructionAPIServicer() *ConstructionAPIService {
 	cfg := &configuration.Configuration{
 		Mode: configuration.Offline,
 	}
@@ -43,7 +43,7 @@ func strToPtr(value string) *string {
 	return &value
 }
 
-func validRequest() *types.ConstructionPreprocessRequest {
+func validConstructionPreprocessRequest() *types.ConstructionPreprocessRequest {
 	defaultOps := []*types.Operation{
 		{
 			OperationIdentifier: &types.OperationIdentifier{Index: 0},
@@ -67,7 +67,7 @@ func validRequest() *types.ConstructionPreprocessRequest {
 }
 
 func TestConstructionPreprocess_NoOperations(t *testing.T) {
-	servicer := setupServicer()
+	servicer := setupContructionAPIServicer()
 
 	ctx := context.Background()
 	response, err := servicer.ConstructionPreprocess(ctx,
@@ -91,7 +91,7 @@ func TestConstructionPreprocess_NoOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
-	servicer := setupServicer()
+	servicer := setupContructionAPIServicer()
 
 	testCases := []struct {
 		suggestedFeeMultiplier *float64
@@ -125,7 +125,7 @@ func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		request := validRequest()
+		request := validConstructionPreprocessRequest()
 
 		request.SuggestedFeeMultiplier = tc.suggestedFeeMultiplier
 
@@ -140,7 +140,7 @@ func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
 }
 
 func TestConstructionPreprocess_Memo(t *testing.T) {
-	servicer := setupServicer()
+	servicer := setupContructionAPIServicer()
 
 	testCases := []struct {
 		memo *string
@@ -161,7 +161,7 @@ func TestConstructionPreprocess_Memo(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		request := validRequest()
+		request := validConstructionPreprocessRequest()
 
 		if tc.memo != nil {
 			request.Metadata["memo"] = *tc.memo
