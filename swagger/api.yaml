@@ -200,6 +200,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+/construction/derive:
+  post:
+    summary: Derive an AccountIdentifier from a PublicKey
+    description: |
+      Derive returns the AccountIdentifier associated with a public key.
+      Blockchains that require an on-chain action to create an
+      account should not implement this method.
+    operationId: constructionDerive
+    tags:
+      - Construction
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConstructionDeriveRequest'
+    responses:
+      '200':
+        description: Expected response to a valid request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConstructionDeriveResponse'
+      '500':
+        description: unexpected error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
 components:
   schemas:
     # Identifiers
@@ -322,6 +352,39 @@ components:
           type: object
           example:
             sequence_number: 23
+    ConstructionDeriveRequest:
+      description: |
+        ConstructionDeriveRequest is passed to the `/construction/derive`
+        endpoint. Network is provided in the request because some blockchains
+        have different address formats for different networks.
+        Metadata is provided in the request because some blockchains
+        allow for multiple address types (i.e. different address
+        for validators vs normal accounts).
+      type: object
+      required:
+        - network_identifier
+        - public_key
+      properties:
+        network_identifier:
+          $ref: '#/components/schemas/NetworkIdentifier'
+        public_key:
+          $ref: '#/components/schemas/PublicKey'
+        metadata:
+          type: object
+      ConstructionDeriveResponse:
+        description: |
+          ConstructionDeriveResponse is returned by the `/construction/derive`
+          endpoint.
+        type: object
+        properties:
+          address:
+            type: string
+            description: |
+              [DEPRECATED by `account_identifier` in `v1.4.4`] Address in network-specific format.
+          account_identifier:
+            $ref: '#/components/schemas/AccountIdentifier'
+          metadata:
+            type: object
     MetadataRequest:
       description: |
         A MetadataRequest is utilized in any request where
