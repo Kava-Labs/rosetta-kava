@@ -19,18 +19,20 @@ package services
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 const defaultSuggestedFeeMultiplier = float64(1)
 
-// ConstructionPreprocess implements the /construction/preprocess
-// endpoint.
+// ConstructionPreprocess implements the /construction/preprocess endpoint.
 func (s *ConstructionAPIService) ConstructionPreprocess(
 	ctx context.Context,
 	request *types.ConstructionPreprocessRequest,
@@ -39,12 +41,23 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 		return nil, ErrNoOperations
 	}
 
-	encodedMaxFee, err := getMaxFeeAndEncodeOption(request.MaxFee, s.cdc)
+	msgs, rerr := parseOperationMsgs(request.Operations)
+	if rerr != nil {
+		return nil, rerr
+	}
+
+	encodedMsgs, err := s.cdc.MarshalJSON(msgs)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(ErrKava, err)
+	}
+
+	encodedMaxFee, rerr := getMaxFeeAndEncodeOption(request.MaxFee, s.cdc)
+	if rerr != nil {
+		return nil, rerr
 	}
 
 	options := map[string]interface{}{
+		"msgs":                     string(encodedMsgs),
 		"suggested_fee_multiplier": suggestedMultiplerOrDefault(request.SuggestedFeeMultiplier),
 		"memo":                     getMemoFromMetadata(request.Metadata),
 	}
@@ -55,6 +68,55 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 	return &types.ConstructionPreprocessResponse{
 		Options: options,
 	}, nil
+}
+
+func parseOperationMsgs(ops []*types.Operation) ([]sdk.Msg, *types.Error) {
+	if len(ops) != 2 {
+		return nil, wrapErr(ErrUnclearIntent, errors.New("invalid number of operations, expected 2"))
+	}
+
+	sendMsg := bank.MsgSend{}
+
+	for _, op := range ops {
+		if op.Type != kava.TransferOpType {
+			return nil, wrapErr(ErrUnclearIntent, fmt.Errorf("invalid opeartion type, only '%s' allowed", kava.TransferOpType))
+		}
+
+		value, err := types.AmountValue(op.Amount)
+		if err != nil {
+			return nil, ErrInvalidCurrencyAmount
+		}
+
+		if value.Sign() == 0 {
+			return nil, ErrInvalidCurrencyAmount
+		}
+
+		if value.Sign() > 0 {
+			to, err := getAddressFromAccount(op.Account)
+			if err != nil {
+				return nil, err
+			}
+
+			sendMsg.ToAddress = to
+
+			coin, err := amountToCoin(op.Amount)
+			if err != nil {
+				return nil, ErrInvalidCurrencyAmount
+			}
+			sendMsg.Amount = sdk.NewCoins(coin)
+		}
+
+		if value.Sign() < 0 {
+			from, err := getAddressFromAccount(op.Account)
+			if err != nil {
+				return nil, err
+			}
+
+			sendMsg.FromAddress = from
+		}
+	}
+
+	return []sdk.Msg{sendMsg}, nil
 }
 
 func suggestedMultiplerOrDefault(multiplier *float64) float64 {
@@ -82,27 +144,11 @@ func getMaxFeeAndEncodeOption(amounts []*types.Amount, cdc *codec.Codec) (*strin
 
 	var maxFee sdk.Coins
 	for _, feeAmount := range amounts {
-		value, ok := sdk.NewIntFromString(feeAmount.Value)
-		if !ok {
-			return nil, ErrInvalidCurrencyAmount
+		coin, err := amountToCoin(feeAmount)
+		if err != nil {
+			return nil, err
 		}
-
-		denom, ok := kava.Denoms[feeAmount.Currency.Symbol]
-		if !ok {
-			return nil, ErrUnsupportedCurrency
-		}
-
-		currency, ok := kava.Currencies[denom]
-		if !ok {
-			return nil, ErrUnsupportedCurrency
-		}
-
-		if currency.Symbol != feeAmount.Currency.Symbol ||
-			currency.Decimals != feeAmount.Currency.Decimals {
-			return nil, ErrUnsupportedCurrency
-		}
-
-		maxFee = maxFee.Add(sdk.NewCoin(denom, value))
+		maxFee = maxFee.Add(coin)
 	}
 
 	b, err := cdc.MarshalJSON(maxFee)
@@ -112,4 +158,41 @@ func getMaxFeeAndEncodeOption(amounts []*types.Amount, cdc *codec.Codec) (*strin
 
 	encodedMaxFee := string(b)
 	return &encodedMaxFee, nil
+}
+
+func amountToCoin(amount *types.Amount) (sdk.Coin, *types.Error) {
+	value, ok := sdk.NewIntFromString(amount.Value)
+	if !ok {
+		return sdk.Coin{}, ErrInvalidCurrencyAmount
+	}
+
+	denom, ok := kava.Denoms[amount.Currency.Symbol]
+	if !ok {
+		return sdk.Coin{}, ErrUnsupportedCurrency
+	}
+
+	currency, ok := kava.Currencies[denom]
+	if !ok {
+		return sdk.Coin{}, ErrUnsupportedCurrency
+	}
+
+	if currency.Symbol != amount.Currency.Symbol ||
+		currency.Decimals != amount.Currency.Decimals {
+		return sdk.Coin{}, ErrUnsupportedCurrency
+	}
+
+	return sdk.NewCoin(denom, value), nil
+}
+
+func getAddressFromAccount(account *types.AccountIdentifier) (sdk.AccAddress, *types.Error) {
+	if account == nil || account.Address == "" {
+		return nil, ErrInvalidAddress
+	}
+
+	addr, err := sdk.AccAddressFromBech32(account.Address)
+	if err != nil {
+		return nil, ErrInvalidAddress
+	}
+
+	return addr, nil
 }

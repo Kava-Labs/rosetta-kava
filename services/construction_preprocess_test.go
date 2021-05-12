@@ -24,6 +24,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -265,4 +266,132 @@ func TestConstructionPreprocess_MaxFee(t *testing.T) {
 			assert.Nil(t, response.Options["max_fee"])
 		}
 	}
+}
+
+func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
+	servicer := setupContructionAPIServicer()
+
+	testCases := []struct {
+		invalidOperations []*types.Operation
+	}{
+		{
+			invalidOperations: []*types.Operation{
+				{
+					OperationIdentifier: &types.OperationIdentifier{Index: 0},
+					Type:                kava.TransferOpType,
+					Account:             &types.AccountIdentifier{Address: "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"},
+					Amount:              &types.Amount{Value: "-1", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+				},
+			},
+		},
+		{
+			invalidOperations: []*types.Operation{
+				{
+					OperationIdentifier: &types.OperationIdentifier{Index: 0},
+					Type:                kava.TransferOpType,
+					Account:             &types.AccountIdentifier{Address: "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"},
+					Amount:              &types.Amount{Value: "-1", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+				},
+				{
+					OperationIdentifier: &types.OperationIdentifier{Index: 1},
+					Type:                kava.TransferOpType,
+					Account:             &types.AccountIdentifier{Address: "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"},
+					Amount:              &types.Amount{Value: "-1", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+				},
+				{
+					OperationIdentifier: &types.OperationIdentifier{Index: 2},
+					Type:                kava.TransferOpType,
+					Account:             &types.AccountIdentifier{Address: "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"},
+					Amount:              &types.Amount{Value: "-1", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+				},
+			},
+		},
+		{
+			invalidOperations: []*types.Operation{
+				{
+					OperationIdentifier: &types.OperationIdentifier{Index: 0},
+					Type:                kava.TransferOpType,
+					Account:             &types.AccountIdentifier{Address: "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"},
+					Amount:              &types.Amount{Value: "-10000", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+				},
+				{
+					OperationIdentifier: &types.OperationIdentifier{Index: 1},
+					Type:                "not a transfer",
+					Account:             &types.AccountIdentifier{Address: "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"},
+					Amount:              &types.Amount{Value: "10000", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		request := &types.ConstructionPreprocessRequest{
+			Operations: tc.invalidOperations,
+		}
+
+		ctx := context.Background()
+		response, err := servicer.ConstructionPreprocess(ctx, request)
+		require.Nil(t, response)
+
+		assert.Equal(t, ErrUnclearIntent.Code, err.Code)
+		assert.Equal(t, ErrUnclearIntent.Message, err.Message)
+	}
+}
+
+func TestConstructionPreprocess_TransferOperations(t *testing.T) {
+	cdc := app.MakeCodec()
+	servicer := setupContructionAPIServicer()
+
+	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
+	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"
+	amount := "5000001"
+
+	operations := []*types.Operation{
+		{
+			OperationIdentifier: &types.OperationIdentifier{Index: 0},
+			Type:                kava.TransferOpType,
+			Account:             &types.AccountIdentifier{Address: fromAddress},
+			Amount:              &types.Amount{Value: "-" + amount, Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+		},
+		{
+			OperationIdentifier: &types.OperationIdentifier{Index: 1},
+			Type:                kava.TransferOpType,
+			Account:             &types.AccountIdentifier{Address: toAddress},
+			Amount:              &types.Amount{Value: amount, Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+		},
+	}
+
+	request := &types.ConstructionPreprocessRequest{
+		Operations: operations,
+	}
+
+	ctx := context.Background()
+	response, rerr := servicer.ConstructionPreprocess(ctx, request)
+	require.Nil(t, rerr)
+
+	encodedMsgs, ok := response.Options["msgs"].(string)
+	require.True(t, ok)
+
+	var msgs []sdk.Msg
+	err := cdc.UnmarshalJSON([]byte(encodedMsgs), &msgs)
+	require.NoError(t, err)
+
+	fromAddr, err := sdk.AccAddressFromBech32(fromAddress)
+	require.NoError(t, err)
+
+	toAddr, err := sdk.AccAddressFromBech32(toAddress)
+	require.NoError(t, err)
+
+	coinAmount, ok := sdk.NewIntFromString(amount)
+	require.True(t, ok)
+
+	expectedMsgs := []sdk.Msg{
+		bank.MsgSend{
+			FromAddress: fromAddr,
+			ToAddress:   toAddr,
+			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", coinAmount)),
+		},
+	}
+
+	assert.Equal(t, expectedMsgs, msgs)
 }

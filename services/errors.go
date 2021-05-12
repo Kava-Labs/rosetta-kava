@@ -69,6 +69,20 @@ var (
 		Code:    5,
 		Message: "Unsupported concurrency",
 	}
+
+	// ErrUnclearIntent is returned when operations
+	// provided in /construction/preprocess or /construction/payloads
+	// are not valid.
+	ErrUnclearIntent = &types.Error{
+		Code:    6,
+		Message: "Unable to parse intent",
+	}
+
+	// ErrInvalidAddress is returned when an account identifier has an invalid address
+	ErrInvalidAddress = &types.Error{
+		Code:    7,
+		Message: "Invalid Address",
+	}
 )
 
 // wrapErr adds details to the types.Error provided. We use a function
