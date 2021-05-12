@@ -28,6 +28,7 @@ var (
 		ErrUnimplemented,
 		ErrUnavailableOffline,
 		ErrKava,
+		ErrUnsupportedCurveType,
 	}
 
 	// ErrUnimplemented is returned when an endpoint
@@ -49,6 +50,11 @@ var (
 	ErrKava = &types.Error{
 		Code:    2,
 		Message: "Kava error",
+	}
+
+	ErrUnsupportedCurveType = &types.Error{
+		Code:    3,
+		Message: "Unsupported Curve Type",
 	}
 )
 
