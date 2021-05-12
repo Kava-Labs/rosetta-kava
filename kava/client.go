@@ -24,6 +24,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -103,6 +104,16 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	return currentBlock, currentTime, genesisBlock, syncStatus, peers, nil
+}
+
+// Account returns the account for the provided address at the latest block height
+func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexported.Account, error) {
+	account, err := c.rpc.Account(address, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }
 
 // Balance fetches and returns the account balance for an account

@@ -833,3 +833,25 @@ func TestBlock_Transactions(t *testing.T) {
 		_, _ = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	})
 }
+
+func TestAccount(t *testing.T) {
+	mockRPCClient, _, client := setupClient(t)
+	addr, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
+	require.NoError(t, err)
+
+	accErr := errors.New("error retrieving account")
+	mockRPCClient.On("Account", addr, int64(0)).Return(nil, accErr).Once()
+
+	ctx := context.Background()
+	account, err := client.Account(ctx, addr)
+	assert.Nil(t, account)
+	assert.EqualError(t, err, accErr.Error())
+
+	expectedAccount := &authtypes.BaseAccount{}
+	mockRPCClient.On("Account", addr, int64(0)).Return(expectedAccount, nil).Once()
+
+	ctx = context.Background()
+	account, err = client.Account(ctx, addr)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedAccount, account)
+}
