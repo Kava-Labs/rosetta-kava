@@ -1,0 +1,261 @@
+{
+  "height": "25157",
+  "txhash": "6DA075400B08699BCC1052132D49A1B213EA1641190688CC5DD4E1198BC97EEF",
+  "raw_log": "[{\"msg_index\":0,\"log\":\"\",\"events\":[{\"type\":\"auction_start\",\"attributes\":[{\"key\":\"auction_id\",\"value\":\"895\"},{\"key\":\"auction_type\",\"value\":\"collateral\"},{\"key\":\"bid\",\"value\":\"0busd\"},{\"key\":\"lot\",\"value\":\"9800000hard\"},{\"key\":\"max_bid\",\"value\":\"695621583busd\"},{\"key\":\"auction_id\",\"value\":\"896\"},{\"key\":\"auction_type\",\"value\":\"collateral\"},{\"key\":\"bid\",\"value\":\"0busd\"},{\"key\":\"lot\",\"value\":\"59094ukava\"},{\"key\":\"max_bid\",\"value\":\"13051423busd\"},{\"key\":\"auction_id\",\"value\":\"897\"},{\"key\":\"auction_type\",\"value\":\"collateral\"},{\"key\":\"bid\",\"value\":\"0busd\"},{\"key\":\"lot\",\"value\":\"19600000usdx\"},{\"key\":\"max_bid\",\"value\":\"482828790busd\"}]},{\"type\":\"hard_liquidation\",\"attributes\":[{\"key\":\"liquidated_owner\",\"value\":\"kava1lm66fpusufq0s5ulwkkv86syff6ygs7rmgmvt6\"},{\"key\":\"liquidated_coins\",\"value\":\"9800000hard,59094ukava,19600000usdx\"},{\"key\":\"keeper\",\"value\":\"kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv\"},{\"key\":\"keeper_reward_coins\",\"value\":\"200000hard,1206ukava,400000usdx\"}]},{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"liquidate\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"module\",\"value\":\"hard\"},{\"key\":\"sender\",\"value\":\"kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv\"}]},{\"type\":\"transfer\",\"attributes\":[{\"key\":\"recipient\",\"value\":\"kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\",\"value\":\"200000hard,1206ukava,400000usdx\"},{\"key\":\"recipient\",\"value\":\"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\",\"value\":\"9800000hard\"},{\"key\":\"recipient\",\"value\":\"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\"},{\"key\":\"recipient\",\"value\":\"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\",\"value\":\"59094ukava\"},{\"key\":\"recipient\",\"value\":\"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\"},{\"key\":\"recipient\",\"value\":\"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\",\"value\":\"19600000usdx\"},{\"key\":\"recipient\",\"value\":\"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd\"},{\"key\":\"sender\",\"value\":\"kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3\"},{\"key\":\"amount\"}]}]}]",
+  "logs": [
+    {
+      "msg_index": 0,
+      "log": "",
+      "events": [
+        {
+          "type": "auction_start",
+          "attributes": [
+            {
+              "key": "auction_id",
+              "value": "895"
+            },
+            {
+              "key": "auction_type",
+              "value": "collateral"
+            },
+            {
+              "key": "bid",
+              "value": "0busd"
+            },
+            {
+              "key": "lot",
+              "value": "9800000hard"
+            },
+            {
+              "key": "max_bid",
+              "value": "695621583busd"
+            },
+            {
+              "key": "auction_id",
+              "value": "896"
+            },
+            {
+              "key": "auction_type",
+              "value": "collateral"
+            },
+            {
+              "key": "bid",
+              "value": "0busd"
+            },
+            {
+              "key": "lot",
+              "value": "59094ukava"
+            },
+            {
+              "key": "max_bid",
+              "value": "13051423busd"
+            },
+            {
+              "key": "auction_id",
+              "value": "897"
+            },
+            {
+              "key": "auction_type",
+              "value": "collateral"
+            },
+            {
+              "key": "bid",
+              "value": "0busd"
+            },
+            {
+              "key": "lot",
+              "value": "19600000usdx"
+            },
+            {
+              "key": "max_bid",
+              "value": "482828790busd"
+            }
+          ]
+        },
+        {
+          "type": "hard_liquidation",
+          "attributes": [
+            {
+              "key": "liquidated_owner",
+              "value": "kava1lm66fpusufq0s5ulwkkv86syff6ygs7rmgmvt6"
+            },
+            {
+              "key": "liquidated_coins",
+              "value": "9800000hard,59094ukava,19600000usdx"
+            },
+            {
+              "key": "keeper",
+              "value": "kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv"
+            },
+            {
+              "key": "keeper_reward_coins",
+              "value": "200000hard,1206ukava,400000usdx"
+            }
+          ]
+        },
+        {
+          "type": "message",
+          "attributes": [
+            {
+              "key": "action",
+              "value": "liquidate"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "module",
+              "value": "hard"
+            },
+            {
+              "key": "sender",
+              "value": "kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv"
+            }
+          ]
+        },
+        {
+          "type": "transfer",
+          "attributes": [
+            {
+              "key": "recipient",
+              "value": "kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount",
+              "value": "200000hard,1206ukava,400000usdx"
+            },
+            {
+              "key": "recipient",
+              "value": "kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount",
+              "value": "9800000hard"
+            },
+            {
+              "key": "recipient",
+              "value": "kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount"
+            },
+            {
+              "key": "recipient",
+              "value": "kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount",
+              "value": "59094ukava"
+            },
+            {
+              "key": "recipient",
+              "value": "kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount"
+            },
+            {
+              "key": "recipient",
+              "value": "kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount",
+              "value": "19600000usdx"
+            },
+            {
+              "key": "recipient",
+              "value": "kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+            },
+            {
+              "key": "sender",
+              "value": "kava1a42xtwfzphuuu9mdp0es6633wu5mm8fhm789v3"
+            },
+            {
+              "key": "amount"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "gas_wanted": "2000000",
+  "gas_used": "382278",
+  "tx": {
+    "type": "cosmos-sdk/StdTx",
+    "value": {
+      "msg": [
+        {
+          "type": "hard/MsgLiquidate",
+          "value": {
+            "keeper": "kava1hfu4mnakfzprg67rzflcjunwcngy7aulejdjcv",
+            "borrower": "kava1lm66fpusufq0s5ulwkkv86syff6ygs7rmgmvt6"
+          }
+        }
+      ],
+      "fee": {
+        "amount": [],
+        "gas": "2000000"
+      },
+      "signatures": [
+        {
+          "pub_key": {
+            "type": "tendermint/PubKeySecp256k1",
+            "value": "AzCxDuQKxuOp7AFgcCRlz/AUmuu2OxasNYcXWUGVENzb"
+          },
+          "signature": "pD5eI9etg4R2N9mwsa/nK+iDr0gsaVYBtVuhBGKk8vlgMQXrIN//HPPyUk2OOCqyNgDdZ7UeW85wN/fTgmfNqw=="
+        }
+      ],
+      "memo": ""
+    }
+  },
+  "timestamp": "2021-04-10T12:31:41Z"
+}
