@@ -24,6 +24,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/server"
+	"github.com/kava-labs/kava/app"
 )
 
 // NewBlockchainRouter creates a Mux http.Handler from a collection
@@ -51,7 +52,8 @@ func NewBlockchainRouter(
 		asserter,
 	)
 
-	constructionAPIService := NewConstructionAPIService(config, client)
+	cdc := app.MakeCodec()
+	constructionAPIService := NewConstructionAPIService(config, client, cdc)
 	constructionAPIController := server.NewConstructionAPIController(
 		constructionAPIService,
 		asserter,

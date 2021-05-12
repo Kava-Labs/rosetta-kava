@@ -51,10 +51,23 @@ var (
 		Message: "Kava error",
 	}
 
-	// ErrNoOperations is return when no operations are provided
+	// ErrNoOperations is returned when no operations are provided
 	ErrNoOperations = &types.Error{
 		Code:    3,
 		Message: "No operations provided",
+	}
+
+	// ErrInvalidCurrency is returned when a currency value could not be parsed
+	ErrInvalidCurrencyAmount = &types.Error{
+		Code:    4,
+		Message: "Invalid currency",
+	}
+
+	// ErrUnsupportedCurrency is returned when a currency symbol is invalid
+	// or the decimals do not match
+	ErrUnsupportedCurrency = &types.Error{
+		Code:    5,
+		Message: "Unsupported concurrency",
 	}
 )
 

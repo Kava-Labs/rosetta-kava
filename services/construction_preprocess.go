@@ -20,10 +20,13 @@ package services
 import (
 	"context"
 
+	"github.com/kava-labs/rosetta-kava/kava"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var defaultSuggestedFeeMultiplier = float64(1)
+const defaultSuggestedFeeMultiplier = float64(1)
 
 // ConstructionPreprocess implements the /construction/preprocess
 // endpoint.
@@ -35,9 +38,15 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 		return nil, ErrNoOperations
 	}
 
+	options := make(map[string]interface{})
+
+	var suggestedFeeMultiplier float64
 	if request.SuggestedFeeMultiplier == nil {
-		request.SuggestedFeeMultiplier = &defaultSuggestedFeeMultiplier
+		suggestedFeeMultiplier = defaultSuggestedFeeMultiplier
+	} else {
+		suggestedFeeMultiplier = *request.SuggestedFeeMultiplier
 	}
+	options["suggested_fee_multiplier"] = suggestedFeeMultiplier
 
 	var memo string
 	if rawMemo, exists := request.Metadata["memo"]; exists {
@@ -45,11 +54,42 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 			memo = parsedMemo
 		}
 	}
+	options["memo"] = memo
+
+	if request.MaxFee != nil {
+		var maxFee sdk.Coins
+		for _, feeAmount := range request.MaxFee {
+			value, ok := sdk.NewIntFromString(feeAmount.Value)
+			if !ok {
+				return nil, ErrInvalidCurrencyAmount
+			}
+
+			denom, ok := kava.Denoms[feeAmount.Currency.Symbol]
+			if !ok {
+				return nil, ErrUnsupportedCurrency
+			}
+
+			currency, ok := kava.Currencies[denom]
+			if !ok {
+				return nil, ErrUnsupportedCurrency
+			}
+
+			if currency.Symbol != feeAmount.Currency.Symbol ||
+				currency.Decimals != feeAmount.Currency.Decimals {
+				return nil, ErrUnsupportedCurrency
+			}
+
+			maxFee = maxFee.Add(sdk.NewCoin(denom, value))
+		}
+
+		encodedMaxFee, err := s.cdc.MarshalJSON(maxFee)
+		if err != nil {
+			return nil, wrapErr(ErrKava, err)
+		}
+		options["max_fee"] = string(encodedMaxFee)
+	}
 
 	return &types.ConstructionPreprocessResponse{
-		Options: map[string]interface{}{
-			"suggested_fee_multiplier": *request.SuggestedFeeMultiplier,
-			"memo":                     memo,
-		},
+		Options: options,
 	}, nil
 }

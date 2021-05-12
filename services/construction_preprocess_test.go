@@ -23,6 +23,8 @@ import (
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +34,8 @@ func setupContructionAPIServicer() *ConstructionAPIService {
 		Mode: configuration.Offline,
 	}
 	mockClient := &mocks.Client{}
-	return NewConstructionAPIService(cfg, mockClient)
+	cdc := app.MakeCodec()
+	return NewConstructionAPIService(cfg, mockClient, cdc)
 }
 
 func float64ToPtr(value float64) *float64 {
@@ -180,5 +183,86 @@ func TestConstructionPreprocess_Memo(t *testing.T) {
 			expectedMemo = ""
 		}
 		assert.Equal(t, expectedMemo, actualMemo)
+	}
+}
+
+func TestConstructionPreprocess_MaxFee(t *testing.T) {
+	cdc := app.MakeCodec()
+	servicer := setupContructionAPIServicer()
+
+	testCases := []struct {
+		maxFee         []*types.Amount
+		expectedMaxFee sdk.Coins
+		expectedErr    *types.Error
+	}{
+		{
+			maxFee:         nil,
+			expectedMaxFee: nil,
+		},
+		{
+			maxFee:      []*types.Amount{{Value: "1.000", Currency: kava.Currencies["ukava"]}},
+			expectedErr: ErrInvalidCurrencyAmount,
+		},
+		{
+			maxFee:      []*types.Amount{{Value: "1000000", Currency: &types.Currency{Symbol: "BNB", Decimals: 8}}},
+			expectedErr: ErrUnsupportedCurrency,
+		},
+		{
+			maxFee:      []*types.Amount{{Value: "1000000", Currency: &types.Currency{Symbol: "KAVA", Decimals: 7}}},
+			expectedErr: ErrUnsupportedCurrency,
+		},
+		{
+			maxFee:         []*types.Amount{{Value: "1000000", Currency: kava.Currencies["ukava"]}},
+			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(1000000), Denom: "ukava"}),
+		},
+		{
+			maxFee:         []*types.Amount{{Value: "500000", Currency: kava.Currencies["ukava"]}},
+			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(500000), Denom: "ukava"}),
+		},
+		{
+			maxFee:         []*types.Amount{{Value: "600001", Currency: kava.Currencies["hard"]}},
+			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(600001), Denom: "hard"}),
+		},
+		{
+			maxFee: []*types.Amount{
+				{Value: "100001", Currency: kava.Currencies["ukava"]},
+				{Value: "200002", Currency: kava.Currencies["hard"]},
+				{Value: "300003", Currency: kava.Currencies["usdx"]},
+			},
+			expectedMaxFee: sdk.NewCoins(
+				sdk.Coin{Amount: sdk.NewInt(100001), Denom: "ukava"},
+				sdk.Coin{Amount: sdk.NewInt(200002), Denom: "hard"},
+				sdk.Coin{Amount: sdk.NewInt(300003), Denom: "usdx"},
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		request := validConstructionPreprocessRequest()
+		request.MaxFee = tc.maxFee
+
+		ctx := context.Background()
+		response, err := servicer.ConstructionPreprocess(ctx, request)
+
+		if tc.expectedErr == nil {
+			require.Nil(t, err)
+		} else {
+			assert.Nil(t, response)
+			assert.Equal(t, tc.expectedErr, err)
+			continue
+		}
+
+		if tc.expectedMaxFee != nil {
+			actualMaxFee, ok := response.Options["max_fee"].(string)
+			require.True(t, ok)
+
+			var coins sdk.Coins
+			err := cdc.UnmarshalJSON([]byte(actualMaxFee), &coins)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedMaxFee, coins)
+		} else {
+			assert.Nil(t, response.Options["max_fee"])
+		}
 	}
 }

@@ -20,6 +20,8 @@ import (
 	"testing"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +46,7 @@ func createTransferOperations(from string, to string, amount string) []*types.Op
 
 func TestTransfer(t *testing.T) {
 	ctx := context.Background()
+	cdc := app.MakeCodec()
 
 	// TODO: use /construction/dervice to generate bech32 addresses
 	operations := createTransferOperations(
@@ -74,4 +77,12 @@ func TestTransfer(t *testing.T) {
 	actualMemo, ok := preprocessResponse.Options["memo"].(string)
 	assert.True(t, ok)
 	assert.Equal(t, "test transfer integration", actualMemo)
+
+	maxFeeEncoded, ok := preprocessResponse.Options["max_fee"].(string)
+	assert.True(t, ok)
+
+	var maxFee sdk.Coins
+	err = cdc.UnmarshalJSON([]byte(maxFeeEncoded), &maxFee)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(500001))), maxFee)
 }
