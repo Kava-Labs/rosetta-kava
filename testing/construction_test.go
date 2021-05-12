@@ -56,6 +56,7 @@ func TestTransfer(t *testing.T) {
 	)
 
 	suggestedFeeMultipler := float64(0.5)
+	gasAdjusment := float64(0.1)
 
 	preprocessResponse, rosettaErr, err := client.ConstructionAPI.ConstructionPreprocess(ctx,
 		&types.ConstructionPreprocessRequest{
@@ -63,7 +64,10 @@ func TestTransfer(t *testing.T) {
 			Operations:             operations,
 			MaxFee:                 []*types.Amount{{Value: "500001", Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}}},
 			SuggestedFeeMultiplier: &suggestedFeeMultipler,
-			Metadata:               map[string]interface{}{"memo": "test transfer integration"},
+			Metadata: map[string]interface{}{
+				"memo":           "test transfer integration",
+				"gas_adjustment": gasAdjusment,
+			},
 		},
 	)
 
@@ -85,4 +89,8 @@ func TestTransfer(t *testing.T) {
 	err = cdc.UnmarshalJSON([]byte(maxFeeEncoded), &maxFee)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(500001))), maxFee)
+
+	actualGasAdjusment, ok := preprocessResponse.Options["gas_adjustment"].(float64)
+	assert.True(t, ok)
+	assert.InDelta(t, gasAdjusment, actualGasAdjusment, 0.0000001)
 }

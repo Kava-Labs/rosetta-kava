@@ -66,6 +66,7 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 
 	options := map[string]interface{}{
 		"msgs":                     string(encodedMsgs),
+		"gas_adjustment":           getGasAdjustmentFromMetadata(request.Metadata),
 		"suggested_fee_multiplier": suggestedMultiplerOrDefault(request.SuggestedFeeMultiplier),
 		"memo":                     getMemoFromMetadata(request.Metadata),
 	}
@@ -162,6 +163,16 @@ func getMemoFromMetadata(metadata map[string]interface{}) string {
 	}
 
 	return ""
+}
+
+func getGasAdjustmentFromMetadata(metadata map[string]interface{}) float64 {
+	if rawAdjustment, exists := metadata["gas_adjustment"]; exists {
+		if adjustment, ok := rawAdjustment.(float64); ok {
+			return adjustment
+		}
+	}
+
+	return float64(0)
 }
 
 func getMaxFeeAndEncodeOption(amounts []*types.Amount, cdc *codec.Codec) (*string, *types.Error) {

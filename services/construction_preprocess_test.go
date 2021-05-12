@@ -397,3 +397,58 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	require.Equal(t, 1, len(response.RequiredPublicKeys))
 	assert.Equal(t, "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea", response.RequiredPublicKeys[0].Address)
 }
+
+func TestConstructionPreprocess_GasAdjustment(t *testing.T) {
+	servicer := setupContructionAPIServicer()
+
+	testCases := []struct {
+		gasAdjustment         *float64
+		expectedGasAdjustment float64
+	}{
+		{
+			gasAdjustment:         nil,
+			expectedGasAdjustment: 0,
+		},
+		{
+			gasAdjustment:         float64ToPtr(0.0000001),
+			expectedGasAdjustment: 0.0000001,
+		},
+		{
+			gasAdjustment:         float64ToPtr(0.1),
+			expectedGasAdjustment: 0.1,
+		},
+		{
+			gasAdjustment:         float64ToPtr(0.55),
+			expectedGasAdjustment: 0.55,
+		},
+		{
+			gasAdjustment:         float64ToPtr(1),
+			expectedGasAdjustment: 1,
+		},
+		{
+			gasAdjustment:         float64ToPtr(2),
+			expectedGasAdjustment: 2,
+		},
+		{
+			gasAdjustment:         float64ToPtr(10),
+			expectedGasAdjustment: 10,
+		},
+	}
+
+	for _, tc := range testCases {
+		ctx := context.Background()
+		request := validConstructionPreprocessRequest()
+
+		if tc.gasAdjustment != nil {
+			request.Metadata["gas_adjustment"] = *tc.gasAdjustment
+		}
+
+		response, err := servicer.ConstructionPreprocess(ctx, request)
+		require.Nil(t, err)
+
+		actualGasAdjustment, ok := response.Options["gas_adjustment"].(float64)
+		require.True(t, ok)
+
+		assert.InDelta(t, tc.expectedGasAdjustment, actualGasAdjustment, 0.0000001)
+	}
+}
