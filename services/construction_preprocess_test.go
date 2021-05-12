@@ -394,4 +394,6 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedMsgs, msgs)
+	require.Equal(t, 1, len(response.RequiredPublicKeys))
+	assert.Equal(t, "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea", response.RequiredPublicKeys[0].Address)
 }

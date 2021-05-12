@@ -73,8 +73,27 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 		options["max_fee"] = *encodedMaxFee
 	}
 
+	requiredPublicKeys := []*types.AccountIdentifier{}
+
+	for _, msg := range msgs {
+		signers := msg.GetSigners()
+
+		seenSigners := make(map[string]bool)
+
+		for _, signer := range signers {
+			_, seen := seenSigners[signer.String()]
+
+			if !seen {
+				requiredPublicKeys = append(requiredPublicKeys, &types.AccountIdentifier{
+					Address: signer.String(),
+				})
+			}
+		}
+	}
+
 	return &types.ConstructionPreprocessResponse{
-		Options: options,
+		Options:            options,
+		RequiredPublicKeys: requiredPublicKeys,
 	}, nil
 }
 
