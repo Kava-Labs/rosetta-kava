@@ -41,6 +41,14 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 		return nil, ErrNoOperations
 	}
 
+	// TODO: improve operation parsing -- very basic for first pass
+	//
+	// currently, only supports a single transfer with one currency
+	// should support multiple transfers, multiple currencies, and
+	// staking operations
+	//
+	// in addition, parsing logic needs to be refactored with improved
+	// testing around invalid cases, and related operations
 	msgs, rerr := parseOperationMsgs(request.Operations)
 	if rerr != nil {
 		return nil, rerr
