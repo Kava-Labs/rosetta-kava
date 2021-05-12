@@ -37,12 +37,6 @@ func TestConstructionService_Online(t *testing.T) {
 	servicer := NewConstructionAPIService(cfg, mockClient)
 	ctx := context.Background()
 
-	// Test Derive
-	deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	assert.Nil(t, deriveResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
 	// Test Preprocess
 	preprocessResponse, err := servicer.ConstructionPreprocess(ctx, &types.ConstructionPreprocessRequest{})
 	assert.Nil(t, preprocessResponse)
@@ -104,10 +98,10 @@ func TestConstructionService_Offline(t *testing.T) {
 	ctx := context.Background()
 
 	// Test Derive
-	deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	assert.Nil(t, deriveResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+	//deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
+	//assert.Nil(t, deriveResponse)
+	//assert.Equal(t, ErrUnimplemented.Code, err.Code)
+	//assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	// Test Preprocess
 	preprocessResponse, err := servicer.ConstructionPreprocess(ctx, &types.ConstructionPreprocessRequest{})

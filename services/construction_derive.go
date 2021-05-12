@@ -20,17 +20,16 @@ package services
 import (
 	"context"
 	"github.com/coinbase/rosetta-sdk-go/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ConstructionDerive implements the /construction/derive endpoint.
 func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request *types.ConstructionDeriveRequest) (*types.ConstructionDeriveResponse, *types.Error) {
 	publicKey := request.PublicKey
-	address := sdk.AccAddress(publicKey.Bytes)
+	curveType := publicKey.CurveType
 
-	return &types.ConstructionDeriveResponse{
-		AccountIdentifier: &types.AccountIdentifier{
-			Address:    string(address),
-		},
-	}, nil
+	if curveType == "secp256k1" {
+		return nil, nil
+	} else {
+		return nil, ErrUnsupportedCurveType
+	}
 }

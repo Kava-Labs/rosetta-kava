@@ -28,9 +28,51 @@ func TestConstructionDerive_CurveValidation(t *testing.T) {
 	ctx := context.Background()
 	response, err := servicer.ConstructionDerive(ctx, request)
 
-	assert.NotNil(t, response)
+	assert.Nil(t, response)
 	assert.Equal(t, ErrUnsupportedCurveType.Code, err.Code)
 }
 
+func TestConstructionDerive_CurveValidation1(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+	tweedle := types.CurveType("tweedle")
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: tweedle,
+		},
+	}
+	ctx := context.Background()
+	response, err := servicer.ConstructionDerive(ctx, request)
 
+	assert.Nil(t, response)
+	assert.Equal(t, ErrUnsupportedCurveType.Code, err.Code)
+}
 
+func TestConstructionDerive_CurveValidation2(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+	edwards25519 := types.CurveType("edwards25519")
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: edwards25519,
+		},
+	}
+	ctx := context.Background()
+	response, err := servicer.ConstructionDerive(ctx, request)
+
+	assert.Nil(t, response)
+	assert.Equal(t, ErrUnsupportedCurveType.Code, err.Code)
+}
+
+func TestConstructionDerive_CurveValidation3(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+	secp256k1 := types.CurveType("secp256k1")
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: secp256k1,
+		},
+	}
+	ctx := context.Background()
+	response, err := servicer.ConstructionDerive(ctx, request)
+	assert.Nil(t, response)
+	assert.Nil(t, err)
+	//assert.Equal(t, ErrUnimplemented.Code, err.Code)
+}
