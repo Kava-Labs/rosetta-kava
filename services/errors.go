@@ -57,7 +57,7 @@ var (
 		Message: "No operations provided",
 	}
 
-	// ErrInvalidCurrency is returned when a currency value could not be parsed
+	// ErrInvalidCurrencyAmount is returned when a currency value could not be parsed
 	ErrInvalidCurrencyAmount = &types.Error{
 		Code:    4,
 		Message: "Invalid currency",
