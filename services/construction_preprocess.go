@@ -30,7 +30,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
-const defaultSuggestedFeeMultiplier = float64(1)
+const (
+	defaultSuggestedFeeMultiplier = float64(1)
+	defaultGasAdjustment          = float64(0.1)
+)
 
 // ConstructionPreprocess implements the /construction/preprocess endpoint.
 func (s *ConstructionAPIService) ConstructionPreprocess(
@@ -172,7 +175,7 @@ func getGasAdjustmentFromMetadata(metadata map[string]interface{}) float64 {
 		}
 	}
 
-	return float64(0)
+	return defaultGasAdjustment
 }
 
 func getMaxFeeAndEncodeOption(amounts []*types.Amount, cdc *codec.Codec) (*string, *types.Error) {

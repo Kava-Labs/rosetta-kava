@@ -407,7 +407,7 @@ func TestConstructionPreprocess_GasAdjustment(t *testing.T) {
 	}{
 		{
 			gasAdjustment:         nil,
-			expectedGasAdjustment: 0,
+			expectedGasAdjustment: 0.1,
 		},
 		{
 			gasAdjustment:         float64ToPtr(0.0000001),
