@@ -29,6 +29,7 @@ var (
 		ErrUnavailableOffline,
 		ErrKava,
 		ErrUnsupportedCurveType,
+		ErrPublicKeyNil,
 	}
 
 	// ErrUnimplemented is returned when an endpoint
