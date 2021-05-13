@@ -30,17 +30,32 @@ func TestConstructionDerive_CurveValidation(t *testing.T) {
 	for _, tc := range testCases {
 		ctx := context.Background()
 		request := &types.ConstructionDeriveRequest{
-					PublicKey: &types.PublicKey{},
-				}
+			PublicKey: &types.PublicKey{},
+		}
 		request.PublicKey.CurveType = tc
 		response, err := servicer.ConstructionDerive(ctx, request)
 
 		if tc == types.Secp256k1 {
 			assert.Nil(t, response)
-			assert.Nil(t, err)
 		} else {
 			assert.Nil(t, response)
 			assert.Equal(t, ErrUnsupportedCurveType, err)
 		}
 	}
+}
+
+func TestConstructionDerive_PublicKey(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: types.Secp256k1,
+			Bytes: nil,
+		},
+	}
+	ctx := context.Background()
+	response, err := servicer.ConstructionDerive(ctx, request)
+
+	assert.Nil(t, response)
+	assert.Equal(t, ErrPublicKeyNil, err)
 }

@@ -56,6 +56,11 @@ var (
 		Code:    3,
 		Message: "Unsupported Curve Type",
 	}
+
+	ErrPublicKeyNil = &types.Error{
+		Code:    4,
+		Message: "Public Key is nil",
+	}
 )
 
 // wrapErr adds details to the types.Error provided. We use a function

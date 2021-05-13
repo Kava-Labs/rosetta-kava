@@ -25,9 +25,15 @@ import (
 // ConstructionDerive implements the /construction/derive endpoint.
 func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request *types.ConstructionDeriveRequest) (*types.ConstructionDeriveResponse, *types.Error) {
 	curveType := request.PublicKey.CurveType
+	publicKeyBytes := request.PublicKey.Bytes
 
-	if curveType == types.Secp256k1 {
-		return nil, nil
+	if curveType != types.Secp256k1 {
+		return nil, ErrUnsupportedCurveType
 	}
-	return nil, ErrUnsupportedCurveType
+
+	if publicKeyBytes == nil {
+		return nil, ErrPublicKeyNil
+	}
+
+	return nil, nil
 }
