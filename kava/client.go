@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -114,6 +115,17 @@ func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexpor
 	}
 
 	return account, nil
+}
+
+func (c *Client) EstimateGas(ctx context.Context, tx *authtypes.StdTx, adjustment float64) (uint64, error) {
+	simResp, err := c.rpc.SimulateTx(tx)
+	if err != nil {
+		return 0, err
+	}
+
+	gas := math.Round(float64(simResp.GasUsed) * (1 + adjustment))
+
+	return uint64(gas), nil
 }
 
 // Balance fetches and returns the account balance for an account
