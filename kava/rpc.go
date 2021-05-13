@@ -149,6 +149,25 @@ func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (st
 	return unbondingDelegations, nil
 }
 
+// SimulateTx simulates a transaction and returns the response containing the gas used and result
+func (c *HTTPClient) SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error) {
+	bz, err := c.cdc.MarshalBinaryLengthPrefixed(*tx)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := c.abciQuery("/app/simulate", bz, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var simRes sdk.SimulationResponse
+	if err := c.cdc.UnmarshalBinaryBare(data, &simRes); err != nil {
+		return nil, err
+	}
+	return &simRes, nil
+}
+
 func (c *HTTPClient) abciQuery(path string, data bytes.HexBytes, height int64) ([]byte, error) {
 	opts := tmrpcclient.ABCIQueryOptions{Height: height, Prove: false}
 	result, err := c.ABCIQueryWithOptions(path, data, opts)
