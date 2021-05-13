@@ -29,6 +29,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func setupContructionAPIServicer() *ConstructionAPIService {
+	cfg := &configuration.Configuration{
+		Mode: configuration.Offline,
+	}
+	mockClient := &mocks.Client{}
+	cdc := app.MakeCodec()
+	return NewConstructionAPIService(cfg, mockClient, cdc)
+}
+
 func TestConstructionService_Online(t *testing.T) {
 	cfg := &configuration.Configuration{
 		Mode: configuration.Online,

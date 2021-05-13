@@ -18,9 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kava-labs/rosetta-kava/configuration"
 	"github.com/kava-labs/rosetta-kava/kava"
-	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,15 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func setupContructionAPIServicer() *ConstructionAPIService {
-	cfg := &configuration.Configuration{
-		Mode: configuration.Offline,
-	}
-	mockClient := &mocks.Client{}
-	cdc := app.MakeCodec()
-	return NewConstructionAPIService(cfg, mockClient, cdc)
-}
 
 func float64ToPtr(value float64) *float64 {
 	return &value
