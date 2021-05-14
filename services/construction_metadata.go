@@ -24,6 +24,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/configuration"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -35,11 +36,11 @@ var requiredOptions = []string{
 }
 
 type options struct {
-	msgs                     []sdk.Msg
-	memo                     string
-	gas_adjustment           float64
-	suggested_fee_multiplier float64
-	max_fee                  sdk.Coins
+	msgs                   []sdk.Msg
+	memo                   string
+	gasAdjustment          float64
+	suggestedFeeMultiplier float64
+	maxFee                 sdk.Coins
 }
 
 // ConstructionMetadata implements the /construction/metadata endpoint.
@@ -51,48 +52,63 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 		return nil, ErrUnavailableOffline
 	}
 
-	for _, option := range requiredOptions {
-		if _, ok := request.Options[option]; !ok {
-			return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("no %s provided", option))
-		}
-	}
-
-	rawMsgs, ok := request.Options["msgs"].(string)
-	if !ok {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "msgs"))
-	}
-
-	var msgs []sdk.Msg
-	err := s.cdc.UnmarshalJSON([]byte(rawMsgs), &msgs)
+	_, err := validateAndParseOptions(s.cdc, request.Options)
 	if err != nil {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "msgs"))
-	}
-
-	_, ok = request.Options["memo"].(string)
-	if !ok {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "memo"))
-	}
-
-	_, ok = request.Options["gas_adjustment"].(float64)
-	if !ok {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "gas_adjustment"))
-	}
-
-	_, ok = request.Options["suggested_fee_multiplier"].(float64)
-	if !ok {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "suggested_fee_multiplier"))
-	}
-
-	rawMaxFee, ok := request.Options["max_fee"].(string)
-	if !ok {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "max_fee"))
-	}
-
-	var maxFee sdk.Coins
-	err = s.cdc.UnmarshalJSON([]byte(rawMaxFee), &maxFee)
-	if err != nil {
-		return nil, wrapErr(ErrInvalidOptions, fmt.Errorf("invalid value for %s", "max_fee"))
+		return nil, wrapErr(ErrInvalidOptions, err)
 	}
 
 	return nil, nil
+}
+
+func validateAndParseOptions(cdc *codec.Codec, opts map[string]interface{}) (*options, error) {
+	for _, option := range requiredOptions {
+		if _, ok := opts[option]; !ok {
+			return nil, fmt.Errorf("no %s provided", option)
+		}
+	}
+
+	rawMsgs, ok := opts["msgs"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid value for %s", "msgs")
+	}
+
+	var msgs []sdk.Msg
+	err := cdc.UnmarshalJSON([]byte(rawMsgs), &msgs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid value for %s", "msgs")
+	}
+
+	memo, ok := opts["memo"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid value for %s", "memo")
+	}
+
+	gasAdjustment, ok := opts["gas_adjustment"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("invalid value for %s", "gas_adjustment")
+	}
+
+	suggestedFeeMultiplier, ok := opts["suggested_fee_multiplier"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("invalid value for %s", "suggested_fee_multiplier")
+	}
+
+	rawMaxFee, ok := opts["max_fee"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid value for %s", "max_fee")
+	}
+
+	var maxFee sdk.Coins
+	err = cdc.UnmarshalJSON([]byte(rawMaxFee), &maxFee)
+	if err != nil {
+		return nil, fmt.Errorf("invalid value for %s", "max_fee")
+	}
+
+	return &options{
+		msgs:                   msgs,
+		memo:                   memo,
+		gasAdjustment:          gasAdjustment,
+		suggestedFeeMultiplier: suggestedFeeMultiplier,
+		maxFee:                 maxFee,
+	}, nil
 }
