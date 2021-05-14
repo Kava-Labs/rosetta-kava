@@ -54,18 +54,6 @@ func (s *ConstructionAPIService) ConstructionDerive(
 	return nil, ErrUnimplemented
 }
 
-// ConstructionMetadata implements the /construction/metadata endpoint.
-func (s *ConstructionAPIService) ConstructionMetadata(
-	ctx context.Context,
-	request *types.ConstructionMetadataRequest,
-) (*types.ConstructionMetadataResponse, *types.Error) {
-	if s.config.Mode != configuration.Online {
-		return nil, ErrUnavailableOffline
-	}
-
-	return nil, ErrUnimplemented
-}
-
 // ConstructionPayloads implements the /construction/payloads endpoint.
 func (s *ConstructionAPIService) ConstructionPayloads(
 	ctx context.Context,
