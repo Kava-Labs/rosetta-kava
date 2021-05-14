@@ -1,0 +1,13 @@
+version: "3"
+services:
+  rosetta:
+    image: rosetta:latest
+    build:
+      context: .
+      # TODO: context: https://github.com/Kava-Labs/rosetta-kava.git
+      dockerfile: Dockerfile
+      args:
+        KAVANODE_VERSION: v0.14.1
+        NETWORK_ID: testing
+    volumes:
+      - ${HOME}/.kvd:/data/kvd
