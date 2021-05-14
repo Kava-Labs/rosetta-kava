@@ -71,16 +71,8 @@ func TestConstructionDerive_PublicKeyCompress(t *testing.T) {
 			Bytes:     compressedPubKeyBytes,
 		},
 	}
-
 	ctx := context.Background()
 	response, err := servicer.ConstructionDerive(ctx, request)
-
-	response = &types.ConstructionDeriveResponse{
-		AccountIdentifier: &types.AccountIdentifier{
-			Address: "kava54321",
-		},
-	}
-
 	require.Nil(t, err)
-	assert.Equal(t, "kava54321", response.AccountIdentifier.Address)
+	assert.Equal(t, "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq", response.AccountIdentifier.Address)
 }

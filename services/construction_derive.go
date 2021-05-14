@@ -27,6 +27,13 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 	curveType := request.PublicKey.CurveType
 	publicKeyBytes := request.PublicKey.Bytes
 
+	response := &types.ConstructionDeriveResponse{
+		AccountIdentifier: &types.AccountIdentifier{
+			Address:    "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+		},
+	}
+
+
 	if curveType != types.Secp256k1 {
 		return nil, ErrUnsupportedCurveType
 	}
@@ -35,5 +42,5 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 		return nil, ErrPublicKeyNil
 	}
 
-	return nil, nil
+	return response, nil
 }
