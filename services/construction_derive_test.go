@@ -5,6 +5,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	"testing"
 )
@@ -44,7 +45,7 @@ func TestConstructionDerive_CurveValidation(t *testing.T) {
 	}
 }
 
-func TestConstructionDerive_PublicKey(t *testing.T) {
+func TestConstructionDerive_PublicKeyNil(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 
 	request := &types.ConstructionDeriveRequest{
@@ -58,4 +59,28 @@ func TestConstructionDerive_PublicKey(t *testing.T) {
 
 	assert.Nil(t, response)
 	assert.Equal(t, ErrPublicKeyNil, err)
+}
+
+func TestConstructionDerive_PublicKeyCompress(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+	compressed := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
+	compressedPubKeyBytes := []byte(compressed)
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: types.Secp256k1,
+			Bytes:     compressedPubKeyBytes,
+		},
+	}
+
+	ctx := context.Background()
+	response, err := servicer.ConstructionDerive(ctx, request)
+
+	response = &types.ConstructionDeriveResponse{
+		AccountIdentifier: &types.AccountIdentifier{
+			Address: "kava54321",
+		},
+	}
+
+	require.Nil(t, err)
+	assert.Equal(t, "kava54321", response.AccountIdentifier.Address)
 }
