@@ -122,12 +122,7 @@ func FeeToOperations(feePayer sdk.AccAddress, amount sdk.Coins, status *string, 
 
 // MsgToOperations returns rosetta operations for a cosmos sdk or kava message
 func MsgToOperations(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
-	ops := getTransferOpsFromMsg(log, status, index)
-
-	switch msg.(type) {
-	case staking.MsgDelegate:
-		return msgDelegateToOperations(ops, log, status, index)
-	}
+	ops := getTransferOpsFromMsg(msg, log, status, index)
 
 	return ops
 }
@@ -230,7 +225,7 @@ func recipientBalanceOps(
 	return operations
 }
 
-func getTransferOpsFromMsg(log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
+func getTransferOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
 	var ops []*types.Operation
 	for _, ev := range log.Events {
 		if ev.Type == "transfer" {
@@ -240,6 +235,10 @@ func getTransferOpsFromMsg(log sdk.ABCIMessageLog, status *string, index int64) 
 				ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
 			}
 		}
+	}
+	switch msg.(type) {
+	case staking.MsgDelegate:
+		return msgDelegateToOperations(ops, log, status, index)
 	}
 	return ops
 }
@@ -278,9 +277,9 @@ func getTransferOpsFromEvent(ev sdk.StringEvent, status *string, index int64) []
 func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
 	recipient := stakingModuleAddress
 	var delegationOps []*types.Operation
+	var amount sdk.Coin
+	var sender sdk.AccAddress
 	for _, ev := range log.Events {
-		var amount sdk.Coin
-		var sender sdk.AccAddress
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
@@ -294,8 +293,8 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 				}
 			}
 		}
-		delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
 	}
+	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
 	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
 }
 
