@@ -665,6 +665,10 @@ func TestMsgToOperations_BalanceTracking(t *testing.T) {
 			name: "cosmos-sdk.MsgSend",
 			log:  readABCILogFromFile(t, "msg-send-tx-response.json"),
 		},
+		{
+			name: "cosmos-sdk.MsgDelegate",
+			log:  readABCILogFromFile(t, "msg-delegate-tx-response.json"),
+		},
 	}
 
 	for _, tc := range tests {
