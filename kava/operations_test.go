@@ -29,6 +29,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	"github.com/kava-labs/kava/app"
 )
@@ -580,6 +581,7 @@ func TestMsgToOperations_BalanceTracking(t *testing.T) {
 	tests := []struct {
 		name string
 		log  sdk.ABCIMessageLog
+		msg  sdk.Msg
 	}{
 		{
 			name: "hard.MsgDeposit",
@@ -668,6 +670,7 @@ func TestMsgToOperations_BalanceTracking(t *testing.T) {
 		{
 			name: "cosmos-sdk.MsgDelegate",
 			log:  readABCILogFromFile(t, "msg-delegate-tx-response.json"),
+			msg:  readMsgFromFile(t, "msg-delegate-tx-response.json"),
 		},
 	}
 
@@ -675,8 +678,8 @@ func TestMsgToOperations_BalanceTracking(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			runAndAssertOperationInvariants(t, TransferOpType,
 				func(otc *operationTestCase) []*types.Operation {
-					ops := getTransferOpsFromMsg(tc.log, &otc.status, otc.index)
-					senders, receivers := calculateSendersReceivers(tc.log)
+					ops := MsgToOperations(tc.msg, tc.log, &otc.status, otc.index)
+					senders, receivers := calculateSendersReceivers(tc.msg, tc.log)
 					coins := calculateCoins(tc.log)
 					assertTransferOpsBalanceTrack(t, otc.name, ops, senders, receivers, coins)
 					return ops
@@ -836,6 +839,13 @@ func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 				}
 			}
 		}
+		if ev.Type == "delegate" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					coins = coins.Add(sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value)))
+				}
+			}
+		}
 	}
 	return coins
 }
@@ -852,7 +862,20 @@ func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 		t.Fatalf("each transaction should have one log, found %d for %s", len(txResponse.Logs), file)
 	}
 	return txResponse.Logs[0]
+}
 
+func readMsgFromFile(t *testing.T, file string) sdk.Msg {
+	txResponse := sdk.TxResponse{}
+	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
+	if err != nil {
+		t.Fatalf("could not read %s: %v", file, err)
+	}
+	cdc := app.MakeCodec()
+	cdc.MustUnmarshalJSON(bz, &txResponse)
+	if len(txResponse.Tx.GetMsgs()) != 1 {
+		t.Fatalf("each transaction should have one msg, found %d for %s", len(txResponse.Tx.GetMsgs()), file)
+	}
+	return txResponse.Tx.GetMsgs()[0]
 }
 
 type accountBalance struct {
@@ -867,7 +890,7 @@ func (ab accountBalance) String() string {
 	`, ab.Account, ab.Balance)
 }
 
-func calculateSendersReceivers(log sdk.ABCIMessageLog) (senders, receivers []accountBalance) {
+func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, receivers []accountBalance) {
 	senderMap := make(map[string]sdk.Coins)
 	receiverMap := make(map[string]sdk.Coins)
 
@@ -918,7 +941,35 @@ func calculateSendersReceivers(log sdk.ABCIMessageLog) (senders, receivers []acc
 	for receiver, balance := range receiverMap {
 		receivers = append(receivers, accountBalance{Account: mustAccAddressFromBech32(receiver), Balance: balance})
 	}
+	switch msg.(type) {
+	case staking.MsgDelegate:
+		senders, receivers = calcDelegationSendersReceivers(senders, receivers, log)
+	}
 	return senders, receivers
+}
+
+func calcDelegationSendersReceivers(senders, receivers []accountBalance, log sdk.ABCIMessageLog) (delegationSenders, delegationReceivers []accountBalance) {
+	var amount sdk.Coin
+	var sender sdk.AccAddress
+	recipient := stakingModuleAddress
+	for _, ev := range log.Events {
+		if ev.Type == "delegate" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+				}
+			}
+		} else if ev.Type == "message" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "sender" && !mustAccAddressFromBech32(attr.Value).Equals(recipient) {
+					sender = mustAccAddressFromBech32(attr.Value)
+				}
+			}
+		}
+	}
+	delegationSenders = append(senders, accountBalance{Account: sender, Balance: sdk.NewCoins(amount)})
+	delegationReceivers = append(receivers, accountBalance{Account: recipient, Balance: sdk.NewCoins(amount)})
+	return delegationSenders, delegationReceivers
 }
 
 func filterCoins(amount sdk.Coins) sdk.Coins {
