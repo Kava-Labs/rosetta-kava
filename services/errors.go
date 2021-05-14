@@ -81,7 +81,13 @@ var (
 	// ErrInvalidAddress is returned when an account identifier has an invalid address
 	ErrInvalidAddress = &types.Error{
 		Code:    7,
-		Message: "Invalid Address",
+		Message: "Invalid address",
+	}
+
+	// ErrInvalidOptions is returned by the metadata endpoint with invalid options
+	ErrInvalidOptions = &types.Error{
+		Code:    8,
+		Message: "Invalid options",
 	}
 )
 
