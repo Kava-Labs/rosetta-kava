@@ -578,123 +578,105 @@ func TestFeeToOperations(t *testing.T) {
 
 func TestMsgToOperations_BalanceTracking(t *testing.T) {
 	tests := []struct {
-		name   string
-		logs   []sdk.ABCIMessageLog
-		status string
+		name string
+		log  sdk.ABCIMessageLog
 	}{
 		{
-			name:   "hard.MsgDeposit",
-			logs:   readABCILogFromFile("hard-deposit-tx-response.json"),
-			status: SuccessStatus,
+			name: "hard.MsgDeposit",
+			log:  readABCILogFromFile(t, "hard-deposit-tx-response.json"),
 		},
 		{
-			name:   "hard.MsgWithdraw",
-			logs:   readABCILogFromFile("hard-withdraw-tx-response.json"),
-			status: SuccessStatus,
+			name: "hard.MsgWithdraw",
+			log:  readABCILogFromFile(t, "hard-withdraw-tx-response.json"),
 		},
 		{
-			name:   "hard.MsgBorrow",
-			logs:   readABCILogFromFile("hard-borrow-tx-response.json"),
-			status: SuccessStatus,
+			name: "hard.MsgBorrow",
+			log:  readABCILogFromFile(t, "hard-borrow-tx-response.json"),
 		},
 		{
-			name:   "hard.MsgRepay",
-			logs:   readABCILogFromFile("hard-repay-tx-response.json"),
-			status: SuccessStatus,
+			name: "hard.MsgRepay",
+			log:  readABCILogFromFile(t, "hard-repay-tx-response.json"),
 		},
 		{
-			name:   "hard.MsgLiquidate",
-			logs:   readABCILogFromFile("hard-liquidate-tx-response.json"),
-			status: SuccessStatus,
+			name: "hard.MsgLiquidate",
+			log:  readABCILogFromFile(t, "hard-liquidate-tx-response.json"),
 		},
 		{
-			name:   "auction.MsgPlaceBid",
-			logs:   readABCILogFromFile("auction-bid-tx-response.json"),
-			status: SuccessStatus,
+			name: "auction.MsgPlaceBid",
+			log:  readABCILogFromFile(t, "auction-bid-tx-response.json"),
 		},
 		{
-			name:   "bep3.MsgCreateAtomicSwap",
-			logs:   readABCILogFromFile("bep3-create-tx-response.json"),
-			status: SuccessStatus,
+			name: "bep3.MsgCreateAtomicSwap",
+			log:  readABCILogFromFile(t, "bep3-create-tx-response.json"),
 		},
 		{
-			name:   "bep3.MsgRefundAtomicSwap",
-			logs:   readABCILogFromFile("bep3-refund-tx-response.json"),
-			status: SuccessStatus,
+			name: "bep3.MsgRefundAtomicSwap",
+			log:  readABCILogFromFile(t, "bep3-refund-tx-response.json"),
 		},
 		{
-			name:   "bep3.MsgClaimAtomicSwap",
-			logs:   readABCILogFromFile("bep3-claim-tx-response.json"),
-			status: SuccessStatus,
+			name: "bep3.MsgClaimAtomicSwap",
+			log:  readABCILogFromFile(t, "bep3-claim-tx-response.json"),
 		},
 		{
-			name:   "cdp.MsgCreateCDP",
-			logs:   readABCILogFromFile("cdp-create-tx-response.json"),
-			status: SuccessStatus,
+			name: "cdp.MsgCreateCDP",
+			log:  readABCILogFromFile(t, "cdp-create-tx-response.json"),
 		},
 		{
-			name:   "cdp.MsgDeposit",
-			logs:   readABCILogFromFile("cdp-deposit-tx-response.json"),
-			status: SuccessStatus,
+			name: "cdp.MsgDeposit",
+			log:  readABCILogFromFile(t, "cdp-deposit-tx-response.json"),
 		},
 		{
-			name:   "cdp.MsgWithdraw",
-			logs:   readABCILogFromFile("cdp-withdraw-tx-response.json"),
-			status: SuccessStatus,
+			name: "cdp.MsgWithdraw",
+			log:  readABCILogFromFile(t, "cdp-withdraw-tx-response.json"),
 		},
 		{
-			name:   "cdp.MsgDrawDebt",
-			logs:   readABCILogFromFile("cdp-draw-tx-response.json"),
-			status: SuccessStatus,
+			name: "cdp.MsgDrawDebt",
+			log:  readABCILogFromFile(t, "cdp-draw-tx-response.json"),
 		},
 		{
-			name:   "cdp.MsgRepayDebt",
-			logs:   readABCILogFromFile("cdp-repay-tx-response.json"),
-			status: SuccessStatus,
+			name: "cdp.MsgRepayDebt",
+			log:  readABCILogFromFile(t, "cdp-repay-tx-response.json"),
 		},
 		{
-			name:   "cdp.MsgLiquidate",
-			logs:   readABCILogFromFile("cdp-liquidate-tx-response.json"),
-			status: SuccessStatus,
+			name: "cdp.MsgLiquidate",
+			log:  readABCILogFromFile(t, "cdp-liquidate-tx-response.json"),
 		},
 		{
-			name:   "kava.SubmitProposal",
-			logs:   readABCILogFromFile("committee-submit-tx-response.json"),
-			status: SuccessStatus,
+			name: "kava.SubmitProposal",
+			log:  readABCILogFromFile(t, "committee-submit-tx-response.json"),
 		},
 		{
-			name:   "kava.MsgVote",
-			logs:   readABCILogFromFile("committee-vote-tx-response.json"),
-			status: SuccessStatus,
+			name: "kava.MsgVote",
+			log:  readABCILogFromFile(t, "committee-vote-tx-response.json"),
 		},
 		{
-			name:   "incentive.MsgClaimUSDXMintingReward",
-			logs:   readABCILogFromFile("incentive-claim-usdx-tx-response.json"),
-			status: SuccessStatus,
+			name: "incentive.MsgClaimUSDXMintingReward",
+			log:  readABCILogFromFile(t, "incentive-claim-usdx-tx-response.json"),
 		},
 		{
-			name:   "incentive.MsgClaimHardReward",
-			logs:   readABCILogFromFile("incentive-claim-hard-tx-response.json"),
-			status: SuccessStatus,
+			name: "incentive.MsgClaimHardReward",
+			log:  readABCILogFromFile(t, "incentive-claim-hard-tx-response.json"),
 		},
 		{
-			name:   "pricefeed.MsgPostPrice",
-			logs:   readABCILogFromFile("pricefeed-post-tx-response.json"),
-			status: SuccessStatus,
+			name: "pricefeed.MsgPostPrice",
+			log:  readABCILogFromFile(t, "pricefeed-post-tx-response.json"),
 		},
 		{
-			name:   "cosmos-sdk.MsgSend",
-			logs:   readABCILogFromFile("msg-send-tx-response.json"),
-			status: SuccessStatus,
+			name: "cosmos-sdk.MsgSend",
+			log:  readABCILogFromFile(t, "msg-send-tx-response.json"),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			for _, log := range tc.logs {
-				ops := getTransferOpsFromMsg(log, &tc.status, 0)
-				assertTransferOpsBalanceTrack(t, tc.name, ops)
-			}
+			runAndAssertOperationInvariants(t, TransferOpType,
+				func(otc *operationTestCase) []*types.Operation {
+					ops := getTransferOpsFromMsg(tc.log, &otc.status, otc.index)
+					senders, receivers := calculateSendersReceivers(tc.log)
+					coins := calculateCoins(tc.log)
+					assertTransferOpsBalanceTrack(t, otc.name, ops, senders, receivers, coins)
+					return ops
+				})
 		})
 	}
 }
@@ -703,11 +685,13 @@ func assertTransferOpsBalanceTrack(
 	t *testing.T,
 	name string,
 	ops []*types.Operation,
+	senderTracking []accountBalance,
+	receiverTracking []accountBalance,
+	transferCoins sdk.Coins,
 ) {
-	amount := calculateCoins(ops)
 	t.Run(name, func(t *testing.T) {
 		supportedCurrenciesFound := false
-		for _, coin := range amount {
+		for _, coin := range transferCoins {
 			_, ok := Currencies[coin.Denom]
 			if ok {
 				supportedCurrenciesFound = true
@@ -718,8 +702,6 @@ func assertTransferOpsBalanceTrack(
 			t.Fatal("no operations found")
 		}
 	})
-
-	senderTracking, receiverTracking := calculateSendersReceivers(ops)
 
 	t.Run("coin operations sum to zero", func(t *testing.T) {
 		if len(senderTracking) == 0 || len(receiverTracking) == 0 {
@@ -835,29 +817,37 @@ func assertTransferOpsBalanceTrack(
 	})
 }
 
-func calculateCoins(ops []*types.Operation) sdk.Coins {
+func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 	coins := sdk.NewCoins()
-	for _, op := range ops {
-		coinAmount, ok := sdk.NewIntFromString(op.Amount.Value)
-		if !ok {
-			panic(fmt.Sprintf("invalid input amount: %s\n", op.Amount.Value))
-		}
-		if coinAmount.IsPositive() {
-			coins = coins.Add(sdk.NewCoin(Denoms[op.Amount.Currency.Symbol], coinAmount))
+	for _, ev := range log.Events {
+		if ev.Type == "transfer" {
+			unflattenedTransferEvents := unflattenTransferEvents(ev)
+			for _, event := range unflattenedTransferEvents {
+				var amount sdk.Coins
+				for _, attr := range event.Attributes {
+					if attr.Key == "amount" {
+						amount = mustParseCoins(attr.Value)
+					}
+					coins = coins.Add(amount...)
+				}
+			}
 		}
 	}
 	return coins
 }
 
-func readABCILogFromFile(file string) sdk.ABCIMessageLogs {
+func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 	txResponse := sdk.TxResponse{}
-	bz, err := ioutil.ReadFile(filepath.Join("mocks", file))
+	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
 	if err != nil {
-		panic(err)
+		t.Fatalf("could not read %s: %v", file, err)
 	}
 	cdc := app.MakeCodec()
 	cdc.MustUnmarshalJSON(bz, &txResponse)
-	return txResponse.Logs
+	if len(txResponse.Logs) != 1 {
+		t.Fatalf("each transaction should have one log, found %d for %s", len(txResponse.Logs), file)
+	}
+	return txResponse.Logs[0]
 
 }
 
@@ -873,39 +863,51 @@ func (ab accountBalance) String() string {
 	`, ab.Account, ab.Balance)
 }
 
-func calculateSendersReceivers(ops []*types.Operation) (senders, receivers []accountBalance) {
+func calculateSendersReceivers(log sdk.ABCIMessageLog) (senders, receivers []accountBalance) {
 	senderMap := make(map[string]sdk.Coins)
 	receiverMap := make(map[string]sdk.Coins)
-	for _, op := range ops {
-		// if len(op.RelatedOperations) > 0 {
-		// 	fmt.Printf("receiver operation: {Identifier: %d, Type: %s, Status: %s, Address: %s, Amount: %s, Currency: %s, Realated Ops: [%d]}\n", op.OperationIdentifier.Index, op.Type, *op.Status, op.Account.Address, op.Amount.Value, op.Amount.Currency.Symbol, op.RelatedOperations[0].Index)
-		// } else {
-		// 	fmt.Printf("sender operation: {Identifier: %d, Type: %s, Status: %s, Address: %s, Amount: %s, Currency: %s}\n", op.OperationIdentifier.Index, op.Type, *op.Status, op.Account.Address, op.Amount.Value, op.Amount.Currency.Symbol)
-		// }
-		coinAmount, ok := sdk.NewIntFromString(op.Amount.Value)
-		if !ok {
-			panic(fmt.Sprintf("invalid input amount: %s\n", op.Amount.Value))
-		}
-		if coinAmount.IsNegative() {
-			sender := mustAccAddressFromBech32(op.Account.Address)
-			coins, seen := senderMap[sender.String()]
-			if !seen {
-				coins = sdk.NewCoins(sdk.NewCoin(Denoms[op.Amount.Currency.Symbol], coinAmount.Neg()))
-			} else {
-				coins = coins.Add(sdk.NewCoin(Denoms[op.Amount.Currency.Symbol], coinAmount.Neg()))
+
+	for _, ev := range log.Events {
+		if ev.Type == "transfer" {
+			unflattenedTransferEvents := unflattenTransferEvents(ev)
+			for _, event := range unflattenedTransferEvents {
+				var sender sdk.AccAddress
+				var recipient sdk.AccAddress
+				var amount sdk.Coins
+				for _, attr := range event.Attributes {
+
+					if attr.Key == "sender" {
+						sender = mustAccAddressFromBech32(attr.Value)
+					}
+					if attr.Key == "recipient" {
+						recipient = mustAccAddressFromBech32(attr.Value)
+					}
+					if attr.Key == "amount" {
+						amount = mustParseCoins(attr.Value)
+					}
+				}
+				filteredCoins := filterCoins(amount)
+				if filteredCoins.Empty() {
+					continue
+				}
+				senderCoins, seenSender := senderMap[sender.String()]
+				if !seenSender {
+					senderCoins = amount
+				} else {
+					senderCoins = senderCoins.Add(amount...)
+				}
+				senderMap[sender.String()] = senderCoins
+				receiverCoins, seenReceiver := receiverMap[recipient.String()]
+				if !seenReceiver {
+					receiverCoins = amount
+				} else {
+					receiverCoins = receiverCoins.Add(amount...)
+				}
+				receiverMap[recipient.String()] = receiverCoins
 			}
-			senderMap[sender.String()] = coins
-		} else {
-			receiver := mustAccAddressFromBech32(op.Account.Address)
-			coins, seen := receiverMap[receiver.String()]
-			if !seen {
-				coins = sdk.NewCoins(sdk.NewCoin(Denoms[op.Amount.Currency.Symbol], coinAmount))
-			} else {
-				coins = coins.Add(sdk.NewCoin(Denoms[op.Amount.Currency.Symbol], coinAmount))
-			}
-			receiverMap[receiver.String()] = coins
 		}
 	}
+
 	for sender, balance := range senderMap {
 		senders = append(senders, accountBalance{Account: mustAccAddressFromBech32(sender), Balance: balance})
 	}
@@ -913,4 +915,15 @@ func calculateSendersReceivers(ops []*types.Operation) (senders, receivers []acc
 		receivers = append(receivers, accountBalance{Account: mustAccAddressFromBech32(receiver), Balance: balance})
 	}
 	return senders, receivers
+}
+
+func filterCoins(amount sdk.Coins) sdk.Coins {
+	filtered := sdk.NewCoins()
+	for _, c := range amount {
+		_, ok := Currencies[c.Denom]
+		if ok {
+			filtered = filtered.Add(c)
+		}
+	}
+	return filtered
 }
