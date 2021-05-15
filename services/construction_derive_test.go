@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/base64"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
@@ -64,15 +65,17 @@ func TestConstructionDerive_PublicKeyNil(t *testing.T) {
 func TestConstructionDerive_PublicKeyCompress(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 	compressed := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
-	compressedPubKeyBytes := []byte(compressed)
+	compressedPubKeyBytes, error := base64.StdEncoding.DecodeString(compressed)
+	require.NoError(t, error)
 	request := &types.ConstructionDeriveRequest{
 		PublicKey: &types.PublicKey{
 			CurveType: types.Secp256k1,
 			Bytes:     compressedPubKeyBytes,
 		},
 	}
+
 	ctx := context.Background()
 	response, err := servicer.ConstructionDerive(ctx, request)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 	assert.Equal(t, "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq", response.AccountIdentifier.Address)
 }

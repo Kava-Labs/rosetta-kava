@@ -19,7 +19,11 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/coinbase/rosetta-sdk-go/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // ConstructionDerive implements the /construction/derive endpoint.
@@ -27,12 +31,28 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 	curveType := request.PublicKey.CurveType
 	publicKeyBytes := request.PublicKey.Bytes
 
-	response := &types.ConstructionDeriveResponse{
-		AccountIdentifier: &types.AccountIdentifier{
-			Address:    "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
-		},
+	key := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
+	decoded, _ := base64.StdEncoding.DecodeString(key)
+	pubKey, err := btcec.ParsePubKey(decoded, btcec.S256())
+	if err != nil {
+		return nil, wrapErr(ErrInvalidPublicKey, err)
 	}
 
+	var tmPubKey secp256k1.PubKeySecp256k1
+	serializedPubKey := pubKey.SerializeCompressed()
+
+	for i := 0; i < len(serializedPubKey); i++ {
+		tmPubKey[i] = serializedPubKey[i]
+	}
+
+	addressBytes := tmPubKey.Address().Bytes()
+	accountAddress := sdk.AccAddress(addressBytes).String()
+
+	response := &types.ConstructionDeriveResponse{
+		AccountIdentifier: &types.AccountIdentifier{
+			Address:    accountAddress,
+		},
+	}
 
 	if curveType != types.Secp256k1 {
 		return nil, ErrUnsupportedCurveType
