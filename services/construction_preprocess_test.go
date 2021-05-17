@@ -60,7 +60,7 @@ func validConstructionPreprocessRequest() *types.ConstructionPreprocessRequest {
 }
 
 func TestConstructionPreprocess_NoOperations(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	ctx := context.Background()
 	response, err := servicer.ConstructionPreprocess(ctx,
@@ -84,7 +84,7 @@ func TestConstructionPreprocess_NoOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	testCases := []struct {
 		suggestedFeeMultiplier *float64
@@ -133,7 +133,7 @@ func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
 }
 
 func TestConstructionPreprocess_Memo(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	testCases := []struct {
 		memo *string
@@ -178,7 +178,7 @@ func TestConstructionPreprocess_Memo(t *testing.T) {
 
 func TestConstructionPreprocess_MaxFee(t *testing.T) {
 	cdc := app.MakeCodec()
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	testCases := []struct {
 		maxFee         []*types.Amount
@@ -258,7 +258,7 @@ func TestConstructionPreprocess_MaxFee(t *testing.T) {
 }
 
 func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	testCases := []struct {
 		invalidOperations []*types.Operation
@@ -329,7 +329,7 @@ func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
 
 func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	cdc := app.MakeCodec()
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
 	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"
@@ -388,7 +388,7 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_GasAdjustment(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 
 	testCases := []struct {
 		gasAdjustment         *float64

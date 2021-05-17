@@ -16,6 +16,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -23,6 +24,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +39,7 @@ func assertOptionsErrorContext(t *testing.T, err *types.Error, context string) {
 }
 
 func TestConstructionMetadata_OptionsValidation_MissingFields(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 	servicer.config.Mode = configuration.Online
 
 	requiredOptions := map[string]interface{}{
@@ -71,7 +73,7 @@ func TestConstructionMetadata_OptionsValidation_MissingFields(t *testing.T) {
 
 func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 	cdc := app.MakeCodec()
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupContructionAPIServicer()
 	servicer.config.Mode = configuration.Online
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
@@ -177,6 +179,225 @@ func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assertOptionError(tc.key, tc.value, tc.message)
+		})
+	}
+}
+
+func TestConstructionMetadata_GasAndFee(t *testing.T) {
+	cdc := app.MakeCodec()
+	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
+	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"
+	amount := "5000001"
+	fromAddr, err := sdk.AccAddressFromBech32(fromAddress)
+	require.NoError(t, err)
+	toAddr, err := sdk.AccAddressFromBech32(toAddress)
+	require.NoError(t, err)
+	coinAmount, ok := sdk.NewIntFromString(amount)
+	require.True(t, ok)
+
+	msgs := []sdk.Msg{
+		bank.MsgSend{
+			FromAddress: fromAddr,
+			ToAddress:   toAddr,
+			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", coinAmount)),
+		},
+	}
+	encodedMsgs, err := cdc.MarshalJSON(msgs)
+	require.NoError(t, err)
+
+	expectedTx := authtypes.NewStdTx(
+		msgs,
+		authtypes.StdFee{},           // est without fee
+		[]authtypes.StdSignature{{}}, // est without signature
+		"some memo message",
+	)
+
+	testCases := []struct {
+		name                   string
+		estimatedGas           uint64
+		gasAdjustment          float64
+		suggestedFeeMultiplier float64
+		maxFee                 sdk.Coins
+		expectedGasWanted      uint64
+		expectedGasPrice       float64
+		expectedFeeAmount      sdk.Int
+	}{
+		{
+			name:                   "zero multiplier",
+			gasAdjustment:          0.2,
+			suggestedFeeMultiplier: 0,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      85000,
+			expectedGasPrice:       float64(0),
+			expectedFeeAmount:      sdk.NewInt(0),
+		},
+		{
+			name:                   "small multiplier",
+			gasAdjustment:          0.5,
+			suggestedFeeMultiplier: 0.00001,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      100001,
+			expectedGasPrice:       float64(0.00000001),
+			expectedFeeAmount:      sdk.NewInt(1),
+		},
+		{
+			name:                   "multiplier under 1",
+			gasAdjustment:          0.5,
+			suggestedFeeMultiplier: 0.5,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      200000,
+			expectedGasPrice:       float64(0.0005),
+			expectedFeeAmount:      sdk.NewInt(100),
+		},
+		{
+			name:                   "multiplier equal to 1",
+			gasAdjustment:          0,
+			suggestedFeeMultiplier: 1,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      200000,
+			expectedGasPrice:       float64(0.001),
+			expectedFeeAmount:      sdk.NewInt(200),
+		},
+		{
+			name:                   "suggested fee is rounded up",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 1,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      200001,
+			expectedGasPrice:       float64(0.001),
+			expectedFeeAmount:      sdk.NewInt(201),
+		},
+		{
+			name:                   "multiplier below 2",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 1.6,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      200001,
+			expectedGasPrice:       float64(0.0304),
+			expectedFeeAmount:      sdk.NewInt(6081),
+		},
+		{
+			name:                   "multiplier equal to 2",
+			gasAdjustment:          0.8,
+			suggestedFeeMultiplier: 2,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      500001,
+			expectedGasPrice:       float64(0.05),
+			expectedFeeAmount:      sdk.NewInt(25001),
+		},
+		{
+			name:                   "multiplier below 3",
+			gasAdjustment:          0.8,
+			suggestedFeeMultiplier: 2.1,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      400001,
+			expectedGasPrice:       float64(0.07),
+			expectedFeeAmount:      sdk.NewInt(28001),
+		},
+		{
+			name:                   "multiplier equal to 3",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 3,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      100000,
+			expectedGasPrice:       float64(0.25),
+			expectedFeeAmount:      sdk.NewInt(25000),
+		},
+		{
+			name:                   "multiplier over 3",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 3.9,
+			maxFee:                 sdk.Coins{},
+			expectedGasWanted:      100000,
+			expectedGasPrice:       float64(0.25),
+			expectedFeeAmount:      sdk.NewInt(25000),
+		},
+		{
+			name:                   "max fee greater than suggested fee",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 3.9,
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(30000))),
+			expectedGasWanted:      100000,
+			expectedGasPrice:       float64(0.25),
+			expectedFeeAmount:      sdk.NewInt(25000),
+		},
+		{
+			name:                   "max fee equal to suggested fee",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 3.9,
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(25000))),
+			expectedGasWanted:      100000,
+			expectedGasPrice:       float64(0.25),
+			expectedFeeAmount:      sdk.NewInt(25000),
+		},
+		{
+			name:                   "max fee less than suggested fee",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 3.9,
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(20000))),
+			expectedGasWanted:      100000,
+			expectedGasPrice:       float64(0.2),
+			expectedFeeAmount:      sdk.NewInt(20000),
+		},
+		{
+			name:                   "max fee less than suggested fee, gas price capped",
+			gasAdjustment:          0.1,
+			suggestedFeeMultiplier: 3.9,
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(20000))),
+			expectedGasWanted:      100001,
+			expectedGasPrice:       float64(0.19999800002),
+			expectedFeeAmount:      sdk.NewInt(20000),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			servicer, mockClient := setupContructionAPIServicer()
+			servicer.config.Mode = configuration.Online
+			ctx := context.Background()
+
+			encodedMaxFee, err := cdc.MarshalJSON(tc.maxFee)
+			require.NoError(t, err)
+
+			validOptions := map[string]interface{}{
+				"msgs":                     string(encodedMsgs),
+				"memo":                     "some memo message",
+				"gas_adjustment":           tc.gasAdjustment,
+				"suggested_fee_multiplier": tc.suggestedFeeMultiplier,
+				"max_fee":                  string(encodedMaxFee),
+			}
+
+			request := &types.ConstructionMetadataRequest{
+				Options:    validOptions,
+				PublicKeys: []*types.PublicKey{},
+			}
+
+			kavaErr := errors.New("some kava error")
+			mockClient.On("EstimateGas", ctx, &expectedTx, tc.gasAdjustment).Return(uint64(0), kavaErr).Once()
+			response, rerr := servicer.ConstructionMetadata(ctx, request)
+			assert.Nil(t, response)
+			require.NotNil(t, rerr)
+			assert.Equal(t, wrapErr(ErrKava, kavaErr), rerr)
+
+			mockClient.On("EstimateGas", ctx, &expectedTx, tc.gasAdjustment).Return(tc.expectedGasWanted, nil).Once()
+			response, rerr = servicer.ConstructionMetadata(ctx, request)
+			require.Nil(t, rerr)
+
+			gasWanted, ok := response.Metadata["gas_wanted"].(uint64)
+			require.True(t, ok)
+
+			gasPrice, ok := response.Metadata["gas_price"].(float64)
+			require.True(t, ok)
+
+			assert.Equal(t, tc.expectedGasWanted, gasWanted)
+			assert.InDelta(t, tc.expectedGasPrice, gasPrice, 0.000000000001)
+
+			require.Equal(t, 1, len(response.SuggestedFee))
+			coin, rerr := amountToCoin(response.SuggestedFee[0])
+			require.Nil(t, rerr)
+
+			assert.Equal(t, "ukava", coin.Denom)
+			assert.Equal(t, tc.expectedFeeAmount, coin.Amount)
 		})
 	}
 }

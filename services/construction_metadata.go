@@ -20,13 +20,18 @@ package services
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
+
+var defaultTransferGas = uint64(200000)
 
 var requiredOptions = []string{
 	"msgs",
@@ -52,12 +57,44 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 		return nil, ErrUnavailableOffline
 	}
 
-	_, err := validateAndParseOptions(s.cdc, request.Options)
+	options, err := validateAndParseOptions(s.cdc, request.Options)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidOptions, err)
 	}
 
-	return nil, nil
+	tx := authtypes.NewStdTx(
+		options.msgs,
+		authtypes.StdFee{},
+		[]authtypes.StdSignature{{}},
+		options.memo,
+	)
+
+	gasWanted, err := s.client.EstimateGas(ctx, &tx, options.gasAdjustment)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
+
+	gasPrice := gasPriceFromMultiplier(options.suggestedFeeMultiplier)
+	feeAmount := gasPrice * float64(gasWanted)
+	suggestedFeeAmount := sdk.NewInt(int64(math.Ceil(feeAmount)))
+
+	if !options.maxFee.Empty() && suggestedFeeAmount.GT(options.maxFee.AmountOf("ukava")) {
+		suggestedFeeAmount = options.maxFee.AmountOf("ukava")
+		gasPrice = float64(suggestedFeeAmount.Int64()) / float64(gasWanted)
+	}
+
+	return &types.ConstructionMetadataResponse{
+		Metadata: map[string]interface{}{
+			"gas_wanted": gasWanted,
+			"gas_price":  gasPrice,
+		},
+		SuggestedFee: []*types.Amount{
+			{
+				Value:    suggestedFeeAmount.String(),
+				Currency: kava.Currencies["ukava"],
+			},
+		},
+	}, nil
 }
 
 func validateAndParseOptions(cdc *codec.Codec, opts map[string]interface{}) (*options, error) {
@@ -111,4 +148,20 @@ func validateAndParseOptions(cdc *codec.Codec, opts map[string]interface{}) (*op
 		suggestedFeeMultiplier: suggestedFeeMultiplier,
 		maxFee:                 maxFee,
 	}, nil
+}
+
+func gasPriceFromMultiplier(multiplier float64) float64 {
+	if multiplier < 1 {
+		return multiplier * 0.001
+	}
+
+	if multiplier < 2 {
+		return (multiplier-1)*0.049 + 0.001
+	}
+
+	if multiplier < 3 {
+		return (multiplier-2)*0.2 + 0.05
+	}
+
+	return 0.25
 }
