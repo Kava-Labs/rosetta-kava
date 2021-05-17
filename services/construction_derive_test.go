@@ -46,7 +46,25 @@ func TestConstructionDerive_CurveValidation(t *testing.T) {
 	}
 }
 
-func TestConstructionDerive_PublicKeyNil(t *testing.T) {
+func TestConstructionDerive_PublicKeyEmpty1(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+
+	emptyKey := make([]byte, 0)
+
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: types.Secp256k1,
+			Bytes: emptyKey,
+		},
+	}
+	ctx := context.Background()
+	response, err := servicer.ConstructionDerive(ctx, request)
+
+	assert.Nil(t, response)
+	assert.Equal(t, ErrPublicKeyEmpty, err)
+}
+
+func TestConstructionDerive_PublicKeyEmpty2(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 
 	request := &types.ConstructionDeriveRequest{
@@ -59,7 +77,7 @@ func TestConstructionDerive_PublicKeyNil(t *testing.T) {
 	response, err := servicer.ConstructionDerive(ctx, request)
 
 	assert.Nil(t, response)
-	assert.Equal(t, ErrPublicKeyNil, err)
+	assert.Equal(t, ErrPublicKeyEmpty, err)
 }
 
 func TestConstructionDerive_PublicKeyValid(t *testing.T) {

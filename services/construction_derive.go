@@ -33,8 +33,8 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 		return nil, ErrUnsupportedCurveType
 	}
 
-	if request.PublicKey.Bytes == nil {
-		return nil, ErrPublicKeyNil
+	if request.PublicKey.Bytes == nil || len(request.PublicKey.Bytes) == 0 {
+		return nil, ErrPublicKeyEmpty
 	}
 
 	pubKey, err := btcec.ParsePubKey(request.PublicKey.Bytes, btcec.S256())
