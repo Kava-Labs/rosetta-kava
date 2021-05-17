@@ -13,10 +13,12 @@ RUN git clone https://github.com/kava-labs/kava \
 # Build rosetta-kava service
 RUN git clone https://github.com/kava-labs/rosetta-kava \
     && cd rosetta-kava \
+    && git fetch origin \
     && git checkout $ROSETTA_KAVA_VERSION \
     && make install
 
 CMD cd rosetta-kava \
-    && git checkout remotes/origin/dm-docker-deployment \
-    && chmod +x /rosetta-kava/scripts/start-services.sh \
-    && /rosetta-kava/scripts/start-services.sh
+    && git fetch origin \
+    && git checkout origin/dm-docker-deployment \
+    && chmod +x ./scripts/start-services.sh \
+    && ./scripts/start-services.sh
