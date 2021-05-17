@@ -62,20 +62,30 @@ func TestConstructionDerive_PublicKeyNil(t *testing.T) {
 	assert.Equal(t, ErrPublicKeyNil, err)
 }
 
-func TestConstructionDerive_PublicKeyCompressed(t *testing.T) {
+func TestConstructionDerive_PublicKey(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
-	compressed := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
-	compressedPubKeyBytes, error := base64.StdEncoding.DecodeString(compressed)
-	require.NoError(t, error)
-	request := &types.ConstructionDeriveRequest{
-		PublicKey: &types.PublicKey{
-			CurveType: types.Secp256k1,
-			Bytes:     compressedPubKeyBytes,
-		},
+
+	testCases := []string{
+		"AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY",
+		"BMAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaYvrG35oB42m6Hc60r5UqINTyW",
 	}
 
-	ctx := context.Background()
-	response, err := servicer.ConstructionDerive(ctx, request)
-	assert.Nil(t, err)
-	assert.Equal(t, "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq", response.AccountIdentifier.Address)
+	for _, tc := range testCases {
+		ctx := context.Background()
+
+		PubKeyBytes, error := base64.StdEncoding.DecodeString(tc)
+		require.NoError(t, error)
+
+		request := &types.ConstructionDeriveRequest{
+			PublicKey: &types.PublicKey{
+				CurveType: types.Secp256k1,
+				Bytes:     PubKeyBytes,
+			},
+		}
+
+		response, err := servicer.ConstructionDerive(ctx, request)
+
+		assert.Equal(t, "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq", response.AccountIdentifier.Address)
+		assert.Nil(t, err)
+	}
 }
