@@ -1,0 +1,104 @@
+{
+  "height": "32",
+  "txhash": "5BA0E2E05023125F2AD2F9AF777E470E835CC91535E883039AA467EA317F1F1E",
+  "raw_log": "[{\"msg_index\":0,\"log\":\"\",\"events\":[{\"type\":\"delegate\",\"attributes\":[{\"key\":\"validator\",\"value\":\"kavavaloper1jl42l225565y3hm9dm4my33hjgdzleucqryhlx\"},{\"key\":\"amount\",\"value\":\"77247739\"}]},{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"delegate\"},{\"key\":\"sender\",\"value\":\"kava1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8m2splc\"},{\"key\":\"module\",\"value\":\"staking\"},{\"key\":\"sender\",\"value\":\"kava1s44lw00rq4lh9379jew5dtfnjc5vr6qkme9yd2\"}]},{\"type\":\"transfer\",\"attributes\":[{\"key\":\"recipient\",\"value\":\"kava1s44lw00rq4lh9379jew5dtfnjc5vr6qkme9yd2\"},{\"key\":\"sender\",\"value\":\"kava1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8m2splc\"},{\"key\":\"amount\",\"value\":\"127ukava\"}]}]}]",
+  "logs": [
+    {
+      "msg_index": 0,
+      "log": "",
+      "events": [
+        {
+          "type": "delegate",
+          "attributes": [
+            {
+              "key": "validator",
+              "value": "kavavaloper1jl42l225565y3hm9dm4my33hjgdzleucqryhlx"
+            },
+            {
+              "key": "amount",
+              "value": "77247739"
+            }
+          ]
+        },
+        {
+          "type": "message",
+          "attributes": [
+            {
+              "key": "action",
+              "value": "delegate"
+            },
+            {
+              "key": "sender",
+              "value": "kava1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8m2splc"
+            },
+            {
+              "key": "module",
+              "value": "staking"
+            },
+            {
+              "key": "sender",
+              "value": "kava1s44lw00rq4lh9379jew5dtfnjc5vr6qkme9yd2"
+            }
+          ]
+        },
+        {
+          "type": "transfer",
+          "attributes": [
+            {
+              "key": "recipient",
+              "value": "kava1s44lw00rq4lh9379jew5dtfnjc5vr6qkme9yd2"
+            },
+            {
+              "key": "sender",
+              "value": "kava1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8m2splc"
+            },
+            {
+              "key": "amount",
+              "value": "127ukava"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "gas_wanted": "500000",
+  "gas_used": "167986",
+  "tx": {
+    "type": "cosmos-sdk/StdTx",
+    "value": {
+      "msg": [
+        {
+          "type": "cosmos-sdk/MsgDelegate",
+          "value": {
+            "delegator_address": "kava1s44lw00rq4lh9379jew5dtfnjc5vr6qkme9yd2",
+            "validator_address": "kavavaloper1jl42l225565y3hm9dm4my33hjgdzleucqryhlx",
+            "amount": {
+              "denom": "ukava",
+              "amount": "77247739"
+            }
+          }
+        }
+      ],
+      "fee": {
+        "amount": [
+          {
+            "denom": "ukava",
+            "amount": "10000"
+          }
+        ],
+        "gas": "500000"
+      },
+      "signatures": [
+        {
+          "pub_key": {
+            "type": "tendermint/PubKeySecp256k1",
+            "value": "Ai5fzSKQ0BwgsNiS+ShFnrOs8qZddMpCNAh9dbleyTsx"
+          },
+          "signature": "yPKTav92bLaTXDstb9M3sHsBm4uQCVlc+/HmxyxdB6QsSQ02+CgzekgsfiNYo6vbjtNvrwnvt8PChCz8LUo3DA=="
+        }
+      ],
+      "memo": "Stake via Trust Wallet"
+    }
+  },
+  "timestamp": "2021-04-08T15:05:27Z"
+}

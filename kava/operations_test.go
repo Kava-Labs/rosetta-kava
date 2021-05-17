@@ -15,17 +15,23 @@
 package kava
 
 import (
+	"fmt"
+	"io/ioutil"
 	"math/big"
 	"math/rand"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+
+	"github.com/kava-labs/kava/app"
 )
 
 const (
@@ -573,41 +579,406 @@ func TestFeeToOperations(t *testing.T) {
 
 func TestMsgToOperations_BalanceTracking(t *testing.T) {
 	tests := []struct {
-		name      string
-		createFn  func(coins sdk.Coins) (sdk.Msg, sdk.ABCIMessageLog)
-		opType    string
-		sender    *types.AccountIdentifier
-		recipient *types.AccountIdentifier
+		name string
+		log  sdk.ABCIMessageLog
+		msg  sdk.Msg
 	}{
 		{
-			name: "bank.MsgSend",
-			createFn: func(coins sdk.Coins) (sdk.Msg, sdk.ABCIMessageLog) {
-				return bank.MsgSend{
-					FromAddress: getAccAddr(t, testAddresses[0]),
-					ToAddress:   getAccAddr(t, testAddresses[1]),
-					Amount:      coins,
-				}, sdk.ABCIMessageLog{}
-			},
-			opType: TransferOpType,
-			sender: &types.AccountIdentifier{
-				Address: testAddresses[0],
-			},
-			recipient: &types.AccountIdentifier{
-				Address: testAddresses[1],
-			},
+			name: "hard.MsgDeposit",
+			log:  readABCILogFromFile(t, "hard-deposit-tx-response.json"),
+		},
+		{
+			name: "hard.MsgWithdraw",
+			log:  readABCILogFromFile(t, "hard-withdraw-tx-response.json"),
+		},
+		{
+			name: "hard.MsgBorrow",
+			log:  readABCILogFromFile(t, "hard-borrow-tx-response.json"),
+		},
+		{
+			name: "hard.MsgRepay",
+			log:  readABCILogFromFile(t, "hard-repay-tx-response.json"),
+		},
+		{
+			name: "hard.MsgLiquidate",
+			log:  readABCILogFromFile(t, "hard-liquidate-tx-response.json"),
+		},
+		{
+			name: "auction.MsgPlaceBid",
+			log:  readABCILogFromFile(t, "auction-bid-tx-response.json"),
+		},
+		{
+			name: "bep3.MsgCreateAtomicSwap",
+			log:  readABCILogFromFile(t, "bep3-create-tx-response.json"),
+		},
+		{
+			name: "bep3.MsgRefundAtomicSwap",
+			log:  readABCILogFromFile(t, "bep3-refund-tx-response.json"),
+		},
+		{
+			name: "bep3.MsgClaimAtomicSwap",
+			log:  readABCILogFromFile(t, "bep3-claim-tx-response.json"),
+		},
+		{
+			name: "cdp.MsgCreateCDP",
+			log:  readABCILogFromFile(t, "cdp-create-tx-response.json"),
+		},
+		{
+			name: "cdp.MsgDeposit",
+			log:  readABCILogFromFile(t, "cdp-deposit-tx-response.json"),
+		},
+		{
+			name: "cdp.MsgWithdraw",
+			log:  readABCILogFromFile(t, "cdp-withdraw-tx-response.json"),
+		},
+		{
+			name: "cdp.MsgDrawDebt",
+			log:  readABCILogFromFile(t, "cdp-draw-tx-response.json"),
+		},
+		{
+			name: "cdp.MsgRepayDebt",
+			log:  readABCILogFromFile(t, "cdp-repay-tx-response.json"),
+		},
+		{
+			name: "cdp.MsgLiquidate",
+			log:  readABCILogFromFile(t, "cdp-liquidate-tx-response.json"),
+		},
+		{
+			name: "kava.SubmitProposal",
+			log:  readABCILogFromFile(t, "committee-submit-tx-response.json"),
+		},
+		{
+			name: "kava.MsgVote",
+			log:  readABCILogFromFile(t, "committee-vote-tx-response.json"),
+		},
+		{
+			name: "incentive.MsgClaimUSDXMintingReward",
+			log:  readABCILogFromFile(t, "incentive-claim-usdx-tx-response.json"),
+		},
+		{
+			name: "incentive.MsgClaimHardReward",
+			log:  readABCILogFromFile(t, "incentive-claim-hard-tx-response.json"),
+		},
+		{
+			name: "pricefeed.MsgPostPrice",
+			log:  readABCILogFromFile(t, "pricefeed-post-tx-response.json"),
+		},
+		{
+			name: "cosmos-sdk.MsgSend",
+			log:  readABCILogFromFile(t, "msg-send-tx-response.json"),
+		},
+		{
+			name: "cosmos-sdk.MsgDelegate",
+			log:  readABCILogFromFile(t, "msg-delegate-tx-response.json"),
+			msg:  readMsgFromFile(t, "msg-delegate-tx-response.json"),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			runAndAssertOperationInvariants(t, tc.opType, func(otc *operationTestCase) []*types.Operation {
-				msg, log := tc.createFn(otc.coins)
-				ops := MsgToOperations(msg, log, &otc.status, otc.index)
-
-				assertTrackedBalance(t, otc.name, ops, tc.sender, otc.coins, tc.recipient)
-
-				return ops
-			})
+			runAndAssertOperationInvariants(t, TransferOpType,
+				func(otc *operationTestCase) []*types.Operation {
+					ops := MsgToOperations(tc.msg, tc.log, &otc.status, otc.index)
+					senders, receivers := calculateSendersReceivers(tc.msg, tc.log)
+					coins := calculateCoins(tc.log)
+					assertTransferOpsBalanceTrack(t, otc.name, ops, senders, receivers, coins)
+					return ops
+				})
 		})
 	}
+}
+
+func assertTransferOpsBalanceTrack(
+	t *testing.T,
+	name string,
+	ops []*types.Operation,
+	senderTracking []accountBalance,
+	receiverTracking []accountBalance,
+	transferCoins sdk.Coins,
+) {
+	t.Run(name, func(t *testing.T) {
+		supportedCurrenciesFound := false
+		for _, coin := range transferCoins {
+			_, ok := Currencies[coin.Denom]
+			if ok {
+				supportedCurrenciesFound = true
+			}
+		}
+
+		if supportedCurrenciesFound && len(ops) == 0 {
+			t.Fatal("no operations found")
+		}
+	})
+
+	t.Run("coin operations sum to zero", func(t *testing.T) {
+		if len(senderTracking) == 0 || len(receiverTracking) == 0 {
+			t.Skip("no sender or recipient to match operations")
+		}
+
+		coinSums := make(map[string]*big.Int)
+
+		for _, op := range ops {
+			symbol := op.Amount.Currency.Symbol
+			value, err := types.AmountValue(op.Amount)
+			require.NoError(t, err)
+
+			sum, ok := coinSums[symbol]
+			if ok {
+				sum.Add(sum, value)
+			} else {
+				coinSums[symbol] = value
+			}
+		}
+
+		for _, sum := range coinSums {
+			assert.True(t, big.NewInt(0).Cmp(sum) == 0)
+		}
+	})
+
+	t.Run("coin operation amounts match for sender", func(t *testing.T) {
+		for _, st := range senderTracking {
+			if st.Account == nil {
+				t.Skip("no sender")
+			}
+			opCoins := sdk.NewCoins()
+			for _, op := range ops {
+				if !mustAccAddressFromBech32(op.Account.Address).Equals(st.Account) {
+					continue
+				}
+
+				symbol := op.Amount.Currency.Symbol
+				value, err := types.AmountValue(op.Amount)
+				if value.Sign() != -1 {
+					continue // exit if value is non-negative, as this is not a send
+				}
+				require.NoError(t, err)
+
+				denom, ok := Denoms[symbol]
+				require.True(t, ok)
+
+				opCoins = opCoins.Add(sdk.NewCoin(denom, sdk.NewIntFromBigInt(value.Neg(value))))
+			}
+			assert.True(t, opCoins.IsEqual(st.Balance))
+		}
+	})
+
+	t.Run("coin operation amounts match for recipient", func(t *testing.T) {
+		for _, rt := range receiverTracking {
+			if rt.Account == nil {
+				t.Skip("no recipient")
+			}
+			opCoins := sdk.NewCoins()
+			for _, op := range ops {
+				if !mustAccAddressFromBech32(op.Account.Address).Equals(rt.Account) {
+					continue
+				}
+				symbol := op.Amount.Currency.Symbol
+				value, err := types.AmountValue(op.Amount)
+				if value.Sign() != 1 {
+					continue
+				}
+				require.NoError(t, err)
+
+				denom, ok := Denoms[symbol]
+				require.True(t, ok)
+
+				opCoins = opCoins.Add(sdk.NewCoin(denom, sdk.NewIntFromBigInt(value)))
+			}
+			assert.True(t, opCoins.IsEqual(rt.Balance))
+		}
+
+	})
+
+	t.Run("each sender op has no related ops", func(t *testing.T) {
+
+		for _, op := range ops {
+			value, err := types.AmountValue(op.Amount)
+			require.NoError(t, err)
+			if value.Sign() == -1 {
+				assert.Equal(t, 0, len(op.RelatedOperations))
+			}
+		}
+	})
+
+	t.Run("each recipient op is related to a sender op", func(t *testing.T) {
+
+		for _, op := range ops {
+			value, err := types.AmountValue(op.Amount)
+			require.NoError(t, err)
+			if value.Sign() == 1 {
+				assert.Equal(t, 1, len(op.RelatedOperations))
+				relatedOpIndex := op.RelatedOperations[0].Index
+				relatedOp := ops[relatedOpIndex-ops[0].OperationIdentifier.Index]
+
+				// index matches as expected
+				assert.Equal(t, relatedOpIndex, relatedOp.OperationIdentifier.Index)
+				// values match
+				negatedRelValue, err := types.NegateValue(relatedOp.Amount.Value)
+				require.NoError(t, err)
+				assert.Equal(t, op.Amount.Value, negatedRelValue)
+
+				// currencies match
+				assert.Equal(t, op.Amount.Value, negatedRelValue)
+			}
+		}
+	})
+}
+
+func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
+	coins := sdk.NewCoins()
+	for _, ev := range log.Events {
+		if ev.Type == "transfer" {
+			unflattenedTransferEvents := unflattenTransferEvents(ev)
+			for _, event := range unflattenedTransferEvents {
+				var amount sdk.Coins
+				for _, attr := range event.Attributes {
+					if attr.Key == "amount" {
+						amount = mustParseCoins(attr.Value)
+					}
+					coins = coins.Add(amount...)
+				}
+			}
+		}
+		if ev.Type == "delegate" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					coins = coins.Add(sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value)))
+				}
+			}
+		}
+	}
+	return coins
+}
+
+func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
+	txResponse := sdk.TxResponse{}
+	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
+	if err != nil {
+		t.Fatalf("could not read %s: %v", file, err)
+	}
+	cdc := app.MakeCodec()
+	cdc.MustUnmarshalJSON(bz, &txResponse)
+	if len(txResponse.Logs) != 1 {
+		t.Fatalf("each transaction should have one log, found %d for %s", len(txResponse.Logs), file)
+	}
+	return txResponse.Logs[0]
+}
+
+func readMsgFromFile(t *testing.T, file string) sdk.Msg {
+	txResponse := sdk.TxResponse{}
+	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
+	if err != nil {
+		t.Fatalf("could not read %s: %v", file, err)
+	}
+	cdc := app.MakeCodec()
+	cdc.MustUnmarshalJSON(bz, &txResponse)
+	if len(txResponse.Tx.GetMsgs()) != 1 {
+		t.Fatalf("each transaction should have one msg, found %d for %s", len(txResponse.Tx.GetMsgs()), file)
+	}
+	return txResponse.Tx.GetMsgs()[0]
+}
+
+type accountBalance struct {
+	Account sdk.AccAddress
+	Balance sdk.Coins
+}
+
+func (ab accountBalance) String() string {
+	return fmt.Sprintf(`
+	Account: %s
+	Balance %s
+	`, ab.Account, ab.Balance)
+}
+
+func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, receivers []accountBalance) {
+	senderMap := make(map[string]sdk.Coins)
+	receiverMap := make(map[string]sdk.Coins)
+
+	for _, ev := range log.Events {
+		if ev.Type == "transfer" {
+			unflattenedTransferEvents := unflattenTransferEvents(ev)
+			for _, event := range unflattenedTransferEvents {
+				var sender sdk.AccAddress
+				var recipient sdk.AccAddress
+				var amount sdk.Coins
+				for _, attr := range event.Attributes {
+
+					if attr.Key == "sender" {
+						sender = mustAccAddressFromBech32(attr.Value)
+					}
+					if attr.Key == "recipient" {
+						recipient = mustAccAddressFromBech32(attr.Value)
+					}
+					if attr.Key == "amount" {
+						amount = mustParseCoins(attr.Value)
+					}
+				}
+				filteredCoins := filterCoins(amount)
+				if filteredCoins.Empty() {
+					continue
+				}
+				senderCoins, seenSender := senderMap[sender.String()]
+				if !seenSender {
+					senderCoins = amount
+				} else {
+					senderCoins = senderCoins.Add(amount...)
+				}
+				senderMap[sender.String()] = senderCoins
+				receiverCoins, seenReceiver := receiverMap[recipient.String()]
+				if !seenReceiver {
+					receiverCoins = amount
+				} else {
+					receiverCoins = receiverCoins.Add(amount...)
+				}
+				receiverMap[recipient.String()] = receiverCoins
+			}
+		}
+	}
+
+	for sender, balance := range senderMap {
+		senders = append(senders, accountBalance{Account: mustAccAddressFromBech32(sender), Balance: balance})
+	}
+	for receiver, balance := range receiverMap {
+		receivers = append(receivers, accountBalance{Account: mustAccAddressFromBech32(receiver), Balance: balance})
+	}
+	switch msg.(type) {
+	case staking.MsgDelegate:
+		senders, receivers = calcDelegationSendersReceivers(senders, receivers, log)
+	}
+	return senders, receivers
+}
+
+func calcDelegationSendersReceivers(senders, receivers []accountBalance, log sdk.ABCIMessageLog) (delegationSenders, delegationReceivers []accountBalance) {
+	var amount sdk.Coin
+	var sender sdk.AccAddress
+	recipient := stakingModuleAddress
+	for _, ev := range log.Events {
+		if ev.Type == "delegate" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+				}
+			}
+		} else if ev.Type == "message" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "sender" && !mustAccAddressFromBech32(attr.Value).Equals(recipient) {
+					sender = mustAccAddressFromBech32(attr.Value)
+				}
+			}
+		}
+	}
+	delegationSenders = append(senders, accountBalance{Account: sender, Balance: sdk.NewCoins(amount)})
+	delegationReceivers = append(receivers, accountBalance{Account: recipient, Balance: sdk.NewCoins(amount)})
+	return delegationSenders, delegationReceivers
+}
+
+func filterCoins(amount sdk.Coins) sdk.Coins {
+	filtered := sdk.NewCoins()
+	for _, c := range amount {
+		_, ok := Currencies[c.Denom]
+		if ok {
+			filtered = filtered.Add(c)
+		}
+	}
+	return filtered
 }

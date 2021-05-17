@@ -22,12 +22,15 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank"
 	mint "github.com/cosmos/cosmos-sdk/x/mint"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var (
-	feeCollectorAddress = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
-	mintModuleAddress   = sdk.AccAddress(crypto.AddressHash([]byte(mint.ModuleName)))
+	feeCollectorAddress  = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
+	mintModuleAddress    = sdk.AccAddress(crypto.AddressHash([]byte(mint.ModuleName)))
+	stakingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(staking.BondedPoolName)))
 )
 
 // EventsToOperations returns rosetta operations from abci block events
@@ -119,20 +122,9 @@ func FeeToOperations(feePayer sdk.AccAddress, amount sdk.Coins, status *string, 
 
 // MsgToOperations returns rosetta operations for a cosmos sdk or kava message
 func MsgToOperations(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
-	switch m := msg.(type) {
-	case bank.MsgSend:
-		return msgSendToOperations(m, status, index)
-	default:
-		return []*types.Operation{}
-	}
-}
+	ops := getTransferOpsFromMsg(msg, log, status, index)
 
-func msgSendToOperations(msg bank.MsgSend, status *string, index int64) []*types.Operation {
-	sender := newAccountID(msg.FromAddress)
-	recipient := newAccountID(msg.ToAddress)
-	amount := msg.Amount
-
-	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
+	return ops
 }
 
 func appendOperationsAndUpdateIndex(
@@ -231,4 +223,101 @@ func recipientBalanceOps(
 	}
 
 	return operations
+}
+
+func getTransferOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
+	var ops []*types.Operation
+	for _, ev := range log.Events {
+		if ev.Type == "transfer" {
+			unflattenedTransferEvents := unflattenTransferEvents(ev)
+			for _, event := range unflattenedTransferEvents {
+				transferOps := getTransferOpsFromEvent(event, status, index)
+				ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
+			}
+		}
+	}
+	switch msg.(type) {
+	case staking.MsgDelegate:
+		return msgDelegateToOperations(ops, log, status, index)
+	}
+	return ops
+}
+
+func unflattenTransferEvents(ev sdk.StringEvent) (events sdk.StringEvents) {
+	if len(ev.Attributes)%3 != 0 {
+		panic(fmt.Sprintf("unexpected number of attributes in transfer event %s", ev.Attributes))
+	}
+	numberOfTransferEvents := len(ev.Attributes) / 3
+	for i := 0; i < numberOfTransferEvents; i++ {
+		startingIndex := i * 3
+		event := sdk.NewEvent(bank.EventTypeTransfer, ev.Attributes[startingIndex:startingIndex+3]...)
+		events = append(events, sdk.StringifyEvent(abci.Event(event)))
+	}
+	return events
+}
+
+func getTransferOpsFromEvent(ev sdk.StringEvent, status *string, index int64) []*types.Operation {
+	var sender sdk.AccAddress
+	var recipient sdk.AccAddress
+	var amount sdk.Coins
+	for _, attr := range ev.Attributes {
+		if attr.Key == "sender" {
+			sender = mustAccAddressFromBech32(attr.Value)
+		}
+		if attr.Key == "recipient" {
+			recipient = mustAccAddressFromBech32(attr.Value)
+		}
+		if attr.Key == "amount" {
+			amount = mustParseCoins(attr.Value)
+		}
+	}
+	return balanceTrackingOps(TransferOpType, newAccountID(sender), amount, newAccountID(recipient), status, index)
+}
+
+func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
+	recipient := stakingModuleAddress
+	var delegationOps []*types.Operation
+	var amount sdk.Coin
+	var sender sdk.AccAddress
+	for _, ev := range log.Events {
+		if ev.Type == "delegate" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+				}
+			}
+		} else if ev.Type == "message" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "sender" && !mustAccAddressFromBech32(attr.Value).Equals(recipient) {
+					sender = mustAccAddressFromBech32(attr.Value)
+				}
+			}
+		}
+	}
+	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
+	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
+}
+
+func mustAccAddressFromBech32(addr string) sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(addr)
+	if err != nil {
+		panic(err)
+	}
+	return acc
+}
+
+func mustParseCoins(coinsStr string) sdk.Coins {
+	coins, err := sdk.ParseCoins(coinsStr)
+	if err != nil {
+		panic(err)
+	}
+	return coins
+}
+
+func mustNewIntFromStr(s string) sdk.Int {
+	i, ok := sdk.NewIntFromString(s)
+	if !ok {
+		panic(fmt.Sprintf("error when converting %s to sdk.Int", s))
+	}
+	return i
 }
