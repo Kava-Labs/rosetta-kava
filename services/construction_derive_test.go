@@ -62,7 +62,7 @@ func TestConstructionDerive_PublicKeyNil(t *testing.T) {
 	assert.Equal(t, ErrPublicKeyNil, err)
 }
 
-func TestConstructionDerive_PublicKeyCompress(t *testing.T) {
+func TestConstructionDerive_PublicKeyCompressed(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 	compressed := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
 	compressedPubKeyBytes, error := base64.StdEncoding.DecodeString(compressed)

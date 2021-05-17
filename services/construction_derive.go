@@ -41,9 +41,7 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 	var tmPubKey secp256k1.PubKeySecp256k1
 	serializedPubKey := pubKey.SerializeCompressed()
 
-	for i := 0; i < len(serializedPubKey); i++ {
-		tmPubKey[i] = serializedPubKey[i]
-	}
+	copy(tmPubKey[:], serializedPubKey)
 
 	addressBytes := tmPubKey.Address().Bytes()
 	accountAddress := sdk.AccAddress(addressBytes).String()
