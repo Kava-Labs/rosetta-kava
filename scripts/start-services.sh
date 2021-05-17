@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 set_access_permissions() {
     chmod +x scripts/wait-for-it.sh
@@ -9,15 +10,15 @@ start_kava_node()
     echo "Starting Kava node"
 
     kvd unsafe-reset-all
-    kvd start --home /data/kvd
-
+    kvd start --home /data/kvd &
     scripts/wait-for-it.sh --timeout=60 localhost:26657
     sleep 5
 }
 
 start_rosetta_service() {
     echo "Starting Rosetta service"
-    MODE=online NETWORK=$NETWORK_ID PORT=8000 KAVA_RPC_URL=tcp://localhost:26657 rosetta-kava run
+    MODE=online NETWORK=testing PORT=8000 KAVA_RPC_URL=tcp://localhost:26657 rosetta-kava run&
+    scripts/wait-for-it.sh --timeout=60 localhost:8000
 }
 
 set_access_permissions
