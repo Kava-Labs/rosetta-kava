@@ -62,30 +62,53 @@ func TestConstructionDerive_PublicKeyNil(t *testing.T) {
 	assert.Equal(t, ErrPublicKeyNil, err)
 }
 
-func TestConstructionDerive_PublicKey(t *testing.T) {
+func TestConstructionDerive_PublicKeyValid(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 
-	testCases := []string{
-		"AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY",
-		"BMAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaYvrG35oB42m6Hc60r5UqINTyW",
+	testCases := []struct {
+			name string
+			key	string
+			address string
+	}{
+		{
+			name: "Compressed Key 1",
+			key:"AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY",
+			address: "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+		},
+		{
+			name: "Uncompressed Key 1",
+			key:"BMAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaYvrG35oB42m6Hc60r5UqINTyW/8Z1kyZ5Ju9w4af71RI=",
+			address: "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+		},
+		{
+			name: "Compressed Key 2",
+			key:"AwoUgfwik9NNmPhuFqVjRXG1GVEG7QjGAim/ADlZc7aS",
+			address: "kava1xg0ktvzyqq7z6nx57e4yhfzsxxwh9nft5xyh8j",
+		},
+		{
+			name: "Uncompressed Key 2",
+			key:"BAoUgfwik9NNmPhuFqVjRXG1GVEG7QjGAim/ADlZc7aS3PKYgitX26InU5cIkzEFftPUeY1eMZ1CQKjgUUtEC+U=",
+			address: "kava1xg0ktvzyqq7z6nx57e4yhfzsxxwh9nft5xyh8j",
+		},
 	}
 
 	for _, tc := range testCases {
-		ctx := context.Background()
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 
-		PubKeyBytes, error := base64.StdEncoding.DecodeString(tc)
-		require.NoError(t, error)
+			PubKeyBytes, error := base64.StdEncoding.DecodeString(tc.key)
+			require.NoError(t, error)
 
-		request := &types.ConstructionDeriveRequest{
-			PublicKey: &types.PublicKey{
-				CurveType: types.Secp256k1,
-				Bytes:     PubKeyBytes,
-			},
-		}
+			request := &types.ConstructionDeriveRequest{
+				PublicKey: &types.PublicKey{
+					CurveType: types.Secp256k1,
+					Bytes:     PubKeyBytes,
+				},
+			}
 
-		response, err := servicer.ConstructionDerive(ctx, request)
-
-		assert.Equal(t, "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq", response.AccountIdentifier.Address)
-		assert.Nil(t, err)
+			response, err := servicer.ConstructionDerive(ctx, request)
+			assert.Equal(t, tc.address, response.AccountIdentifier.Address)
+			assert.Nil(t, err)
+		})
 	}
 }

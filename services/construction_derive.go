@@ -19,7 +19,6 @@ package services
 
 import (
 	"context"
-	"encoding/base64"
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,11 +28,16 @@ import (
 // ConstructionDerive implements the /construction/derive endpoint.
 func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request *types.ConstructionDeriveRequest) (*types.ConstructionDeriveResponse, *types.Error) {
 	curveType := request.PublicKey.CurveType
-	publicKeyBytes := request.PublicKey.Bytes
 
-	key := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
-	decoded, _ := base64.StdEncoding.DecodeString(key)
-	pubKey, err := btcec.ParsePubKey(decoded, btcec.S256())
+	if curveType != types.Secp256k1 {
+		return nil, ErrUnsupportedCurveType
+	}
+
+	if request.PublicKey.Bytes == nil {
+		return nil, ErrPublicKeyNil
+	}
+
+	pubKey, err := btcec.ParsePubKey(request.PublicKey.Bytes, btcec.S256())
 	if err != nil {
 		return nil, wrapErr(ErrInvalidPublicKey, err)
 	}
@@ -50,14 +54,6 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 		AccountIdentifier: &types.AccountIdentifier{
 			Address:    accountAddress,
 		},
-	}
-
-	if curveType != types.Secp256k1 {
-		return nil, ErrUnsupportedCurveType
-	}
-
-	if publicKeyBytes == nil {
-		return nil, ErrPublicKeyNil
 	}
 
 	return response, nil
