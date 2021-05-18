@@ -19,10 +19,11 @@ package services
 
 import (
 	"context"
+	"errors"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 

@@ -1,16 +1,18 @@
 package services
 
 import (
+	"context"
 	"encoding/base64"
-	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/kava-labs/kava/app"
+	"errors"
+	"testing"
+
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
-	"github.com/pkg/errors"
+
+	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
-	"testing"
 )
 
 func setupConstructionAPIServicer() *ConstructionAPIService {
@@ -87,6 +89,22 @@ func TestConstructionDerive_PublicKeyEmptyNil(t *testing.T) {
 	}
 }
 
+func TestConstructionDerive_InvalidPublicKey(t *testing.T) {
+	servicer := setupConstructionAPIServicer()
+	ctx := context.Background()
+
+	request := &types.ConstructionDeriveRequest{
+		PublicKey: &types.PublicKey{
+			CurveType: types.Secp256k1,
+			Bytes:     []byte("some invalid key bytes"),
+		},
+	}
+
+	response, err := servicer.ConstructionDerive(ctx, request)
+	assert.Nil(t, response)
+	assert.Equal(t, wrapErr(ErrInvalidPublicKey, errors.New("invalid pub key length 22")), err)
+}
+
 func TestConstructionDerive_PublicKeyValid(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 
@@ -121,8 +139,8 @@ func TestConstructionDerive_PublicKeyValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			PubKeyBytes, error := base64.StdEncoding.DecodeString(tc.key)
-			require.NoError(t, error)
+			PubKeyBytes, err := base64.StdEncoding.DecodeString(tc.key)
+			require.NoError(t, err)
 
 			request := &types.ConstructionDeriveRequest{
 				PublicKey: &types.PublicKey{
@@ -131,9 +149,9 @@ func TestConstructionDerive_PublicKeyValid(t *testing.T) {
 				},
 			}
 
-			response, err := servicer.ConstructionDerive(ctx, request)
+			response, rerr := servicer.ConstructionDerive(ctx, request)
 			assert.Equal(t, tc.address, response.AccountIdentifier.Address)
-			assert.Nil(t, err)
+			assert.Nil(t, rerr)
 		})
 	}
 }
