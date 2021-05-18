@@ -31,8 +31,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-var defaultTransferGas = uint64(200000)
-
 var requiredOptions = []string{
 	"msgs",
 	"memo",
