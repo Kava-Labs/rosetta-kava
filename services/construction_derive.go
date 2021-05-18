@@ -22,6 +22,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
@@ -33,8 +34,11 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 		return nil, ErrUnsupportedCurveType
 	}
 
+
 	if request.PublicKey.Bytes == nil || len(request.PublicKey.Bytes) == 0 {
-		return nil, ErrPublicKeyEmpty
+		originalError := errors.New("nil public key")
+		wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
+		return nil, wrappedPublicKeyErr
 	}
 
 	pubKey, err := btcec.ParsePubKey(request.PublicKey.Bytes, btcec.S256())

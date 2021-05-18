@@ -5,6 +5,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
@@ -60,12 +61,16 @@ func TestConstructionDerive_PublicKeyEmpty1(t *testing.T) {
 	ctx := context.Background()
 	response, err := servicer.ConstructionDerive(ctx, request)
 
+	originalError := errors.New("nil public key")
+	wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
+
 	assert.Nil(t, response)
-	assert.Equal(t, ErrPublicKeyEmpty, err)
+	assert.Equal(t, wrappedPublicKeyErr, err)
 }
 
 func TestConstructionDerive_PublicKeyEmpty2(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
+	//Could probably refactor the PublicKeyNil error to use the same PublicKeyInvalid error w/ a wrapped errors.New("nil public key")
 
 	request := &types.ConstructionDeriveRequest{
 		PublicKey: &types.PublicKey{
@@ -76,8 +81,11 @@ func TestConstructionDerive_PublicKeyEmpty2(t *testing.T) {
 	ctx := context.Background()
 	response, err := servicer.ConstructionDerive(ctx, request)
 
+	originalError := errors.New("nil public key")
+	wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
+
 	assert.Nil(t, response)
-	assert.Equal(t, ErrPublicKeyEmpty, err)
+	assert.Equal(t, wrappedPublicKeyErr, err)
 }
 
 func TestConstructionDerive_PublicKeyValid(t *testing.T) {

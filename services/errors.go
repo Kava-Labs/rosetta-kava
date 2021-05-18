@@ -29,7 +29,7 @@ var (
 		ErrUnavailableOffline,
 		ErrKava,
 		ErrUnsupportedCurveType,
-		ErrPublicKeyEmpty,
+		ErrPublicKeyNil,
 		ErrInvalidPublicKey,
 	}
 
@@ -59,9 +59,9 @@ var (
 		Message: "Unsupported Curve Type",
 	}
 
-	ErrPublicKeyEmpty = &types.Error{
+	ErrPublicKeyNil = &types.Error{
 		Code:    4,
-		Message: "Public Key is empty",
+		Message: "Public Key is nil",
 	}
 
 	ErrInvalidPublicKey = &types.Error{
