@@ -34,7 +34,6 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 		return nil, ErrUnsupportedCurveType
 	}
 
-
 	if len(request.PublicKey.Bytes) == 0 {
 		return nil, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
 	}
@@ -54,7 +53,7 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 
 	response := &types.ConstructionDeriveResponse{
 		AccountIdentifier: &types.AccountIdentifier{
-			Address:    accountAddress,
+			Address: accountAddress,
 		},
 	}
 
