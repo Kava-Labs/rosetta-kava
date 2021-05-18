@@ -47,45 +47,43 @@ func TestConstructionDerive_CurveValidation(t *testing.T) {
 	}
 }
 
-func TestConstructionDerive_PublicKeyEmpty1(t *testing.T) {
+func TestConstructionDerive_PublicKeyEmptyNil(t *testing.T) {
 	servicer := setupConstructionAPIServicer()
 
-	emptyKey := make([]byte, 0)
-
-	request := &types.ConstructionDeriveRequest{
-		PublicKey: &types.PublicKey{
-			CurveType: types.Secp256k1,
-			Bytes: emptyKey,
+	testCases := []struct {
+		name string
+		bytes	[]byte
+	}{
+		{
+			name: "Nil",
+			bytes: nil,
 		},
-	}
-	ctx := context.Background()
-	response, err := servicer.ConstructionDerive(ctx, request)
-
-	originalError := errors.New("nil public key")
-	wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
-
-	assert.Nil(t, response)
-	assert.Equal(t, wrappedPublicKeyErr, err)
-}
-
-func TestConstructionDerive_PublicKeyEmpty2(t *testing.T) {
-	servicer := setupConstructionAPIServicer()
-	//Could probably refactor the PublicKeyNil error to use the same PublicKeyInvalid error w/ a wrapped errors.New("nil public key")
-
-	request := &types.ConstructionDeriveRequest{
-		PublicKey: &types.PublicKey{
-			CurveType: types.Secp256k1,
-			Bytes: nil,
+		{
+			name: "Zero length",
+			bytes: []byte{},
 		},
+
 	}
-	ctx := context.Background()
-	response, err := servicer.ConstructionDerive(ctx, request)
 
-	originalError := errors.New("nil public key")
-	wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 
-	assert.Nil(t, response)
-	assert.Equal(t, wrappedPublicKeyErr, err)
+			request := &types.ConstructionDeriveRequest{
+				PublicKey: &types.PublicKey{
+					CurveType: types.Secp256k1,
+					Bytes:     tc.bytes,
+				},
+			}
+
+			response, err := servicer.ConstructionDerive(ctx, request)
+			originalError := errors.New("nil public key")
+			wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
+
+			assert.Nil(t, response)
+			assert.Equal(t, wrappedPublicKeyErr, err)
+		})
+	}
 }
 
 func TestConstructionDerive_PublicKeyValid(t *testing.T) {

@@ -35,10 +35,8 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 	}
 
 
-	if request.PublicKey.Bytes == nil || len(request.PublicKey.Bytes) == 0 {
-		originalError := errors.New("nil public key")
-		wrappedPublicKeyErr := wrapErr(ErrPublicKeyNil, originalError)
-		return nil, wrappedPublicKeyErr
+	if len(request.PublicKey.Bytes) == 0 {
+		return nil, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
 	}
 
 	pubKey, err := btcec.ParsePubKey(request.PublicKey.Bytes, btcec.S256())
