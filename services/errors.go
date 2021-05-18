@@ -54,18 +54,51 @@ var (
 		Message: "Kava error",
 	}
 
-	ErrUnsupportedCurveType = &types.Error{
+	// ErrNoOperations is returned when no operations are provided
+	ErrNoOperations = &types.Error{
 		Code:    3,
+		Message: "No operations provided",
+	}
+
+	// ErrInvalidCurrencyAmount is returned when a currency value could not be parsed
+	ErrInvalidCurrencyAmount = &types.Error{
+		Code:    4,
+		Message: "Invalid currency",
+	}
+
+	// ErrUnsupportedCurrency is returned when a currency symbol is invalid
+	// or the decimals do not match
+	ErrUnsupportedCurrency = &types.Error{
+		Code:    5,
+		Message: "Unsupported concurrency",
+	}
+
+	// ErrUnclearIntent is returned when operations
+	// provided in /construction/preprocess or /construction/payloads
+	// are not valid.
+	ErrUnclearIntent = &types.Error{
+		Code:    6,
+		Message: "Unable to parse intent",
+	}
+
+	// ErrInvalidAddress is returned when an account identifier has an invalid address
+	ErrInvalidAddress = &types.Error{
+		Code:    7,
+		Message: "Invalid Address",
+	}
+
+	ErrUnsupportedCurveType = &types.Error{
+		Code:    8,
 		Message: "Unsupported Curve Type",
 	}
 
 	ErrPublicKeyNil = &types.Error{
-		Code:    4,
+		Code:    9,
 		Message: "Public Key is nil",
 	}
 
 	ErrInvalidPublicKey = &types.Error{
-		Code:	5,
+		Code:    10,
 		Message: "Invalid Public Key",
 	}
 )

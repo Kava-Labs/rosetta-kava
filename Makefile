@@ -46,7 +46,7 @@ watch:
 
 .PHONY: watch-integration
 watch-integration:
-	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration ./testing; done
+	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test -tags=integration -count=1 ./testing; done
 
 .PHONY: rosetta-check-data
 rosetta-check-data:
@@ -59,7 +59,7 @@ rosetta-check-data-local:
 .PHONY: gen-mocks
 gen-mocks:
 	mockery --dir services --all --case underscore --outpkg services --output mocks/services;
-	mockery --dir kava --name RPCClient --structname Client --case underscore --outpkg tendermint --output mocks/tendermint
+	mockery --dir kava --all --case underscore --outpkg mocks --output kava/mocks
 
 .PHONY: clean-mocks
 clean-mocks:
