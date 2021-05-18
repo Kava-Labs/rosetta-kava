@@ -61,6 +61,38 @@ func (_m *Client) Block(_a0 context.Context, _a1 *types.PartialBlockIdentifier) 
 	return r0, r1
 }
 
+// PostTx provides a mock function with given fields: txBytes
+func (_m *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, map[string]interface{}, error) {
+	ret := _m.Called(txBytes)
+
+	var r0 *types.TransactionIdentifier
+	if rf, ok := ret.Get(0).(func([]byte) *types.TransactionIdentifier); ok {
+		r0 = rf(txBytes)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.TransactionIdentifier)
+		}
+	}
+
+	var r1 map[string]interface{}
+	if rf, ok := ret.Get(1).(func([]byte) map[string]interface{}); ok {
+		r1 = rf(txBytes)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(map[string]interface{})
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func([]byte) error); ok {
+		r2 = rf(txBytes)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // Status provides a mock function with given fields: _a0
 func (_m *Client) Status(_a0 context.Context) (*types.BlockIdentifier, int64, *types.BlockIdentifier, *types.SyncStatus, []*types.Peer, error) {
 	ret := _m.Called(_a0)
