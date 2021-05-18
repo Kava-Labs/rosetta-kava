@@ -22,6 +22,8 @@ import (
 
 	"github.com/kava-labs/rosetta-kava/configuration"
 
+	"github.com/kava-labs/kava/app"
+
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/server"
 )
@@ -51,7 +53,8 @@ func NewBlockchainRouter(
 		asserter,
 	)
 
-	constructionAPIService := NewConstructionAPIService(config, client)
+	cdc := app.MakeCodec()
+	constructionAPIService := NewConstructionAPIService(config, client, cdc)
 	constructionAPIController := server.NewConstructionAPIController(
 		constructionAPIService,
 		asserter,

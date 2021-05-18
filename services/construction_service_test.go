@@ -21,6 +21,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
@@ -28,13 +29,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func setupContructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
+	cfg := &configuration.Configuration{
+		Mode: configuration.Offline,
+	}
+	mockClient := &mocks.Client{}
+	cdc := app.MakeCodec()
+	return NewConstructionAPIService(cfg, mockClient, cdc), mockClient
+}
+
 func TestConstructionService_Online(t *testing.T) {
 	cfg := &configuration.Configuration{
 		Mode: configuration.Online,
 	}
 
 	mockClient := &mocks.Client{}
-	servicer := NewConstructionAPIService(cfg, mockClient)
+	cdc := app.MakeCodec()
+	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
 
 	// Test Derive
@@ -100,7 +111,8 @@ func TestConstructionService_Offline(t *testing.T) {
 	}
 
 	mockClient := &mocks.Client{}
-	servicer := NewConstructionAPIService(cfg, mockClient)
+	cdc := app.MakeCodec()
+	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
 
 	// Test Derive
