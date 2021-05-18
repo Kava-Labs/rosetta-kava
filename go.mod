@@ -3,6 +3,7 @@ module github.com/kava-labs/rosetta-kava
 go 1.15
 
 require (
+	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/coinbase/rosetta-sdk-go v0.6.10
 	github.com/cosmos/cosmos-sdk v0.39.2
 	github.com/fatih/color v1.10.0
@@ -23,7 +24,7 @@ require (
 	github.com/tendermint/tendermint v0.33.9
 	go.etcd.io/bbolt v1.3.4 // indirect
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	golang.org/x/sys v0.0.0-20210228012217-479acdf4ea46 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/genproto v0.0.0-20200707001353-8e8330bf89df // indirect
