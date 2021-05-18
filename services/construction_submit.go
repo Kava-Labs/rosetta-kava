@@ -19,37 +19,34 @@ package services
 
 import (
 	"context"
+	"encoding/hex"
+
+	"github.com/kava-labs/rosetta-kava/configuration"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
-// Client is used services to get blockchain
-// data and submit transactions.
-type Client interface {
-	Status(context.Context) (
-		*types.BlockIdentifier,
-		int64,
-		*types.BlockIdentifier,
-		*types.SyncStatus,
-		[]*types.Peer,
-		error,
-	)
+// ConstructionSubmit implements the /construction/submit endpoint.
+func (s *ConstructionAPIService) ConstructionSubmit(
+	ctx context.Context,
+	request *types.ConstructionSubmitRequest,
+) (*types.TransactionIdentifierResponse, *types.Error) {
+	if s.config.Mode != configuration.Online {
+		return nil, ErrUnavailableOffline
+	}
 
-	Balance(
-		context.Context,
-		*types.AccountIdentifier,
-		*types.PartialBlockIdentifier,
-		[]*types.Currency,
-	) (*types.AccountBalanceResponse, error)
+	txBytes, err := hex.DecodeString(request.SignedTransaction)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
 
-	Block(
-		context.Context,
-		*types.PartialBlockIdentifier,
-	) (*types.BlockResponse, error)
+	res, meta, err := s.client.PostTx(txBytes)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
 
-	PostTx(txBytes []byte) (
-		res *types.TransactionIdentifier,
-		meta map[string]interface{},
-		err error,
-	)
+	return &types.TransactionIdentifierResponse{
+		TransactionIdentifier: res,
+		Metadata:              meta,
+	}, nil
 }

@@ -28,6 +28,7 @@ import (
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func init() {
@@ -327,4 +328,20 @@ func stringifyEvents(events []abci.Event) sdk.StringEvents {
 	}
 
 	return res
+}
+
+func (c *Client) PostTx(txBytes []byte) (
+	res *types.TransactionIdentifier,
+	meta map[string]interface{},
+	err error,
+) {
+	txRes, err := c.rpc.BroadcastTxAsync(tmtypes.Tx(txBytes))
+
+	res = &types.TransactionIdentifier{Hash: txRes.Hash.String()}
+
+	meta["Data"] = txRes.Data
+	meta["Code"] = txRes.Code
+	meta["Codespace"] = txRes.Codespace
+
+	return res, meta, err
 }
