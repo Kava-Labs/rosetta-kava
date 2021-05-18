@@ -51,7 +51,9 @@ func NewRouter(config *configuration.Configuration) (http.Handler, error) {
 		return nil, fmt.Errorf("%w: could not initialize http client", err)
 	}
 
-	client, err := kava.NewClient(http)
+	accountBalanceFactory := kava.NewRPCBalanceFactory(http)
+
+	client, err := kava.NewClient(http, accountBalanceFactory)
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not initialize kava client", err)
 	}

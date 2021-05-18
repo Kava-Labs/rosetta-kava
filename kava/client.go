@@ -30,27 +30,21 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-func init() {
-	// bootstrap cosmos-sdk config for kava chain
-	kavaConfig := sdk.GetConfig()
-	kava.SetBech32AddressPrefixes(kavaConfig)
-	kava.SetBip44CoinType(kavaConfig)
-	kavaConfig.Seal()
-}
-
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
-	rpc RPCClient
-	cdc *codec.Codec
+	rpc            RPCClient
+	cdc            *codec.Codec
+	balanceFactory BalanceServiceFactory
 }
 
 // NewClient initialized a new Client with the provided rpc client
-func NewClient(rpc RPCClient) (*Client, error) {
+func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
 	cdc := kava.MakeCodec()
 
 	return &Client{
-		rpc: rpc,
-		cdc: cdc,
+		rpc:            rpc,
+		cdc:            cdc,
+		balanceFactory: balanceServiceFactory,
 	}, nil
 }
 
@@ -75,7 +69,6 @@ func (c *Client) Status(ctx context.Context) (
 	syncInfo := resultStatus.SyncInfo
 	tmPeers := resultNetInfo.Peers
 
-	// TODO: update when indexer is implemented
 	currentBlock := &types.BlockIdentifier{
 		Index: syncInfo.LatestBlockHeight,
 		Hash:  syncInfo.LatestBlockHash.String(),
@@ -88,7 +81,6 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	synced := !syncInfo.CatchingUp
-	// TODO: update when indexer is implemented
 	syncStatus := &types.SyncStatus{
 		CurrentIndex: &syncInfo.LatestBlockHeight,
 		TargetIndex:  &syncInfo.LatestBlockHeight,
@@ -130,12 +122,31 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	acc, err := c.rpc.Account(addr, block.Block.Header.Height)
+	balanceService, err := c.balanceFactory(addr, &block.Block.Header)
 	if err != nil {
 		return nil, err
 	}
 
-	spendableCoins := acc.SpendableCoins(block.Block.Header.Time)
+	coins, err := balanceService.GetCoinsForSubAccount(accountIdentifier.SubAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	balances := c.getBalancesAndFilterByCurrency(coins, currencies)
+
+	return &types.AccountBalanceResponse{
+		BlockIdentifier: &types.BlockIdentifier{
+			Index: block.Block.Header.Height,
+			Hash:  block.BlockID.Hash.String(),
+		},
+		Balances: balances,
+	}, nil
+}
+
+func (c *Client) getBalancesAndFilterByCurrency(
+	coins sdk.Coins,
+	currencies []*types.Currency,
+) []*types.Amount {
 	var currencyLookup map[string]*types.Currency
 
 	if currencies == nil {
@@ -155,21 +166,15 @@ func (c *Client) Balance(
 	balances := []*types.Amount{}
 
 	for denom, currency := range currencyLookup {
-		spendableValue := spendableCoins.AmountOf(denom)
+		value := coins.AmountOf(denom)
 
 		balances = append(balances, &types.Amount{
-			Value:    spendableValue.String(),
+			Value:    value.String(),
 			Currency: currency,
 		})
 	}
 
-	return &types.AccountBalanceResponse{
-		BlockIdentifier: &types.BlockIdentifier{
-			Index: block.Block.Header.Height,
-			Hash:  block.BlockID.Hash.String(),
-		},
-		Balances: balances,
-	}, nil
+	return balances
 }
 
 // Block returns rosetta block for an index or hash
@@ -242,12 +247,9 @@ func (c *Client) getTransactionsForBlock(
 	// returns transactions -- this will be number of txs + begin/end block (if there)
 	transactions := []*types.Transaction{}
 
-	// TODO: vesting account operations (must be before being blocker operations)
-	//	add them before begin blocker ops, and pass updated index to op method
-
 	beginBlockOps := EventsToOperations(
 		stringifyEvents(resultBlockResults.BeginBlockEvents),
-		0, // TODO: update index to be after vesting ops
+		0,
 	)
 
 	if len(beginBlockOps) > 0 {
