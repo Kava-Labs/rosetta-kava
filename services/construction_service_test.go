@@ -94,12 +94,6 @@ func TestConstructionService_Offline(t *testing.T) {
 	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
 
-	// Test Derive
-	//deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	//assert.Nil(t, deriveResponse)
-	//assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	//assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
 	// Test Metadata
 	metadataResponse, err := servicer.ConstructionMetadata(ctx, &types.ConstructionMetadataRequest{})
 	assert.Nil(t, metadataResponse)
