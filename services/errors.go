@@ -28,6 +28,9 @@ var (
 		ErrUnimplemented,
 		ErrUnavailableOffline,
 		ErrKava,
+		ErrUnsupportedCurveType,
+		ErrPublicKeyNil,
+		ErrInvalidPublicKey,
 	}
 
 	// ErrUnimplemented is returned when an endpoint
@@ -83,10 +86,28 @@ var (
 		Code:    7,
 		Message: "Invalid Address",
 	}
+
+	// ErrUnsupportedCurveType is returned when a public key curve type is not supported
+	ErrUnsupportedCurveType = &types.Error{
+		Code:    8,
+		Message: "Unsupported Curve Type",
+	}
+
+	// ErrPublicKeyNil is returned when a public key is not provided
+	ErrPublicKeyNil = &types.Error{
+		Code:    9,
+		Message: "Public Key is nil",
+	}
+
+	// ErrInvalidPublicKey is returned when a public key is an invalid or could not be parsed
+	ErrInvalidPublicKey = &types.Error{
+		Code:    10,
+		Message: "Invalid Public Key",
+	}
 )
 
 // wrapErr adds details to the types.Error provided. We use a function
-// to do this so that we don't accidentially overrwrite the standard
+// to do this so that we don't accidentally overwrite the standard
 // errors.
 func wrapErr(rErr *types.Error, err error) *types.Error {
 	newErr := &types.Error{
