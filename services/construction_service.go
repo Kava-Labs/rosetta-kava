@@ -23,22 +23,26 @@ import (
 	"github.com/kava-labs/rosetta-kava/configuration"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // ConstructionAPIService implements the server.ConstructionAPIServicer interface.
 type ConstructionAPIService struct {
 	config *configuration.Configuration
 	client Client
+	cdc    *codec.Codec
 }
 
 // NewConstructionAPIService creates a new instance of a ConstructionAPIService.
 func NewConstructionAPIService(
 	cfg *configuration.Configuration,
 	client Client,
+	cdc *codec.Codec,
 ) *ConstructionAPIService {
 	return &ConstructionAPIService{
 		config: cfg,
 		client: client,
+		cdc:    cdc,
 	}
 }
 
@@ -47,15 +51,6 @@ func (s *ConstructionAPIService) ConstructionDerive(
 	ctx context.Context,
 	request *types.ConstructionDeriveRequest,
 ) (*types.ConstructionDeriveResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionPreprocess implements the /construction/preprocess
-// endpoint.
-func (s *ConstructionAPIService) ConstructionPreprocess(
-	ctx context.Context,
-	request *types.ConstructionPreprocessRequest,
-) (*types.ConstructionPreprocessResponse, *types.Error) {
 	return nil, ErrUnimplemented
 }
 
