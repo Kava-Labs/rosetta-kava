@@ -87,16 +87,19 @@ var (
 		Message: "Invalid Address",
 	}
 
+	// ErrUnsupportedCurveType is returned when a public key curve type is not supported
 	ErrUnsupportedCurveType = &types.Error{
 		Code:    8,
 		Message: "Unsupported Curve Type",
 	}
 
+	// ErrPublicKeyNil is returned when a public key is not provided
 	ErrPublicKeyNil = &types.Error{
 		Code:    9,
 		Message: "Public Key is nil",
 	}
 
+	// ErrInvalidPublicKey is returned when a public key is an invalid or could not be parsed
 	ErrInvalidPublicKey = &types.Error{
 		Code:    10,
 		Message: "Invalid Public Key",
