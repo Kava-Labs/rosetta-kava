@@ -88,14 +88,6 @@ func (s *ConstructionAPIService) ConstructionCombine(
 	return nil, ErrUnimplemented
 }
 
-// ConstructionHash implements the /construction/hash endpoint.
-func (s *ConstructionAPIService) ConstructionHash(
-	ctx context.Context,
-	request *types.ConstructionHashRequest,
-) (*types.TransactionIdentifierResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
 // ConstructionParse implements the /construction/parse endpoint.
 func (s *ConstructionAPIService) ConstructionParse(
 	ctx context.Context,

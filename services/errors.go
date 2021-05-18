@@ -28,6 +28,7 @@ var (
 		ErrUnimplemented,
 		ErrUnavailableOffline,
 		ErrKava,
+		ErrInvalidTx,
 	}
 
 	// ErrUnimplemented is returned when an endpoint
@@ -49,6 +50,12 @@ var (
 	ErrKava = &types.Error{
 		Code:    2,
 		Message: "Kava error",
+	}
+
+	// ErrInvalidTx is returned by invalid transactions.
+	ErrInvalidTx = &types.Error{
+		Code:    3,
+		Message: "Invalid transaction",
 	}
 )
 
