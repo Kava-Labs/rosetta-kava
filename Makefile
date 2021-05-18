@@ -4,7 +4,7 @@ install:
 
 .PHONY: lint
 lint:
-	go run golang.org/x/lint/golint ./...
+	go run golang.org/x/lint/golint -set_exit_status ./...
 
 .PHONY: golangci-lint
 golangci-lint:
