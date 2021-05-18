@@ -28,6 +28,14 @@ var (
 		ErrUnimplemented,
 		ErrUnavailableOffline,
 		ErrKava,
+
+		ErrNoOperations,
+		ErrInvalidCurrencyAmount,
+		ErrUnsupportedCurrency,
+		ErrUnclearIntent,
+		ErrInvalidAddress,
+		ErrInvalidOptions,
+
 		ErrUnsupportedCurveType,
 		ErrPublicKeyNil,
 		ErrInvalidPublicKey,
