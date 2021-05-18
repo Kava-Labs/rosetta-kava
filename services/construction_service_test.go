@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupContructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
+func setupConstructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
 	cfg := &configuration.Configuration{
 		Mode: configuration.Offline,
 	}
@@ -47,12 +47,6 @@ func TestConstructionService_Online(t *testing.T) {
 	cdc := app.MakeCodec()
 	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
-
-	// Test Derive
-	deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	assert.Nil(t, deriveResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	// Test Payloads
 	payloadsResponse, err := servicer.ConstructionPayloads(ctx, &types.ConstructionPayloadsRequest{})
@@ -102,12 +96,6 @@ func TestConstructionService_Offline(t *testing.T) {
 	cdc := app.MakeCodec()
 	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
-
-	// Test Derive
-	deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	assert.Nil(t, deriveResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	// Test Metadata
 	metadataResponse, err := servicer.ConstructionMetadata(ctx, &types.ConstructionMetadataRequest{})

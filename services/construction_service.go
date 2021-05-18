@@ -46,14 +46,6 @@ func NewConstructionAPIService(
 	}
 }
 
-// ConstructionDerive implements the /construction/derive endpoint.
-func (s *ConstructionAPIService) ConstructionDerive(
-	ctx context.Context,
-	request *types.ConstructionDeriveRequest,
-) (*types.ConstructionDeriveResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
 // ConstructionPayloads implements the /construction/payloads endpoint.
 func (s *ConstructionAPIService) ConstructionPayloads(
 	ctx context.Context,

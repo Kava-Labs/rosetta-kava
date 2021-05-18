@@ -39,7 +39,7 @@ func assertOptionsErrorContext(t *testing.T, err *types.Error, context string) {
 }
 
 func TestConstructionMetadata_OptionsValidation_MissingFields(t *testing.T) {
-	servicer, _ := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 	servicer.config.Mode = configuration.Online
 
 	requiredOptions := map[string]interface{}{
@@ -73,7 +73,7 @@ func TestConstructionMetadata_OptionsValidation_MissingFields(t *testing.T) {
 
 func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 	cdc := app.MakeCodec()
-	servicer, _ := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 	servicer.config.Mode = configuration.Online
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
@@ -352,7 +352,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			servicer, mockClient := setupContructionAPIServicer()
+			servicer, mockClient := setupConstructionAPIServicer()
 			servicer.config.Mode = configuration.Online
 			ctx := context.Background()
 
