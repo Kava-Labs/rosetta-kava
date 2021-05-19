@@ -29,34 +29,34 @@ import (
 
 // ConstructionDerive implements the /construction/derive endpoint.
 func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request *types.ConstructionDeriveRequest) (*types.ConstructionDeriveResponse, *types.Error) {
-	curveType := request.PublicKey.CurveType
+	addr, err := getAddressFromPublicKey(request.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 
-	if curveType != types.Secp256k1 {
+	return &types.ConstructionDeriveResponse{
+		AccountIdentifier: &types.AccountIdentifier{
+			Address: addr.String(),
+		},
+	}, nil
+}
+
+func getAddressFromPublicKey(pubKey *types.PublicKey) (sdk.AccAddress, *types.Error) {
+	if pubKey.CurveType != types.Secp256k1 {
 		return nil, ErrUnsupportedCurveType
 	}
 
-	if len(request.PublicKey.Bytes) == 0 {
+	if len(pubKey.Bytes) == 0 {
 		return nil, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
 	}
 
-	pubKey, err := btcec.ParsePubKey(request.PublicKey.Bytes, btcec.S256())
+	pk, err := btcec.ParsePubKey(pubKey.Bytes, btcec.S256())
 	if err != nil {
 		return nil, wrapErr(ErrInvalidPublicKey, err)
 	}
 
 	var tmPubKey secp256k1.PubKeySecp256k1
-	serializedPubKey := pubKey.SerializeCompressed()
+	copy(tmPubKey[:], pk.SerializeCompressed())
 
-	copy(tmPubKey[:], serializedPubKey)
-
-	addressBytes := tmPubKey.Address().Bytes()
-	accountAddress := sdk.AccAddress(addressBytes).String()
-
-	response := &types.ConstructionDeriveResponse{
-		AccountIdentifier: &types.AccountIdentifier{
-			Address: accountAddress,
-		},
-	}
-
-	return response, nil
+	return sdk.AccAddress(tmPubKey.Address().Bytes()), nil
 }

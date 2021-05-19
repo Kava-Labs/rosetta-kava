@@ -46,6 +46,11 @@ type options struct {
 	maxFee                 sdk.Coins
 }
 
+type signerInfo struct {
+	accountNumber   uint64
+	accountSequence uint64
+}
+
 // ConstructionMetadata implements the /construction/metadata endpoint.
 func (s *ConstructionAPIService) ConstructionMetadata(
 	ctx context.Context,
@@ -58,6 +63,24 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 	options, err := validateAndParseOptions(s.cdc, request.Options)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidOptions, err)
+	}
+
+	var signers []signerInfo
+	for _, pubkey := range request.PublicKeys {
+		addr, rerr := getAddressFromPublicKey(pubkey)
+		if err != nil {
+			return nil, rerr
+		}
+
+		acc, err := s.client.Account(ctx, addr)
+		if err != nil {
+			return nil, wrapErr(ErrKava, err)
+		}
+
+		signers = append(signers, signerInfo{
+			accountNumber:   acc.GetAccountNumber(),
+			accountSequence: acc.GetSequence(),
+		})
 	}
 
 	tx := authtypes.NewStdTx(
@@ -83,8 +106,10 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 
 	return &types.ConstructionMetadataResponse{
 		Metadata: map[string]interface{}{
+			"signers":    signers,
 			"gas_wanted": gasWanted,
 			"gas_price":  gasPrice,
+			"memo":       options.memo,
 		},
 		SuggestedFee: []*types.Amount{
 			{
@@ -128,15 +153,17 @@ func validateAndParseOptions(cdc *codec.Codec, opts map[string]interface{}) (*op
 		return nil, fmt.Errorf("invalid value for %s", "suggested_fee_multiplier")
 	}
 
-	rawMaxFee, ok := opts["max_fee"].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid value for %s", "max_fee")
-	}
-
 	var maxFee sdk.Coins
-	err = cdc.UnmarshalJSON([]byte(rawMaxFee), &maxFee)
-	if err != nil {
-		return nil, fmt.Errorf("invalid value for %s", "max_fee")
+	if maxFeeOpt, ok := opts["max_fee"]; ok {
+		rawMaxFee, ok := maxFeeOpt.(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid value for %s", "max_fee")
+		}
+
+		err = cdc.UnmarshalJSON([]byte(rawMaxFee), &maxFee)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for %s", "max_fee")
+		}
 	}
 
 	return &options{

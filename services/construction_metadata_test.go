@@ -16,6 +16,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"testing"
@@ -389,6 +390,11 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			gasPrice, ok := response.Metadata["gas_price"].(float64)
 			require.True(t, ok)
 
+			memo, ok := response.Metadata["memo"].(string)
+			require.True(t, ok)
+
+			assert.Equal(t, "some memo message", memo)
+
 			assert.Equal(t, tc.expectedGasWanted, gasWanted)
 			assert.InDelta(t, tc.expectedGasPrice, gasPrice, 0.000000000001)
 
@@ -400,4 +406,87 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			assert.Equal(t, tc.expectedFeeAmount, coin.Amount)
 		})
 	}
+}
+
+func TestConstructionMetadata_SignerData(t *testing.T) {
+	servicer, mockClient := setupConstructionAPIServicer()
+	servicer.config.Mode = configuration.Online
+	ctx := context.Background()
+	cdc := app.MakeCodec()
+
+	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
+	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"
+	amount := "5000001"
+	fromAddr, err := sdk.AccAddressFromBech32(fromAddress)
+	require.NoError(t, err)
+	toAddr, err := sdk.AccAddressFromBech32(toAddress)
+	require.NoError(t, err)
+	coinAmount, ok := sdk.NewIntFromString(amount)
+	require.True(t, ok)
+
+	msgs := []sdk.Msg{
+		bank.MsgSend{
+			FromAddress: fromAddr,
+			ToAddress:   toAddr,
+			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", coinAmount)),
+		},
+	}
+	encodedMsgs, err := cdc.MarshalJSON(msgs)
+	require.NoError(t, err)
+
+	expectedTx := authtypes.NewStdTx(
+		msgs,
+		authtypes.StdFee{},           // est without fee
+		[]authtypes.StdSignature{{}}, // est without signature
+		"some memo message",
+	)
+
+	validOptions := map[string]interface{}{
+		"msgs":                     string(encodedMsgs),
+		"memo":                     "some memo message",
+		"gas_adjustment":           float64(0.1),
+		"suggested_fee_multiplier": float64(1),
+	}
+
+	accountPubKey := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
+	pubKeyBytes, err := base64.StdEncoding.DecodeString(accountPubKey)
+	require.NoError(t, err)
+	accountAddr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
+	require.NoError(t, err)
+
+	request := &types.ConstructionMetadataRequest{
+		Options: validOptions,
+		PublicKeys: []*types.PublicKey{
+			{
+				Bytes:     pubKeyBytes,
+				CurveType: types.Secp256k1,
+			},
+		},
+	}
+
+	mockClient.On("EstimateGas", ctx, &expectedTx, float64(0.1)).Return(uint64(100000), nil).Once()
+
+	accountErr := errors.New("some client error")
+	mockClient.On("Account", ctx, accountAddr).Return(nil, accountErr).Once()
+
+	response, rerr := servicer.ConstructionMetadata(ctx, request)
+	assert.Nil(t, response)
+	require.Equal(t, wrapErr(ErrKava, accountErr), rerr)
+
+	account := &authtypes.BaseAccount{
+		AccountNumber: 10,
+		Sequence:      11,
+	}
+
+	mockClient.On("Account", ctx, accountAddr).Return(account, nil).Once()
+	response, rerr = servicer.ConstructionMetadata(ctx, request)
+	assert.Nil(t, rerr)
+
+	signers, ok := response.Metadata["signers"].([]signerInfo)
+	require.True(t, ok)
+
+	require.Equal(t, 1, len(signers))
+	signer := signers[0]
+	assert.Equal(t, account.GetAccountNumber(), signer.accountNumber)
+	assert.Equal(t, account.GetSequence(), signer.accountSequence)
 }
