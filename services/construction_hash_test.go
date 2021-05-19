@@ -30,18 +30,6 @@ import (
 	"github.com/kava-labs/kava/app"
 )
 
-func validConstructionHashRequest(txBytes []byte, blockchain, network string) *types.ConstructionHashRequest {
-	networkIdentifier := &types.NetworkIdentifier{
-		Blockchain: blockchain,
-		Network:    network,
-	}
-
-	return &types.ConstructionHashRequest{
-		NetworkIdentifier: networkIdentifier,
-		SignedTransaction: hex.EncodeToString(txBytes),
-	}
-}
-
 func TestConstructionHash(t *testing.T) {
 	servicer := setupContructionAPIServicer()
 
