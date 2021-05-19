@@ -15,32 +15,23 @@
 package services
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/coinbase/rosetta-sdk-go/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	"github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
-
-	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/stretchr/testify/require"
 )
-
-func validConstructionSubmitRequest(txBytes []byte, blockchain, network string) *types.ConstructionSubmitRequest {
-	networkIdentifier := &types.NetworkIdentifier{
-		Blockchain: blockchain,
-		Network:    network,
-	}
-
-	return &types.ConstructionSubmitRequest{
-		NetworkIdentifier: networkIdentifier,
-		SignedTransaction: hex.EncodeToString(txBytes),
-	}
-}
 
 func TestConstructionSubmit(t *testing.T) {
 	// Set up servicer with mock client
@@ -72,12 +63,32 @@ func TestConstructionSubmit(t *testing.T) {
 		bz, err := ioutil.ReadFile(relPath)
 		require.NoError(t, err)
 
-		ctx := context.Background()
-		request := validConstructionSubmitRequest(bz, "Kava", "testing")
-		response, rosettaErr := servicer.ConstructionSubmit(ctx, request)
+		cdc := app.MakeCodec()
+		var stdtx authtypes.StdTx
+		err = cdc.UnmarshalJSON(bz, &stdtx)
+		require.NoError(t, err)
 
-		require.Nil(t, rosettaErr)
-		t.Log(response)
-		t.Fail()
+		payload, err := cdc.MarshalBinaryLengthPrefixed(stdtx)
+		require.NoError(t, err)
+
+		// Expected response
+		txIndentifier := &types.TransactionIdentifier{
+			Hash: hex.EncodeToString(tmtypes.Tx(bz).Hash()),
+		}
+		metadata := make(map[string]interface{})
+
+		mockClient.On(
+			"PostTx",
+			payload,
+		).Return(
+			txIndentifier,
+			metadata,
+			nil,
+		).Once()
+
+		res, meta, err := servicer.client.PostTx(payload)
+		require.Nil(t, err)
+		assert.Equal(t, res, txIndentifier)
+		assert.Equal(t, meta, metadata)
 	}
 }
