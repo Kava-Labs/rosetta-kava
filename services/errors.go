@@ -28,7 +28,10 @@ var (
 		ErrUnimplemented,
 		ErrUnavailableOffline,
 		ErrKava,
-		ErrInvalidTx,
+		ErrUnsupportedCurveType,
+		ErrPublicKeyNil,
+		ErrInvalidPublicKey,
+    ErrInvalidTx,
 	}
 
 	// ErrUnimplemented is returned when an endpoint
@@ -52,15 +55,65 @@ var (
 		Message: "Kava error",
 	}
 
-	// ErrInvalidTx is returned by invalid transactions.
-	ErrInvalidTx = &types.Error{
+	// ErrNoOperations is returned when no operations are provided
+	ErrNoOperations = &types.Error{
 		Code:    3,
+		Message: "No operations provided",
+	}
+
+	// ErrInvalidCurrencyAmount is returned when a currency value could not be parsed
+	ErrInvalidCurrencyAmount = &types.Error{
+		Code:    4,
+		Message: "Invalid currency",
+	}
+
+	// ErrUnsupportedCurrency is returned when a currency symbol is invalid
+	// or the decimals do not match
+	ErrUnsupportedCurrency = &types.Error{
+		Code:    5,
+		Message: "Unsupported concurrency",
+	}
+
+	// ErrUnclearIntent is returned when operations
+	// provided in /construction/preprocess or /construction/payloads
+	// are not valid.
+	ErrUnclearIntent = &types.Error{
+		Code:    6,
+		Message: "Unable to parse intent",
+	}
+
+	// ErrInvalidAddress is returned when an account identifier has an invalid address
+	ErrInvalidAddress = &types.Error{
+		Code:    7,
+		Message: "Invalid Address",
+	}
+
+	// ErrUnsupportedCurveType is returned when a public key curve type is not supported
+	ErrUnsupportedCurveType = &types.Error{
+		Code:    8,
+		Message: "Unsupported Curve Type",
+	}
+
+	// ErrPublicKeyNil is returned when a public key is not provided
+	ErrPublicKeyNil = &types.Error{
+		Code:    9,
+		Message: "Public Key is nil",
+	}
+
+	// ErrInvalidPublicKey is returned when a public key is an invalid or could not be parsed
+	ErrInvalidPublicKey = &types.Error{
+		Code:    10,
+		Message: "Invalid Public Key",
+
+ 	// ErrInvalidTx is returned by invalid transactions.
+	ErrInvalidTx = &types.Error{
+		Code:    11,
 		Message: "Invalid transaction",
 	}
 )
 
 // wrapErr adds details to the types.Error provided. We use a function
-// to do this so that we don't accidentially overrwrite the standard
+// to do this so that we don't accidentally overwrite the standard
 // errors.
 func wrapErr(rErr *types.Error, err error) *types.Error {
 	newErr := &types.Error{

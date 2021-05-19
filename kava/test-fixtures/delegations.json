@@ -1,0 +1,20 @@
+[
+  {
+    "delegator_address": "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+    "validator_address": "kavavaloper1g20mhvcpjxp6gzlwhtfcphjehwcl2njqydgu7q",
+    "shares": "0.000080545036647241",
+    "balance": {
+      "denom": "ukava",
+      "amount": "500000"
+    }
+  },
+  {
+    "delegator_address": "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+    "validator_address": "kavavaloper1ceun2qqw65qce5la33j8zv8ltyyaqqfctl35n4",
+    "shares": "0.000000163678800955",
+    "balance": {
+      "denom": "ukava",
+      "amount": "10000000"
+    }
+  }
+]

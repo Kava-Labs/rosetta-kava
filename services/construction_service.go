@@ -46,23 +46,6 @@ func NewConstructionAPIService(
 	}
 }
 
-// ConstructionDerive implements the /construction/derive endpoint.
-func (s *ConstructionAPIService) ConstructionDerive(
-	ctx context.Context,
-	request *types.ConstructionDeriveRequest,
-) (*types.ConstructionDeriveResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionPreprocess implements the /construction/preprocess
-// endpoint.
-func (s *ConstructionAPIService) ConstructionPreprocess(
-	ctx context.Context,
-	request *types.ConstructionPreprocessRequest,
-) (*types.ConstructionPreprocessResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
 // ConstructionMetadata implements the /construction/metadata endpoint.
 func (s *ConstructionAPIService) ConstructionMetadata(
 	ctx context.Context,

@@ -1,0 +1,50 @@
+[
+  {
+    "delegator_address": "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+    "validator_address": "kavavaloper1g20mhvcpjxp6gzlwhtfcphjehwcl2njqydgu7q",
+    "entries": [
+      {
+        "creation_height": "293006",
+        "completion_time": "2021-05-21T19:44:47.994269769Z",
+        "initial_balance": "5000000",
+        "balance": "5000000"
+      },
+      {
+        "creation_height": "293028",
+        "completion_time": "2021-05-21T19:47:13.177697294Z",
+        "initial_balance": "999999",
+        "balance": "999999"
+      },
+      {
+        "creation_height": "293049",
+        "completion_time": "2021-05-21T19:49:31.562179699Z",
+        "initial_balance": "999999",
+        "balance": "999999"
+      },
+      {
+        "creation_height": "293053",
+        "completion_time": "2021-05-21T19:49:58.499887762Z",
+        "initial_balance": "1999999",
+        "balance": "1999999"
+      },
+      {
+        "creation_height": "304009",
+        "completion_time": "2021-05-22T15:47:34.375692005Z",
+        "initial_balance": "2000000",
+        "balance": "2000000"
+      }
+    ]
+  },
+  {
+    "delegator_address": "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq",
+    "validator_address": "kavavaloper1ceun2qqw65qce5la33j8zv8ltyyaqqfctl35n4",
+    "entries": [
+      {
+        "creation_height": "304002",
+        "completion_time": "2021-05-22T15:46:48.699270252Z",
+        "initial_balance": "1",
+        "balance": "1"
+      }
+    ]
+  }
+]

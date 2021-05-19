@@ -26,6 +26,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/server"
+	"github.com/kava-labs/kava/app"
 )
 
 // NewBlockchainRouter creates a Mux http.Handler from a collection
