@@ -103,19 +103,19 @@ var (
 
 	// ErrUnsupportedCurveType is returned when a public key curve type is not supported
 	ErrUnsupportedCurveType = &types.Error{
-		Code:    8,
+		Code:    9,
 		Message: "Unsupported Curve Type",
 	}
 
 	// ErrPublicKeyNil is returned when a public key is not provided
 	ErrPublicKeyNil = &types.Error{
-		Code:    9,
+		Code:    10,
 		Message: "Public Key is nil",
 	}
 
 	// ErrInvalidPublicKey is returned when a public key is an invalid or could not be parsed
 	ErrInvalidPublicKey = &types.Error{
-		Code:    10,
+		Code:    11,
 		Message: "Invalid Public Key",
 	}
 )
