@@ -16,17 +16,18 @@ package services
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/kava-labs/kava/app"
 )
 
 func validConstructionHashRequest(txBytes []byte, blockchain, network string) *types.ConstructionHashRequest {
@@ -46,28 +47,34 @@ func TestConstructionHash(t *testing.T) {
 
 	testCases := []struct {
 		testFixtureFile string
+		expectedTxHash  string
 		expectErr       bool
 		expectedErrCode int32
 	}{
 		{
 			testFixtureFile: "msg-send.json",
+			expectedTxHash:  "4E218DC828F45B7112F7CF6B328563045B5307B07D8602549389553F3B27D997",
 			expectErr:       false,
 		},
 		{
 			testFixtureFile: "msg-create-cdp.json",
 			expectErr:       false,
+			expectedTxHash:  "02C44611CD6898E89839F34830A089AD67A1FDA59D809EABA24B5A4B236849BB",
 		},
 		{
 			testFixtureFile: "msg-hard-deposit.json",
 			expectErr:       false,
+			expectedTxHash:  "E47E8BB9FA3C90B925D46C75DA03BB316ABB9D04CB647854AC215CB7C743368C",
 		},
 		{
 			testFixtureFile: "multiple-msgs.json",
 			expectErr:       false,
+			expectedTxHash:  "4F5EB96A9F29554F2BF0E01059268B1919D5702C29440B017E5C656547725F4C",
 		},
 		{
-			testFixtureFile: "long-memo.json", // memo length = maxABCIDataLength
+			testFixtureFile: "long-memo.json",
 			expectErr:       false,
+			expectedTxHash:  "C25EBDC1FB86BEE1F21FB1F0A97925A64ECF838B424D4E57758751806A100FBF",
 		},
 	}
 
@@ -81,20 +88,33 @@ func TestConstructionHash(t *testing.T) {
 		bz, err := ioutil.ReadFile(relPath)
 		require.NoError(t, err)
 
-		// Calculated expected tx hash
-		hash := sha256.Sum256(bz)
-		bzHash := hash[:]
-		expectedTxHash := strings.ToUpper(hex.EncodeToString(bzHash))
+		cdc := app.MakeCodec()
+		var stdtx authtypes.StdTx
+		err = cdc.UnmarshalJSON(bz, &stdtx)
+		require.NoError(t, err)
+
+		payload, err := cdc.MarshalBinaryLengthPrefixed(stdtx)
+		require.NoError(t, err)
+		signedTx := hex.EncodeToString(payload)
+
+		networkIdentifier := &types.NetworkIdentifier{
+			Blockchain: "Kava",
+			Network:    "testing",
+		}
+
+		request := &types.ConstructionHashRequest{
+			NetworkIdentifier: networkIdentifier,
+			SignedTransaction: signedTx,
+		}
 
 		// Check that response contains expected tx hash
 		ctx := context.Background()
-		request := validConstructionHashRequest(bz, "Kava", "testing")
 		response, rosettaErr := servicer.ConstructionHash(ctx, request)
 		if tc.expectErr {
 			require.Equal(t, tc.expectedErrCode, rosettaErr.Code)
 		} else {
 			require.Nil(t, rosettaErr)
-			require.Equal(t, expectedTxHash, response.TransactionIdentifier.Hash)
+			require.Equal(t, tc.expectedTxHash, response.TransactionIdentifier.Hash)
 		}
 	}
 }

@@ -23,11 +23,10 @@ import (
 	"strings"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-)
 
-const (
-	maxABCIDataLength = 1024 * 1024
+	"github.com/kava-labs/kava/app"
 )
 
 // ConstructionHash implements the /construction/hash endpoint.
@@ -41,12 +40,17 @@ func (s *ConstructionAPIService) ConstructionHash(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	tx := tmtypes.Tx(bz)
-	if len(tx) > maxABCIDataLength {
+	cdc := app.MakeCodec()
+	var stdtx authtypes.StdTx
+	cdc.MustUnmarshalBinaryLengthPrefixed(bz, &stdtx)
+
+	err = stdtx.ValidateBasic()
+	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	hash := hex.EncodeToString(tx.Hash())
-	txIdentifier := &types.TransactionIdentifier{Hash: strings.ToUpper(hash)}
+	tx := tmtypes.Tx(bz)
+	txHash := hex.EncodeToString(tx.Hash())
+	txIdentifier := &types.TransactionIdentifier{Hash: strings.ToUpper(txHash)}
 	return &types.TransactionIdentifierResponse{TransactionIdentifier: txIdentifier}, nil
 }
