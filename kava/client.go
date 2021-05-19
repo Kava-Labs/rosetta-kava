@@ -335,13 +335,10 @@ func (c *Client) PostTx(txBytes []byte) (
 	meta map[string]interface{},
 	err error,
 ) {
-	txRes, err := c.rpc.BroadcastTxAsync(tmtypes.Tx(txBytes))
+	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
+	if err != nil {
+		return res, meta, err
+	}
 
-	res = &types.TransactionIdentifier{Hash: txRes.Hash.String()}
-
-	meta["Data"] = txRes.Data
-	meta["Code"] = txRes.Code
-	meta["Codespace"] = txRes.Codespace
-
-	return res, meta, err
+	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, meta, err
 }
