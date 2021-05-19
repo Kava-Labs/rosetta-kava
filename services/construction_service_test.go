@@ -25,6 +25,7 @@ import (
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,20 +35,9 @@ func TestConstructionService_Online(t *testing.T) {
 	}
 
 	mockClient := &mocks.Client{}
-	servicer := NewConstructionAPIService(cfg, mockClient)
+	cdc := app.MakeCodec()
+	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
-
-	// Test Derive
-	deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	assert.Nil(t, deriveResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Preprocess
-	preprocessResponse, err := servicer.ConstructionPreprocess(ctx, &types.ConstructionPreprocessRequest{})
-	assert.Nil(t, preprocessResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	// Test Metadata
 	metadataResponse, err := servicer.ConstructionMetadata(ctx, &types.ConstructionMetadataRequest{})
@@ -100,20 +90,9 @@ func TestConstructionService_Offline(t *testing.T) {
 	}
 
 	mockClient := &mocks.Client{}
-	servicer := NewConstructionAPIService(cfg, mockClient)
+	cdc := app.MakeCodec()
+	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 	ctx := context.Background()
-
-	// Test Derive
-	deriveResponse, err := servicer.ConstructionDerive(ctx, &types.ConstructionDeriveRequest{})
-	assert.Nil(t, deriveResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Preprocess
-	preprocessResponse, err := servicer.ConstructionPreprocess(ctx, &types.ConstructionPreprocessRequest{})
-	assert.Nil(t, preprocessResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	// Test Metadata
 	metadataResponse, err := servicer.ConstructionMetadata(ctx, &types.ConstructionMetadataRequest{})

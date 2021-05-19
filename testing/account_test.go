@@ -105,12 +105,9 @@ func TestAccountBalanceOnline(t *testing.T) {
 	})
 	require.Equal(t, accountBalance, accountBalanceByHash)
 
-	block, err := rpc.Block(&accountBalance.BlockIdentifier.Index)
-	require.NoError(t, err)
-
 	account, err := GetAccount(testAccountAddress, accountBalance.BlockIdentifier.Index)
 	require.NoError(t, err)
-	spendableCoins := account.SpendableCoins(block.Block.Header.Time)
+	ownedCoins := account.GetCoins()
 
 	for _, amount := range accountBalance.Balances {
 		rosettaSymbol := amount.Currency.Symbol
@@ -121,8 +118,8 @@ func TestAccountBalanceOnline(t *testing.T) {
 			kavaSymbol = "ukava"
 		}
 
-		spendableAmount := spendableCoins.AmountOf(kavaSymbol)
-		assert.Equal(t, amount.Value, spendableAmount.String())
+		ownedAmount := ownedCoins.AmountOf(kavaSymbol)
+		assert.Equal(t, amount.Value, ownedAmount.String())
 
 		decimals := amount.Currency.Decimals
 		if kavaSymbol == "ukava" || kavaSymbol == "hard" || kavaSymbol == "usdx" {

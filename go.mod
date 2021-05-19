@@ -3,6 +3,7 @@ module github.com/kava-labs/rosetta-kava
 go 1.15
 
 require (
+	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/coinbase/rosetta-sdk-go v0.6.10
 	github.com/cosmos/cosmos-sdk v0.39.2
 	github.com/fatih/color v1.10.0
