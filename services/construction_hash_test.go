@@ -42,7 +42,7 @@ func validConstructionHashRequest(txBytes []byte, blockchain, network string) *t
 }
 
 func TestConstructionHash(t *testing.T) {
-	servicer, _ := setupContructionAPIServicer()
+	servicer := setupContructionAPIServicer()
 
 	testCases := []struct {
 		testFixtureFile string

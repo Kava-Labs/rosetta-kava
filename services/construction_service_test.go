@@ -26,18 +26,8 @@ import (
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 )
-
-func setupContructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
-	cfg := &configuration.Configuration{
-		Mode: configuration.Offline,
-	}
-	mockClient := &mocks.Client{}
-	cdc := app.MakeCodec()
-	return NewConstructionAPIService(cfg, mockClient, cdc), mockClient
-}
 
 func TestConstructionService_Online(t *testing.T) {
 	cfg := &configuration.Configuration{
