@@ -19,11 +19,15 @@ package services
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"strings"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+)
+
+const (
+	maxABCIDataLength = 1024 * 1024
 )
 
 // ConstructionHash implements the /construction/hash endpoint.
@@ -31,15 +35,18 @@ func (s *ConstructionAPIService) ConstructionHash(
 	ctx context.Context,
 	request *types.ConstructionHashRequest,
 ) (*types.TransactionIdentifierResponse, *types.Error) {
+
 	bz, err := hex.DecodeString(request.SignedTransaction)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	hash := sha256.Sum256(bz)
-	bzHash := hash[:]
-	hashString := hex.EncodeToString(bzHash)
+	tx := tmtypes.Tx(bz)
+	if len(tx) > maxABCIDataLength {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
 
-	txIdentifier := &types.TransactionIdentifier{Hash: strings.ToUpper(hashString)}
+	hash := hex.EncodeToString(tx.Hash())
+	txIdentifier := &types.TransactionIdentifier{Hash: strings.ToUpper(hash)}
 	return &types.TransactionIdentifierResponse{TransactionIdentifier: txIdentifier}, nil
 }

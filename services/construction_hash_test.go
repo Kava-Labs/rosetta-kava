@@ -16,84 +16,85 @@ package services
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/kava-labs/go-sdk/keys"
-	"github.com/kava-labs/kava/app"
-	"github.com/kava-labs/kava/x/cdp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const (
-	TestMnemonic = "conduct elegant layer interest unknown warrior deliver fringe fall door link start then potato stand concert bacon east glare boat scene ring idea cruel"
-	TestAddress  = "kava10an7smc50d6xlgxul3sh8uhz2887t7ruk93a5a"
-)
-
-func validConstructionHashRequest() (*types.ConstructionHashRequest, error) {
-
+func validConstructionHashRequest(txBytes []byte, blockchain, network string) *types.ConstructionHashRequest {
 	networkIdentifier := &types.NetworkIdentifier{
-		Blockchain: "Kava",
-		Network:    "kava-7",
+		Blockchain: blockchain,
+		Network:    network,
 	}
-
-	cdc := app.MakeCodec()
-
-	testAddr, err := sdk.AccAddressFromBech32(TestAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	keyManager, err := keys.NewMnemonicKeyManager(TestMnemonic, app.Bip44CoinType)
-	if err != nil {
-		return nil, err
-	}
-
-	collateral := sdk.NewCoin("ukava", sdk.NewInt(2))
-	principal := sdk.NewCoin("usdx", sdk.NewInt(100))
-	msg := cdp.NewMsgCreateCDP(testAddr, collateral, principal, "ukava-a")
-	unsignedMsgs := []sdk.Msg{msg}
-
-	signMsg := authtypes.StdSignMsg{
-		ChainID:       networkIdentifier.Network,
-		AccountNumber: 0,
-		Sequence:      0,
-		Fee:           authtypes.NewStdFee(250000, nil),
-		Msgs:          unsignedMsgs,
-		Memo:          "",
-	}
-
-	for _, m := range signMsg.Msgs {
-		if err := m.ValidateBasic(); err != nil {
-			return nil, err
-		}
-	}
-
-	bz, err := keyManager.Sign(signMsg, cdc)
-	if err != nil {
-		return nil, err
-	}
-	tx := tmtypes.Tx(bz)
 
 	return &types.ConstructionHashRequest{
 		NetworkIdentifier: networkIdentifier,
-		SignedTransaction: tx.String(),
-	}, nil
+		SignedTransaction: hex.EncodeToString(txBytes),
+	}
 }
 
 func TestConstructionHash(t *testing.T) {
 	servicer, _ := setupContructionAPIServicer()
 
-	hashReq, err := validConstructionHashRequest()
-	require.Nil(t, err)
+	testCases := []struct {
+		testFixtureFile string
+		expectErr       bool
+		expectedErrCode int32
+	}{
+		{
+			testFixtureFile: "msg-send.json",
+			expectErr:       false,
+		},
+		{
+			testFixtureFile: "msg-create-cdp.json",
+			expectErr:       false,
+		},
+		{
+			testFixtureFile: "msg-hard-deposit.json",
+			expectErr:       false,
+		},
+		{
+			testFixtureFile: "multiple-msgs.json",
+			expectErr:       false,
+		},
+		{
+			testFixtureFile: "long-memo.json", // memo length = maxABCIDataLength
+			expectErr:       false,
+		},
+	}
 
-	ctx := context.Background()
-	response, rosettaErr := servicer.ConstructionHash(ctx, hashReq)
-	require.Nil(t, rosettaErr)
-	assert.NotNil(t, response)
+	for _, tc := range testCases {
+		// Load signed transaction from file
+		relPath, err := filepath.Rel(
+			"services",
+			fmt.Sprintf("kava/test-fixtures/signed-msgs/%s", tc.testFixtureFile),
+		)
+		require.NoError(t, err)
+		bz, err := ioutil.ReadFile(relPath)
+		require.NoError(t, err)
+
+		// Calculated expected tx hash
+		hash := sha256.Sum256(bz)
+		bzHash := hash[:]
+		expectedTxHash := strings.ToUpper(hex.EncodeToString(bzHash))
+
+		// Check that response contains expected tx hash
+		ctx := context.Background()
+		request := validConstructionHashRequest(bz, "Kava", "testing")
+		response, rosettaErr := servicer.ConstructionHash(ctx, request)
+		if tc.expectErr {
+			require.Equal(t, tc.expectedErrCode, rosettaErr.Code)
+		} else {
+			require.Nil(t, rosettaErr)
+			require.Equal(t, expectedTxHash, response.TransactionIdentifier.Hash)
+		}
+	}
 }
