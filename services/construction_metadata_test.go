@@ -50,7 +50,7 @@ func TestConstructionMetadata_OptionsValidation_MissingFields(t *testing.T) {
 		"suggested_fee_multiplier": float64(0),
 	}
 
-	for key, _ := range requiredOptions {
+	for key := range requiredOptions {
 		ctx := context.Background()
 
 		options := make(map[string]interface{})
