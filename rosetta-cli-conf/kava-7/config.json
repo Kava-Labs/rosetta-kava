@@ -4,13 +4,13 @@
   "network": "kava-7"
  },
  "online_url": "http://localhost:8000",
- "data_directory": "",
+ "data_directory": "./rosetta-cli-conf/cache",
  "http_timeout": 10,
- "max_retries": 5,
+ "max_retries": 25,
  "retry_elapsed_time": 0,
  "max_online_connections": 120,
  "max_sync_concurrency": 5,
- "tip_delay": 30,
+ "tip_delay": 300,
  "max_reorg_depth": 100,
  "log_configuration": false,
  "compression_disabled": false,
@@ -25,7 +25,7 @@
   "log_balance_changes": false,
   "log_reconciliations": false,
   "ignore_reconciliation_error": false,
-  "exempt_accounts": "",
+  "exempt_accounts": "exempt_accounts.json",
   "bootstrap_balances": "bootstrap_balances.json",
   "interesting_accounts": "",
   "reconciliation_disabled": false,
@@ -38,7 +38,7 @@
   "pruning_disabled": false,
   "initial_balance_fetch_disabled": false,
   "end_conditions": {
-    "index": 100
+    "tip": true
   }
  }
 }
