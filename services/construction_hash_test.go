@@ -83,7 +83,7 @@ func TestConstructionHash(t *testing.T) {
 			expectedTxHash:  "",
 			errs: errArgs{
 				expectErr:     true,
-				expectErrCode: 11,
+				expectErrCode: ErrInvalidTx.Code,
 			},
 		},
 	}
