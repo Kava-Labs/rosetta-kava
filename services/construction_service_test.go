@@ -21,11 +21,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 )
 
