@@ -72,7 +72,7 @@ func TestConstructionSubmit(t *testing.T) {
 		// Load signed transaction from file
 		relPath, err := filepath.Rel(
 			"services",
-			fmt.Sprintf("kava/test-fixtures/signed-msgs/%s", tc.testFixtureFile),
+			fmt.Sprintf("kava/test-fixtures/txs/%s", tc.testFixtureFile),
 		)
 		require.NoError(t, err)
 		bz, err := ioutil.ReadFile(relPath)
