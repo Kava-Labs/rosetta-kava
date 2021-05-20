@@ -669,6 +669,11 @@ func TestMsgToOperations_BalanceTracking(t *testing.T) {
 			log:  readABCILogFromFile(t, "msg-delegate-tx-response.json"),
 			msg:  readMsgFromFile(t, "msg-delegate-tx-response.json"),
 		},
+		{
+			name: "cosmos-sdk.MsgCreateValidator",
+			log:  readABCILogFromFile(t, "msg-create-validator-tx-response.json"),
+			msg:  readMsgFromFile(t, "msg-create-validator-tx-response.json"),
+		},
 	}
 
 	for _, tc := range tests {
@@ -957,6 +962,8 @@ func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, re
 	switch msg.(type) {
 	case staking.MsgDelegate:
 		senders, receivers = calcDelegationSendersReceivers(senders, receivers, log)
+	case staking.MsgCreateValidator:
+		senders, receivers = calcCreateValdiatorSendersReceivers(senders, receivers, log)
 	}
 	return senders, receivers
 }
@@ -967,6 +974,30 @@ func calcDelegationSendersReceivers(senders, receivers []accountBalance, log sdk
 	recipient := stakingModuleAddress
 	for _, ev := range log.Events {
 		if ev.Type == "delegate" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+				}
+			}
+		} else if ev.Type == "message" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "sender" && !mustAccAddressFromBech32(attr.Value).Equals(recipient) {
+					sender = mustAccAddressFromBech32(attr.Value)
+				}
+			}
+		}
+	}
+	delegationSenders = append(senders, accountBalance{Account: sender, Balance: sdk.NewCoins(amount)})
+	delegationReceivers = append(receivers, accountBalance{Account: recipient, Balance: sdk.NewCoins(amount)})
+	return delegationSenders, delegationReceivers
+}
+
+func calcCreateValdiatorSendersReceivers(senders, receivers []accountBalance, log sdk.ABCIMessageLog) (delegationSenders, delegationReceivers []accountBalance) {
+	var amount sdk.Coin
+	var sender sdk.AccAddress
+	recipient := stakingModuleAddress
+	for _, ev := range log.Events {
+		if ev.Type == "create_validator" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
 					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))

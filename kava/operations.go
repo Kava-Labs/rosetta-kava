@@ -323,6 +323,8 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 	switch msg.(type) {
 	case staking.MsgDelegate:
 		return msgDelegateToOperations(ops, log, status, index)
+	case staking.MsgCreateValidator:
+		return msgCreateValidatorToOperations(ops, log, status, index)
 	}
 	return ops
 }
@@ -369,6 +371,37 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 	}
 	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
 	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
+}
+
+// Because there's no transfer event, and worse the `create_validator` event doesn't contain the delegators' address, just the validator.
+// A delegate message moves coins from an account to the staking module account - ideally there would be a transfer event in there, but there's not. Instead, I had to resort to parsing the delegate  and the message events to recreate the transfer
+func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
+	var createValidatorOps []*types.Operation
+
+	if len(log.Events) == 0 {
+		return createValidatorOps
+	}
+
+	recipient := stakingModuleAddress
+	var amount sdk.Coin
+	var sender sdk.AccAddress
+	for _, ev := range log.Events {
+		if ev.Type == "create_validator" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+				}
+			}
+		} else if ev.Type == "message" {
+			for _, attr := range ev.Attributes {
+				if attr.Key == "sender" && !mustAccAddressFromBech32(attr.Value).Equals(recipient) {
+					sender = mustAccAddressFromBech32(attr.Value)
+				}
+			}
+		}
+	}
+	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
+	return appendOperationsAndUpdateIndex(ops, createValidatorOps, &index)
 }
 
 func mustAccAddressFromBech32(addr string) sdk.AccAddress {
