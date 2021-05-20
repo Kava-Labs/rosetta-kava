@@ -1,17 +1,12 @@
 #!/bin/bash
 set -eu
 
-set_access_permissions() {
-    chmod +x scripts/wait-for-it.sh
-}
-
 start_kava_node()
 {
     echo "Starting Kava node"
 
-    kvd unsafe-reset-all
     kvd start --home /data/kvd &
-    scripts/wait-for-it.sh --timeout=60 localhost:26657
+    scripts/wait-for-it.sh --timeout=600 localhost:26657 # 10 minute timeout
     sleep 5
 }
 
@@ -21,7 +16,6 @@ start_rosetta_service() {
     scripts/wait-for-it.sh --timeout=60 localhost:8000
 }
 
-set_access_permissions
 start_kava_node
 start_rosetta_service
 
