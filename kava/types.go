@@ -49,6 +49,8 @@ const (
 	TransferOpType = "transfer"
 	// MintOpType is used to reference mint operations
 	MintOpType = "mint"
+	// BurnOpType is used to reference burn operations
+	BurnOpType = "burn"
 
 	// AccLiquid represents spendable coins
 	AccLiquid = "liquid"
@@ -70,6 +72,7 @@ var (
 		FeeOpType,
 		TransferOpType,
 		MintOpType,
+		BurnOpType,
 	}
 
 	// OperationStatuses are all supported operation statuses.
