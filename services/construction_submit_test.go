@@ -44,12 +44,27 @@ func TestConstructionSubmit(t *testing.T) {
 
 	testCases := []struct {
 		testFixtureFile string
-		expectErr       bool
-		expectedErrCode int32
+		expectTxErr     bool
 	}{
 		{
 			testFixtureFile: "msg-send.json",
-			expectErr:       false,
+			expectTxErr:     false,
+		},
+		{
+			testFixtureFile: "msg-create-cdp.json",
+			expectTxErr:     false,
+		},
+		{
+			testFixtureFile: "msg-hard-deposit.json",
+			expectTxErr:     false,
+		},
+		{
+			testFixtureFile: "multiple-msgs.json",
+			expectTxErr:     false,
+		},
+		{
+			testFixtureFile: "invalid-msg-send.json", // invalid sender bech32 address
+			expectTxErr:     true,
 		},
 	}
 
@@ -66,6 +81,10 @@ func TestConstructionSubmit(t *testing.T) {
 		cdc := app.MakeCodec()
 		var stdtx authtypes.StdTx
 		err = cdc.UnmarshalJSON(bz, &stdtx)
+		if tc.expectTxErr {
+			require.NotNil(t, err)
+			continue
+		}
 		require.NoError(t, err)
 
 		payload, err := cdc.MarshalBinaryLengthPrefixed(stdtx)
