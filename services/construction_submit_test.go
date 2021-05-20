@@ -44,27 +44,27 @@ func TestConstructionSubmit(t *testing.T) {
 
 	testCases := []struct {
 		testFixtureFile string
-		expectTxErr     bool
+		expectErr       bool
 	}{
 		{
 			testFixtureFile: "msg-send.json",
-			expectTxErr:     false,
+			expectErr:       false,
 		},
 		{
 			testFixtureFile: "msg-create-cdp.json",
-			expectTxErr:     false,
+			expectErr:       false,
 		},
 		{
 			testFixtureFile: "msg-hard-deposit.json",
-			expectTxErr:     false,
+			expectErr:       false,
 		},
 		{
 			testFixtureFile: "multiple-msgs.json",
-			expectTxErr:     false,
+			expectErr:       false,
 		},
 		{
-			testFixtureFile: "invalid-msg-send.json", // invalid sender bech32 address
-			expectTxErr:     true,
+			testFixtureFile: "unsigned-msg-send.json",
+			expectErr:       true,
 		},
 	}
 
@@ -81,10 +81,6 @@ func TestConstructionSubmit(t *testing.T) {
 		cdc := app.MakeCodec()
 		var stdtx authtypes.StdTx
 		err = cdc.UnmarshalJSON(bz, &stdtx)
-		if tc.expectTxErr {
-			require.NotNil(t, err)
-			continue
-		}
 		require.NoError(t, err)
 
 		payload, err := cdc.MarshalBinaryLengthPrefixed(stdtx)
@@ -95,6 +91,8 @@ func TestConstructionSubmit(t *testing.T) {
 			Hash: hex.EncodeToString(tmtypes.Tx(bz).Hash()),
 		}
 		metadata := make(map[string]interface{})
+		err = stdtx.ValidateBasic()
+		mockErr := err
 
 		mockClient.On(
 			"PostTx",
@@ -102,12 +100,16 @@ func TestConstructionSubmit(t *testing.T) {
 		).Return(
 			txIndentifier,
 			metadata,
-			nil,
+			mockErr,
 		).Once()
 
 		res, meta, err := servicer.client.PostTx(payload)
-		require.Nil(t, err)
-		assert.Equal(t, res, txIndentifier)
-		assert.Equal(t, meta, metadata)
+		if tc.expectErr {
+			require.NotNil(t, err)
+		} else {
+			require.Nil(t, err)
+			assert.Equal(t, res, txIndentifier)
+			assert.Equal(t, meta, metadata)
+		}
 	}
 }
