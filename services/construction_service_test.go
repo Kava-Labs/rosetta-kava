@@ -69,12 +69,6 @@ func TestConstructionService_Online(t *testing.T) {
 	assert.Equal(t, ErrUnimplemented.Code, err.Code)
 	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
-	// Test Hash
-	hashResponse, err := servicer.ConstructionHash(ctx, &types.ConstructionHashRequest{})
-	assert.Nil(t, hashResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
 	// Test Submit
 	submitResponse, err := servicer.ConstructionSubmit(ctx, &types.ConstructionSubmitRequest{})
 	assert.Nil(t, submitResponse)
@@ -121,12 +115,6 @@ func TestConstructionService_Offline(t *testing.T) {
 	// Test Parse Signed
 	parseSignedResponse, err := servicer.ConstructionParse(ctx, &types.ConstructionParseRequest{})
 	assert.Nil(t, parseSignedResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Hash
-	hashResponse, err := servicer.ConstructionHash(ctx, &types.ConstructionHashRequest{})
-	assert.Nil(t, hashResponse)
 	assert.Equal(t, ErrUnimplemented.Code, err.Code)
 	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
