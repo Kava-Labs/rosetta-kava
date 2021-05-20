@@ -39,6 +39,7 @@ var (
 		ErrUnsupportedCurveType,
 		ErrPublicKeyNil,
 		ErrInvalidPublicKey,
+		ErrInvalidTx,
 	}
 
 	// ErrUnimplemented is returned when an endpoint
@@ -117,6 +118,12 @@ var (
 	ErrInvalidPublicKey = &types.Error{
 		Code:    11,
 		Message: "Invalid Public Key",
+	}
+
+	// ErrInvalidTx is returned by invalid transactions.
+	ErrInvalidTx = &types.Error{
+		Code:    11,
+		Message: "Invalid transaction",
 	}
 )
 

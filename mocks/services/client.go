@@ -111,6 +111,29 @@ func (_m *Client) EstimateGas(_a0 context.Context, _a1 *authtypes.StdTx, _a2 flo
 	return r0, r1
 }
 
+// PostTx provides a mock function with given fields: txBytes
+func (_m *Client) PostTx(txBytes []byte) (*rosetta_sdk_gotypes.TransactionIdentifier, error) {
+	ret := _m.Called(txBytes)
+
+	var r0 *rosetta_sdk_gotypes.TransactionIdentifier
+	if rf, ok := ret.Get(0).(func([]byte) *rosetta_sdk_gotypes.TransactionIdentifier); ok {
+		r0 = rf(txBytes)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*rosetta_sdk_gotypes.TransactionIdentifier)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(txBytes)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Status provides a mock function with given fields: _a0
 func (_m *Client) Status(_a0 context.Context) (*rosetta_sdk_gotypes.BlockIdentifier, int64, *rosetta_sdk_gotypes.BlockIdentifier, *rosetta_sdk_gotypes.SyncStatus, []*rosetta_sdk_gotypes.Peer, error) {
 	ret := _m.Called(_a0)

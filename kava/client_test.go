@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -906,4 +907,32 @@ func TestEstimateGas(t *testing.T) {
 	gas, err = client.EstimateGas(ctx, &tx, gasAdjusment)
 	require.Nil(t, err)
 	assert.Equal(t, uint64(220000), gas)
+}
+
+func TestPostTx(t *testing.T) {
+	mockRPCClient, _, client := setupClient(t)
+
+	txjson, err := ioutil.ReadFile("test-fixtures/txs/msg-send.json")
+	require.NoError(t, err)
+
+	cdc := app.MakeCodec()
+	var stdtx authtypes.StdTx
+	err = cdc.UnmarshalJSON(txjson, &stdtx)
+	require.NoError(t, err)
+
+	txBytes, err := cdc.MarshalBinaryLengthPrefixed(stdtx)
+	require.NoError(t, err)
+
+	rpcErr := errors.New("some rpc error")
+	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(nil, rpcErr).Once()
+
+	response, err := client.PostTx(txBytes)
+	assert.Nil(t, response)
+	assert.Equal(t, rpcErr, err)
+
+	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(&ctypes.ResultBroadcastTx{Hash: tmtypes.Tx(txBytes).Hash()}, nil).Once()
+
+	response, err = client.PostTx(txBytes)
+	require.NoError(t, err)
+	assert.Equal(t, "4E218DC828F45B7112F7CF6B328563045B5307B07D8602549389553F3B27D997", response.Hash)
 }

@@ -63,30 +63,10 @@ func (s *ConstructionAPIService) ConstructionCombine(
 	return nil, ErrUnimplemented
 }
 
-// ConstructionHash implements the /construction/hash endpoint.
-func (s *ConstructionAPIService) ConstructionHash(
-	ctx context.Context,
-	request *types.ConstructionHashRequest,
-) (*types.TransactionIdentifierResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
 // ConstructionParse implements the /construction/parse endpoint.
 func (s *ConstructionAPIService) ConstructionParse(
 	ctx context.Context,
 	request *types.ConstructionParseRequest,
 ) (*types.ConstructionParseResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionSubmit implements the /construction/submit endpoint.
-func (s *ConstructionAPIService) ConstructionSubmit(
-	ctx context.Context,
-	request *types.ConstructionSubmitRequest,
-) (*types.TransactionIdentifierResponse, *types.Error) {
-	if s.config.Mode != configuration.Online {
-		return nil, ErrUnavailableOffline
-	}
-
 	return nil, ErrUnimplemented
 }

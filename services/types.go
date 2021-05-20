@@ -50,4 +50,6 @@ type Client interface {
 		[]*types.Peer,
 		error,
 	)
+
+	PostTx(txBytes []byte) (*types.TransactionIdentifier, error)
 }
