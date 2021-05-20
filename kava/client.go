@@ -332,15 +332,12 @@ func stringifyEvents(events []abci.Event) sdk.StringEvents {
 	return res
 }
 
-func (c *Client) PostTx(txBytes []byte) (
-	res *types.TransactionIdentifier,
-	meta map[string]interface{},
-	err error,
-) {
+// PostTx broadcasts a transaction and returns an error if it does not get into mempool
+func (c *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, error) {
 	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
 	if err != nil {
-		return res, meta, err
+		return nil, err
 	}
 
-	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, meta, err
+	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, nil
 }

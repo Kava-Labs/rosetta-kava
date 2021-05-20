@@ -40,13 +40,12 @@ func (s *ConstructionAPIService) ConstructionSubmit(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	res, meta, err := s.client.PostTx(txBytes)
+	res, err := s.client.PostTx(txBytes)
 	if err != nil {
 		return nil, wrapErr(ErrKava, err)
 	}
 
 	return &types.TransactionIdentifierResponse{
 		TransactionIdentifier: res,
-		Metadata:              meta,
 	}, nil
 }

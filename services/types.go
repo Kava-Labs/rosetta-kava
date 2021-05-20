@@ -48,8 +48,7 @@ type Client interface {
 	) (*types.BlockResponse, error)
 
 	PostTx(txBytes []byte) (
-		res *types.TransactionIdentifier,
-		meta map[string]interface{},
-		err error,
+		*types.TransactionIdentifier,
+		error,
 	)
 }

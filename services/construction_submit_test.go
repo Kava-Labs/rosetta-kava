@@ -15,6 +15,7 @@
 package services
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -90,7 +91,6 @@ func TestConstructionSubmit(t *testing.T) {
 		txIndentifier := &types.TransactionIdentifier{
 			Hash: hex.EncodeToString(tmtypes.Tx(bz).Hash()),
 		}
-		metadata := make(map[string]interface{})
 		err = stdtx.ValidateBasic()
 		mockErr := err
 
@@ -99,17 +99,19 @@ func TestConstructionSubmit(t *testing.T) {
 			payload,
 		).Return(
 			txIndentifier,
-			metadata,
 			mockErr,
 		).Once()
 
-		res, meta, err := servicer.client.PostTx(payload)
+		ctx := context.Background()
+		request := &types.ConstructionSubmitRequest{
+			SignedTransaction: hex.EncodeToString(payload),
+		}
+		res, rerr := servicer.ConstructionSubmit(ctx, request)
 		if tc.expectErr {
-			require.NotNil(t, err)
+			assert.Equal(t, wrapErr(ErrKava, mockErr), rerr)
 		} else {
 			require.Nil(t, err)
-			assert.Equal(t, res, txIndentifier)
-			assert.Equal(t, meta, metadata)
+			assert.Equal(t, &types.TransactionIdentifierResponse{TransactionIdentifier: txIndentifier}, res)
 		}
 	}
 }
