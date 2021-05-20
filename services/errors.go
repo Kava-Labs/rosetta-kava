@@ -122,7 +122,7 @@ var (
 
 	// ErrInvalidTx is returned by invalid transactions.
 	ErrInvalidTx = &types.Error{
-		Code:    11,
+		Code:    12,
 		Message: "Invalid transaction",
 	}
 )
