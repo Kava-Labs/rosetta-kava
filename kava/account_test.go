@@ -43,6 +43,21 @@ func TestRPCAccountBalance_AccountError(t *testing.T) {
 	assert.EqualError(t, err, accErr.Error())
 }
 
+func TestRPCAccountBalance_NullAccount(t *testing.T) {
+	addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
+
+	accErr := errors.New("unknown address kava1abc...")
+	mockRPCClient.On("Account", addr, blockHeader.Height).Return(nil, accErr)
+
+	service, err := serviceFactory(addr, blockHeader)
+	assert.NoError(t, err)
+
+	balance, err := service.GetCoinsForSubAccount(&types.SubAccountIdentifier{Address: kava.AccLiquid})
+	assert.NoError(t, err)
+
+	assert.Equal(t, sdk.Coins{}, balance)
+}
+
 func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 	coins := sdk.NewCoins(
 		sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)},

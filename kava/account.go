@@ -1,6 +1,8 @@
 package kava
 
 import (
+	"regexp"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
@@ -10,6 +12,8 @@ import (
 )
 
 const stakingDenom = "ukava"
+
+var unknownAddress = regexp.MustCompile("unknown address")
 
 // AccountBalanceService provides an interface fetch a balance from an account subtype
 type AccountBalanceService interface {
@@ -26,6 +30,10 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 	return func(addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
 		acc, err := rpc.Account(addr, blockHeader.Height)
 		if err != nil {
+			if unknownAddress.MatchString(err.Error()) {
+				return &nullBalance{}, nil
+			}
+
 			return nil, err
 		}
 
@@ -36,6 +44,13 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 			return &rpcBaseBalance{rpc: rpc, acc: acc, blockHeader: blockHeader}, nil
 		}
 	}
+}
+
+type nullBalance struct {
+}
+
+func (b *nullBalance) GetCoinsForSubAccount(subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
+	return sdk.Coins{}, nil
 }
 
 type rpcBaseBalance struct {
