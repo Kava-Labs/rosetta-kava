@@ -82,15 +82,3 @@ func (s *ConstructionAPIService) ConstructionParse(
 ) (*types.ConstructionParseResponse, *types.Error) {
 	return nil, ErrUnimplemented
 }
-
-// ConstructionSubmit implements the /construction/submit endpoint.
-func (s *ConstructionAPIService) ConstructionSubmit(
-	ctx context.Context,
-	request *types.ConstructionSubmitRequest,
-) (*types.TransactionIdentifierResponse, *types.Error) {
-	if s.config.Mode != configuration.Online {
-		return nil, ErrUnavailableOffline
-	}
-
-	return nil, ErrUnimplemented
-}

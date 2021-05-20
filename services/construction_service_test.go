@@ -69,12 +69,6 @@ func TestConstructionService_Online(t *testing.T) {
 	assert.Equal(t, ErrUnimplemented.Code, err.Code)
 	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
-	// Test Submit
-	submitResponse, err := servicer.ConstructionSubmit(ctx, &types.ConstructionSubmitRequest{})
-	assert.Nil(t, submitResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
 	mockClient.AssertExpectations(t)
 }
 

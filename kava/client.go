@@ -28,6 +28,7 @@ import (
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // Client implements services.Client interface for communicating with the kava chain
@@ -329,4 +330,14 @@ func stringifyEvents(events []abci.Event) sdk.StringEvents {
 	}
 
 	return res
+}
+
+// PostTx broadcasts a transaction and returns an error if it does not get into mempool
+func (c *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, error) {
+	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, nil
 }
