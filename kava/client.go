@@ -17,6 +17,7 @@ package kava
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -337,6 +338,10 @@ func (c *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, error) {
 	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
 	if err != nil {
 		return nil, err
+	}
+
+	if txRes.Code != abci.CodeTypeOK {
+		return nil, errors.New(txRes.Log)
 	}
 
 	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, nil
