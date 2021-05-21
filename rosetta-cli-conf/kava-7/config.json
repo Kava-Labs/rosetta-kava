@@ -18,7 +18,7 @@
  "construction": {
    "offline_url": "http://localhost:8001",
    "max_offline_connections": 100,
-   "force_retry": false,
+   "force_retry": true,
    "stale_depth": 5,
    "broadcast_limit": 5,
    "ignore_broadcast_failures": false,
