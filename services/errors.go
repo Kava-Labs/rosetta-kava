@@ -35,6 +35,7 @@ var (
 		ErrUnclearIntent,
 		ErrInvalidAddress,
 		ErrInvalidOptions,
+		ErrInvalidMetadata,
 
 		ErrUnsupportedCurveType,
 		ErrPublicKeyNil,
@@ -102,27 +103,39 @@ var (
 		Message: "Invalid options",
 	}
 
+	// ErrInvalidMetadata is returned by the metadata endpoint with invalid options
+	ErrInvalidMetadata = &types.Error{
+		Code:    9,
+		Message: "Invalid metadata",
+	}
+
 	// ErrUnsupportedCurveType is returned when a public key curve type is not supported
 	ErrUnsupportedCurveType = &types.Error{
-		Code:    9,
+		Code:    10,
 		Message: "Unsupported Curve Type",
 	}
 
 	// ErrPublicKeyNil is returned when a public key is not provided
 	ErrPublicKeyNil = &types.Error{
-		Code:    10,
+		Code:    11,
 		Message: "Public Key is nil",
 	}
 
 	// ErrInvalidPublicKey is returned when a public key is an invalid or could not be parsed
 	ErrInvalidPublicKey = &types.Error{
-		Code:    11,
+		Code:    12,
 		Message: "Invalid Public Key",
+	}
+
+	// ErrMissingPublicKey is returned when a public key is missing from a request
+	ErrMissingPublicKey = &types.Error{
+		Code:    13,
+		Message: "Invalid missing Public Key",
 	}
 
 	// ErrInvalidTx is returned by invalid transactions.
 	ErrInvalidTx = &types.Error{
-		Code:    12,
+		Code:    14,
 		Message: "Invalid transaction",
 	}
 )

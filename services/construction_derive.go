@@ -41,22 +41,32 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 	}, nil
 }
 
-func getAddressFromPublicKey(pubKey *types.PublicKey) (sdk.AccAddress, *types.Error) {
+func parsePublicKey(pubKey *types.PublicKey) (secp256k1.PubKeySecp256k1, *types.Error) {
+	var tmPubKey secp256k1.PubKeySecp256k1
+
 	if pubKey.CurveType != types.Secp256k1 {
-		return nil, ErrUnsupportedCurveType
+		return tmPubKey, ErrUnsupportedCurveType
 	}
 
 	if len(pubKey.Bytes) == 0 {
-		return nil, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
+		return tmPubKey, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
 	}
 
 	pk, err := btcec.ParsePubKey(pubKey.Bytes, btcec.S256())
 	if err != nil {
-		return nil, wrapErr(ErrInvalidPublicKey, err)
+		return tmPubKey, wrapErr(ErrInvalidPublicKey, err)
 	}
 
-	var tmPubKey secp256k1.PubKeySecp256k1
 	copy(tmPubKey[:], pk.SerializeCompressed())
+
+	return tmPubKey, nil
+}
+
+func getAddressFromPublicKey(pubKey *types.PublicKey) (sdk.AccAddress, *types.Error) {
+	tmPubKey, err := parsePublicKey(pubKey)
+	if err != nil {
+		return nil, err
+	}
 
 	return sdk.AccAddress(tmPubKey.Address().Bytes()), nil
 }

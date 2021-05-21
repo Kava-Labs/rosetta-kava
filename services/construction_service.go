@@ -18,11 +18,8 @@
 package services
 
 import (
-	"context"
-
 	"github.com/kava-labs/rosetta-kava/configuration"
 
-	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -44,29 +41,4 @@ func NewConstructionAPIService(
 		client: client,
 		cdc:    cdc,
 	}
-}
-
-// ConstructionPayloads implements the /construction/payloads endpoint.
-func (s *ConstructionAPIService) ConstructionPayloads(
-	ctx context.Context,
-	request *types.ConstructionPayloadsRequest,
-) (*types.ConstructionPayloadsResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionCombine implements the /construction/combine
-// endpoint.
-func (s *ConstructionAPIService) ConstructionCombine(
-	ctx context.Context,
-	request *types.ConstructionCombineRequest,
-) (*types.ConstructionCombineResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionParse implements the /construction/parse endpoint.
-func (s *ConstructionAPIService) ConstructionParse(
-	ctx context.Context,
-	request *types.ConstructionParseRequest,
-) (*types.ConstructionParseResponse, *types.Error) {
-	return nil, ErrUnimplemented
 }

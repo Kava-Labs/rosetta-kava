@@ -38,43 +38,6 @@ func setupConstructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
 	return NewConstructionAPIService(cfg, mockClient, cdc), mockClient
 }
 
-func TestConstructionService_Online(t *testing.T) {
-	cfg := &configuration.Configuration{
-		Mode: configuration.Online,
-	}
-
-	mockClient := &mocks.Client{}
-	cdc := app.MakeCodec()
-	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
-	ctx := context.Background()
-
-	// Test Payloads
-	payloadsResponse, err := servicer.ConstructionPayloads(ctx, &types.ConstructionPayloadsRequest{})
-	assert.Nil(t, payloadsResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Parse
-	parseUnsignedResponse, err := servicer.ConstructionParse(ctx, &types.ConstructionParseRequest{})
-	assert.Nil(t, parseUnsignedResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Combine
-	combineResponse, err := servicer.ConstructionCombine(ctx, &types.ConstructionCombineRequest{})
-	assert.Nil(t, combineResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Parse Signed
-	parseSignedResponse, err := servicer.ConstructionParse(ctx, &types.ConstructionParseRequest{})
-	assert.Nil(t, parseSignedResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	mockClient.AssertExpectations(t)
-}
-
 func TestConstructionService_Offline(t *testing.T) {
 	cfg := &configuration.Configuration{
 		Mode: configuration.Offline,
@@ -90,30 +53,6 @@ func TestConstructionService_Offline(t *testing.T) {
 	assert.Nil(t, metadataResponse)
 	assert.Equal(t, ErrUnavailableOffline.Code, err.Code)
 	assert.Equal(t, ErrUnavailableOffline.Message, err.Message)
-
-	// Test Payloads
-	payloadsResponse, err := servicer.ConstructionPayloads(ctx, &types.ConstructionPayloadsRequest{})
-	assert.Nil(t, payloadsResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Parse
-	parseUnsignedResponse, err := servicer.ConstructionParse(ctx, &types.ConstructionParseRequest{})
-	assert.Nil(t, parseUnsignedResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Combine
-	combineResponse, err := servicer.ConstructionCombine(ctx, &types.ConstructionCombineRequest{})
-	assert.Nil(t, combineResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
-
-	// Test Parse Signed
-	parseSignedResponse, err := servicer.ConstructionParse(ctx, &types.ConstructionParseRequest{})
-	assert.Nil(t, parseSignedResponse)
-	assert.Equal(t, ErrUnimplemented.Code, err.Code)
-	assert.Equal(t, ErrUnimplemented.Message, err.Message)
 
 	// Test Submit
 	submitResponse, err := servicer.ConstructionSubmit(ctx, &types.ConstructionSubmitRequest{})
