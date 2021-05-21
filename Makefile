@@ -52,6 +52,10 @@ watch-integration:
 rosetta-check-data:
 	rosetta-cli --configuration-file rosetta-cli-conf/kava-7/config.json check:data
 
+.PHONY: rosetta-check-construction
+rosetta-check-construction:
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-7/config.json check:construction
+
 .PHONY: rosetta-check-data-local
 rosetta-check-data-local:
 	rosetta-cli --configuration-file rosetta-cli-conf/kava-localnet/config.json check:data
