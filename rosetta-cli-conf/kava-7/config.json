@@ -10,7 +10,7 @@
  "retry_elapsed_time": 0,
  "max_online_connections": 120,
  "max_sync_concurrency": 5,
- "tip_delay": 300,
+ "tip_delay": 30,
  "max_reorg_depth": 100,
  "log_configuration": false,
  "compression_disabled": false,
@@ -38,7 +38,11 @@
   "pruning_disabled": false,
   "initial_balance_fetch_disabled": false,
   "end_conditions": {
-    "tip": true
+   "reconciliation_coverage": {
+      "coverage": 0.95,
+      "from_tip": true,
+      "tip": true
+    }
   }
  }
 }
