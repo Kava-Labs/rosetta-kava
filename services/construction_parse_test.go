@@ -48,6 +48,7 @@ func TestConstructionParse_Unsigned(t *testing.T) {
 
 	cdc := app.MakeCodec()
 	txBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
+	require.NoError(t, err)
 	txPayload := hex.EncodeToString(txBytes)
 
 	request := &types.ConstructionParseRequest{
