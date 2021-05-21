@@ -19,6 +19,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 
@@ -47,8 +48,8 @@ type options struct {
 }
 
 type signerInfo struct {
-	accountNumber   uint64
-	accountSequence uint64
+	AccountNumber   uint64 `json:"account_number"`
+	AccountSequence uint64 `json:"account_sequence"`
 }
 
 // ConstructionMetadata implements the /construction/metadata endpoint.
@@ -78,9 +79,14 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 		}
 
 		signers = append(signers, signerInfo{
-			accountNumber:   acc.GetAccountNumber(),
-			accountSequence: acc.GetSequence(),
+			AccountNumber:   acc.GetAccountNumber(),
+			AccountSequence: acc.GetSequence(),
 		})
+	}
+
+	encodedSigners, err := json.Marshal(signers)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
 	}
 
 	tx := authtypes.NewStdTx(
@@ -106,7 +112,7 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 
 	return &types.ConstructionMetadataResponse{
 		Metadata: map[string]interface{}{
-			"signers":    signers,
+			"signers":    string(encodedSigners),
 			"gas_wanted": gasWanted,
 			"gas_price":  gasPrice,
 			"memo":       options.memo,

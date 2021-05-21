@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"testing"
 
 	"github.com/kava-labs/rosetta-kava/kava"
@@ -60,14 +61,16 @@ func TestConstructionPayloads(t *testing.T) {
 
 	signers := []signerInfo{
 		{
-			accountNumber:   10,
-			accountSequence: 11,
+			AccountNumber:   10,
+			AccountSequence: 11,
 		},
 	}
+	encodedSigners, err := json.Marshal(signers)
+	require.NoError(t, err)
 
 	metadata := map[string]interface{}{
-		"signers":    signers,
-		"gas_wanted": uint64(250001),
+		"signers":    string(encodedSigners),
+		"gas_wanted": float64(250001),
 		"gas_price":  float64(0.25),
 		"memo":       "some memo",
 	}

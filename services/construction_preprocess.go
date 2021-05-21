@@ -32,7 +32,7 @@ import (
 
 const (
 	defaultSuggestedFeeMultiplier = float64(1)
-	defaultGasAdjustment          = float64(0.1)
+	defaultGasAdjustment          = float64(0.5)
 )
 
 // ConstructionPreprocess implements the /construction/preprocess endpoint.

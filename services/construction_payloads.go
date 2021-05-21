@@ -20,6 +20,7 @@ package services
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
 
@@ -84,8 +85,8 @@ func (s *ConstructionAPIService) ConstructionPayloads(
 
 		signBytes := auth.StdSignBytes(
 			request.NetworkIdentifier.Network,
-			signer.accountNumber,
-			signer.accountSequence,
+			signer.AccountNumber,
+			signer.AccountSequence,
 			tx.Fee,
 			tx.Msgs,
 			tx.Memo,
@@ -111,9 +112,14 @@ func validateAndParseMetadata(meta map[string]interface{}) (*metadata, error) {
 		}
 	}
 
-	signers, ok := meta["signers"].([]signerInfo)
+	rawSigners, ok := meta["signers"].(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid value for %s", "signers")
+	}
+	var signers []signerInfo
+	err := json.Unmarshal([]byte(rawSigners), &signers)
+	if err != nil {
+		return nil, fmt.Errorf("invalid value for signers: %w", err)
 	}
 
 	gasPrice, ok := meta["gas_price"].(float64)
@@ -121,7 +127,7 @@ func validateAndParseMetadata(meta map[string]interface{}) (*metadata, error) {
 		return nil, fmt.Errorf("invalid value for %s", "gas_price")
 	}
 
-	gasWanted, ok := meta["gas_wanted"].(uint64)
+	gasWanted, ok := meta["gas_wanted"].(float64)
 	if !ok {
 		return nil, fmt.Errorf("invalid value for %s", "gas_wanted")
 	}
@@ -134,7 +140,7 @@ func validateAndParseMetadata(meta map[string]interface{}) (*metadata, error) {
 	return &metadata{
 		signers:   signers,
 		gasPrice:  gasPrice,
-		gasWanted: gasWanted,
+		gasWanted: uint64(gasWanted),
 		memo:      memo,
 	}, nil
 }

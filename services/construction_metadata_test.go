@@ -17,6 +17,7 @@ package services
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -482,11 +483,14 @@ func TestConstructionMetadata_SignerData(t *testing.T) {
 	response, rerr = servicer.ConstructionMetadata(ctx, request)
 	assert.Nil(t, rerr)
 
-	signers, ok := response.Metadata["signers"].([]signerInfo)
+	signersRaw, ok := response.Metadata["signers"].(string)
 	require.True(t, ok)
+	var signers []signerInfo
+	err = json.Unmarshal([]byte(signersRaw), &signers)
+	require.NoError(t, err)
 
 	require.Equal(t, 1, len(signers))
 	signer := signers[0]
-	assert.Equal(t, account.GetAccountNumber(), signer.accountNumber)
-	assert.Equal(t, account.GetSequence(), signer.accountSequence)
+	assert.Equal(t, account.GetAccountNumber(), signer.AccountNumber)
+	assert.Equal(t, account.GetSequence(), signer.AccountSequence)
 }
