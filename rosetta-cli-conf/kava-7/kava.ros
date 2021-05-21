@@ -37,7 +37,7 @@ create_account(1){
 
 transfer(10){
   transfer{
-    transfer.network = set_variable({"network":"kava-7", "blockchain":"Kava"};
+    transfer.network = set_variable({"network":"kava-7", "blockchain":"Kava"});
     currency = {"symbol":"KAVA", "decimals":6};
     sender = find_balance({
       "minimum_balance":{
@@ -120,7 +120,7 @@ return_funds(10){
       },
       {
         "operation_identifier":{"index":1},
-        "related_operations": [{"index":0"}],
+        "related_operations":[{"index":0}],
         "type":"transfer",
         "account":{{faucet}},
         "amount":{
