@@ -301,6 +301,7 @@ func accountBalanceOps(
 
 func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
 	var ops []*types.Operation
+
 	for _, ev := range log.Events {
 		if ev.Type == bank.EventTypeTransfer {
 			events := unflattenEvents(ev, bank.EventTypeTransfer, 3)
@@ -326,7 +327,23 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 	case staking.MsgCreateValidator:
 		return msgCreateValidatorToOperations(ops, log, status, index)
 	}
+
+	if *status != SuccessStatus {
+		switch m := msg.(type) {
+		case bank.MsgSend:
+			transferOps := msgSendToTransferOperations(m, log, status, index)
+			ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
+		}
+	}
 	return ops
+}
+
+func msgSendToTransferOperations(msg bank.MsgSend, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
+	sender := newAccountID(msg.FromAddress)
+	recipient := newAccountID(msg.ToAddress)
+	amount := msg.Amount
+
+	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
 }
 
 func unflattenEvents(ev sdk.StringEvent, eventType string, numAttributes int) (events sdk.StringEvents) {
