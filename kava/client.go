@@ -33,10 +33,12 @@ import (
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 var insufficientFee = regexp.MustCompile("insufficient funds to pay for fees")
+var noBlockResultsForHeight = regexp.MustCompile("could not find results for height")
 
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
@@ -233,7 +235,7 @@ func (c *Client) Block(
 		}
 	}
 
-	deliverResults, err := c.rpc.BlockResults(&height)
+	deliverResults, err := c.getBlockDeliverResults(&height)
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +250,29 @@ func (c *Client) Block(
 			Transactions:          transactions,
 		},
 	}, nil
+}
+
+func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
+	backoff := 50 * time.Millisecond
+	for attempts := 0; attempts < 5; attempts++ {
+		blockResults, err = c.rpc.BlockResults(height)
+
+		if err != nil {
+			var rpcError *tmrpctypes.RPCError
+
+			if errors.As(err, &rpcError) {
+				if noBlockResultsForHeight.MatchString(rpcError.Data) {
+					time.Sleep(backoff)
+					backoff = 2 * backoff
+					continue
+				}
+			}
+		}
+
+		return
+	}
+
+	return
 }
 
 // getBlockResult returns the specified block by Index or Hash. If the
