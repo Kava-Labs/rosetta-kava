@@ -39,6 +39,7 @@ var (
 
 		ErrUnsupportedCurveType,
 		ErrPublicKeyNil,
+		ErrMissingPublicKey,
 		ErrInvalidPublicKey,
 		ErrInvalidTx,
 	}
