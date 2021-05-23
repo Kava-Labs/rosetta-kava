@@ -338,15 +338,12 @@ func (c *Client) getOperationsForTransaction(
 	tx *authtypes.StdTx,
 	result *abci.ResponseDeliverTx,
 ) []*types.Operation {
-	var opStatus string
+	opStatus := SuccessStatus
+	feeStatus := SuccessStatus
 
-	if result.Code == abci.CodeTypeOK {
-		opStatus = SuccessStatus
-	} else {
-		opStatus = SuccessStatus
+	if result.Code != abci.CodeTypeOK {
+		opStatus = FailureStatus
 	}
-
-	var feeStatus string
 
 	if result.Codespace == sdkerrors.RootCodespace {
 		switch result.Code {
@@ -355,15 +352,8 @@ func (c *Client) getOperationsForTransaction(
 		case sdkerrors.ErrInsufficientFunds.ABCICode():
 			if insufficientFee.MatchString(result.Log) {
 				feeStatus = FailureStatus
-			} else {
-				feeStatus = SuccessStatus
 			}
-		default:
-			feeStatus = SuccessStatus
-			opStatus = FailureStatus
 		}
-	} else {
-		feeStatus = SuccessStatus
 	}
 
 	logs, err := sdk.ParseABCILogs(result.Log)
