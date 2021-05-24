@@ -29,34 +29,44 @@ import (
 
 // ConstructionDerive implements the /construction/derive endpoint.
 func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request *types.ConstructionDeriveRequest) (*types.ConstructionDeriveResponse, *types.Error) {
-	curveType := request.PublicKey.CurveType
-
-	if curveType != types.Secp256k1 {
-		return nil, ErrUnsupportedCurveType
-	}
-
-	if len(request.PublicKey.Bytes) == 0 {
-		return nil, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
-	}
-
-	pubKey, err := btcec.ParsePubKey(request.PublicKey.Bytes, btcec.S256())
+	addr, err := getAddressFromPublicKey(request.PublicKey)
 	if err != nil {
-		return nil, wrapErr(ErrInvalidPublicKey, err)
+		return nil, err
 	}
 
-	var tmPubKey secp256k1.PubKeySecp256k1
-	serializedPubKey := pubKey.SerializeCompressed()
-
-	copy(tmPubKey[:], serializedPubKey)
-
-	addressBytes := tmPubKey.Address().Bytes()
-	accountAddress := sdk.AccAddress(addressBytes).String()
-
-	response := &types.ConstructionDeriveResponse{
+	return &types.ConstructionDeriveResponse{
 		AccountIdentifier: &types.AccountIdentifier{
-			Address: accountAddress,
+			Address: addr.String(),
 		},
+	}, nil
+}
+
+func parsePublicKey(pubKey *types.PublicKey) (secp256k1.PubKeySecp256k1, *types.Error) {
+	var tmPubKey secp256k1.PubKeySecp256k1
+
+	if pubKey.CurveType != types.Secp256k1 {
+		return tmPubKey, ErrUnsupportedCurveType
 	}
 
-	return response, nil
+	if len(pubKey.Bytes) == 0 {
+		return tmPubKey, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
+	}
+
+	pk, err := btcec.ParsePubKey(pubKey.Bytes, btcec.S256())
+	if err != nil {
+		return tmPubKey, wrapErr(ErrInvalidPublicKey, err)
+	}
+
+	copy(tmPubKey[:], pk.SerializeCompressed())
+
+	return tmPubKey, nil
+}
+
+func getAddressFromPublicKey(pubKey *types.PublicKey) (sdk.AccAddress, *types.Error) {
+	tmPubKey, err := parsePublicKey(pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdk.AccAddress(tmPubKey.Address().Bytes()), nil
 }

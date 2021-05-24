@@ -28,7 +28,9 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	amino "github.com/tendermint/go-amino"
@@ -384,6 +386,101 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 	unbonding, err = client.UnbondingDelegations(addr, height)
 	assert.Nil(t, unbonding)
 	assert.Contains(t, err.Error(), "UnmarshalJSON")
+}
+
+func TestHTTPClient_SimulateTx(t *testing.T) {
+	cdc := app.MakeCodec()
+	testTx := &authtypes.StdTx{}
+
+	mockResponse := sdk.SimulationResponse{
+		GasInfo: sdk.GasInfo{
+			GasWanted: 500000,
+			GasUsed:   200000,
+		},
+	}
+
+	var simulateResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		assert.Equal(t, "abci_query", request.Method)
+		return simulateResponse(request)
+	})
+	defer ts.Close()
+
+	client, err := kava.NewHTTPClient(ts.URL)
+	require.NoError(t, err)
+
+	simulateResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		var params struct {
+			Path   string
+			Data   bytes.HexBytes
+			Height string
+			Prove  bool
+		}
+
+		err := json.Unmarshal(request.Params, &params)
+		require.NoError(t, err)
+
+		assert.Equal(t, "0", params.Height)
+
+		var tx authtypes.StdTx
+		err = cdc.UnmarshalBinaryLengthPrefixed(params.Data, &tx)
+		require.NoError(t, err)
+
+		respValue, err := cdc.MarshalBinaryBare(mockResponse)
+		require.NoError(t, err)
+
+		abciResult := ctypes.ResultABCIQuery{
+			Response: abci.ResponseQuery{
+				Value: respValue,
+			},
+		}
+
+		data, err := cdc.MarshalJSON(&abciResult)
+		require.NoError(t, err)
+
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Result:  json.RawMessage(data),
+		}
+	}
+	simResp, err := client.SimulateTx(testTx)
+	assert.NoError(t, err)
+	assert.Equal(t, mockResponse, *simResp)
+
+	simulateResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Error: &jsonrpctypes.RPCError{
+				Code:    1,
+				Message: "something went wrong",
+			},
+		}
+	}
+	simResp, err = client.SimulateTx(testTx)
+	assert.Nil(t, simResp)
+	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+
+	simulateResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		abciResult := ctypes.ResultABCIQuery{
+			Response: abci.ResponseQuery{
+				Value: []byte("invalid"),
+			},
+		}
+
+		data, err := cdc.MarshalJSON(&abciResult)
+		require.NoError(t, err)
+
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Result:  data,
+		}
+	}
+	simResp, err = client.SimulateTx(testTx)
+	assert.Nil(t, simResp)
+	assert.Error(t, err)
 }
 
 func TestParseABCIResult(t *testing.T) {

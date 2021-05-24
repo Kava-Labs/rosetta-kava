@@ -20,6 +20,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -48,6 +49,8 @@ const (
 	TransferOpType = "transfer"
 	// MintOpType is used to reference mint operations
 	MintOpType = "mint"
+	// BurnOpType is used to reference burn operations
+	BurnOpType = "burn"
 
 	// AccLiquid represents spendable coins
 	AccLiquid = "liquid"
@@ -69,6 +72,7 @@ var (
 		FeeOpType,
 		TransferOpType,
 		MintOpType,
+		BurnOpType,
 	}
 
 	// OperationStatuses are all supported operation statuses.
@@ -146,6 +150,7 @@ type RPCClient interface {
 	Account(addr sdk.AccAddress, height int64) (authexported.Account, error)
 	Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error)
 	UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error)
+	SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error)
 }
 
 func strToPtr(s string) *string {

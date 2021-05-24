@@ -31,7 +31,7 @@ import (
 )
 
 func TestConstructionHash(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	type errArgs struct {
 		expectErr     bool
@@ -83,7 +83,7 @@ func TestConstructionHash(t *testing.T) {
 			expectedTxHash:  "",
 			errs: errArgs{
 				expectErr:     true,
-				expectErrCode: 11,
+				expectErrCode: ErrInvalidTx.Code,
 			},
 		},
 	}

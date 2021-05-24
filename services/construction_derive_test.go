@@ -6,26 +6,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kava-labs/rosetta-kava/configuration"
-	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
-
 	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupConstructionAPIServicer() *ConstructionAPIService {
-	cfg := &configuration.Configuration{
-		Mode: configuration.Offline,
-	}
-	mockClient := &mocks.Client{}
-	cdc := app.MakeCodec()
-	return NewConstructionAPIService(cfg, mockClient, cdc)
-}
-
 func TestConstructionDerive_CurveValidation(t *testing.T) {
-	servicer := setupConstructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []types.CurveType{
 		types.Secp256r1,
@@ -52,7 +39,7 @@ func TestConstructionDerive_CurveValidation(t *testing.T) {
 }
 
 func TestConstructionDerive_PublicKeyEmptyNil(t *testing.T) {
-	servicer := setupConstructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		name  string
@@ -90,7 +77,7 @@ func TestConstructionDerive_PublicKeyEmptyNil(t *testing.T) {
 }
 
 func TestConstructionDerive_InvalidPublicKey(t *testing.T) {
-	servicer := setupConstructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 	ctx := context.Background()
 
 	request := &types.ConstructionDeriveRequest{
@@ -106,7 +93,7 @@ func TestConstructionDerive_InvalidPublicKey(t *testing.T) {
 }
 
 func TestConstructionDerive_PublicKeyValid(t *testing.T) {
-	servicer := setupConstructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		name    string

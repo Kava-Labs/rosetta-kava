@@ -835,6 +835,80 @@ func TestBlock_Transactions(t *testing.T) {
 	})
 }
 
+func TestAccount(t *testing.T) {
+	mockRPCClient, _, client := setupClient(t)
+	addr, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
+	require.NoError(t, err)
+
+	accErr := errors.New("error retrieving account")
+	mockRPCClient.On("Account", addr, int64(0)).Return(nil, accErr).Once()
+
+	ctx := context.Background()
+	account, err := client.Account(ctx, addr)
+	assert.Nil(t, account)
+	assert.EqualError(t, err, accErr.Error())
+
+	expectedAccount := &authtypes.BaseAccount{}
+	mockRPCClient.On("Account", addr, int64(0)).Return(expectedAccount, nil).Once()
+
+	ctx = context.Background()
+	account, err = client.Account(ctx, addr)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedAccount, account)
+}
+
+func TestEstimateGas(t *testing.T) {
+	mockRPCClient, _, client := setupClient(t)
+
+	addr1, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
+	require.NoError(t, err)
+	addr2, err := sdk.AccAddressFromBech32("kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w")
+	require.NoError(t, err)
+
+	msgs := []sdk.Msg{
+		bank.MsgSend{
+			FromAddress: addr1,
+			ToAddress:   addr2,
+			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000))),
+		},
+		bank.MsgSend{
+			FromAddress: addr1,
+			ToAddress:   addr2,
+			Amount:      sdk.NewCoins(sdk.NewCoin("hard", sdk.NewInt(2000000))),
+		},
+	}
+
+	tx := authtypes.NewStdTx(
+		msgs,
+		authtypes.StdFee{},
+		[]authtypes.StdSignature{{}},
+		"a memo",
+	)
+	gasAdjusment := float64(0.1)
+
+	simErr := errors.New("could not simulate tx")
+	mockRPCClient.On("SimulateTx", &tx).Return(nil, simErr).Once()
+
+	ctx := context.Background()
+	gas, err := client.EstimateGas(ctx, &tx, gasAdjusment)
+	assert.Equal(t, uint64(0), gas)
+	assert.EqualError(t, err, simErr.Error())
+
+	gasUsed := uint64(200000)
+	simResp := &sdk.SimulationResponse{
+		GasInfo: sdk.GasInfo{
+			GasWanted: 100000,
+			GasUsed:   gasUsed,
+		},
+	}
+
+	mockRPCClient.On("SimulateTx", &tx).Return(simResp, nil).Once()
+	ctx = context.Background()
+	gas, err = client.EstimateGas(ctx, &tx, gasAdjusment)
+	require.Nil(t, err)
+	assert.Equal(t, uint64(220000), gas)
+}
+
 func TestPostTx(t *testing.T) {
 	mockRPCClient, _, client := setupClient(t)
 

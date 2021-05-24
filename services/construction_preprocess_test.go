@@ -18,9 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kava-labs/rosetta-kava/configuration"
 	"github.com/kava-labs/rosetta-kava/kava"
-	mocks "github.com/kava-labs/rosetta-kava/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,15 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func setupContructionAPIServicer() *ConstructionAPIService {
-	cfg := &configuration.Configuration{
-		Mode: configuration.Offline,
-	}
-	mockClient := &mocks.Client{}
-	cdc := app.MakeCodec()
-	return NewConstructionAPIService(cfg, mockClient, cdc)
-}
 
 func float64ToPtr(value float64) *float64 {
 	return &value
@@ -71,7 +60,7 @@ func validConstructionPreprocessRequest() *types.ConstructionPreprocessRequest {
 }
 
 func TestConstructionPreprocess_NoOperations(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	ctx := context.Background()
 	response, err := servicer.ConstructionPreprocess(ctx,
@@ -95,7 +84,7 @@ func TestConstructionPreprocess_NoOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		suggestedFeeMultiplier *float64
@@ -144,7 +133,7 @@ func TestConstructionPreprocess_SuggestedFeeMultiplier(t *testing.T) {
 }
 
 func TestConstructionPreprocess_Memo(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		memo *string
@@ -189,7 +178,7 @@ func TestConstructionPreprocess_Memo(t *testing.T) {
 
 func TestConstructionPreprocess_MaxFee(t *testing.T) {
 	cdc := app.MakeCodec()
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		maxFee         []*types.Amount
@@ -269,7 +258,7 @@ func TestConstructionPreprocess_MaxFee(t *testing.T) {
 }
 
 func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		invalidOperations []*types.Operation
@@ -340,7 +329,7 @@ func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
 
 func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	cdc := app.MakeCodec()
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
 	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"
@@ -399,7 +388,7 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_GasAdjustment(t *testing.T) {
-	servicer := setupContructionAPIServicer()
+	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
 		gasAdjustment         *float64
@@ -407,7 +396,7 @@ func TestConstructionPreprocess_GasAdjustment(t *testing.T) {
 	}{
 		{
 			gasAdjustment:         nil,
-			expectedGasAdjustment: 0.1,
+			expectedGasAdjustment: 0.5,
 		},
 		{
 			gasAdjustment:         float64ToPtr(0.0000001),

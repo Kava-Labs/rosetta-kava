@@ -19,18 +19,24 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
+
+var insufficientFee = regexp.MustCompile("insufficient funds to pay for fees")
 
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
@@ -105,6 +111,28 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	return currentBlock, currentTime, genesisBlock, syncStatus, peers, nil
+}
+
+// Account returns the account for the provided address at the latest block height
+func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexported.Account, error) {
+	account, err := c.rpc.Account(address, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+// EstimateGas returns a gas wanted estimate from a tx with a provided adjustment
+func (c *Client) EstimateGas(ctx context.Context, tx *authtypes.StdTx, adjustment float64) (uint64, error) {
+	simResp, err := c.rpc.SimulateTx(tx)
+	if err != nil {
+		return 0, err
+	}
+
+	gas := math.Round(float64(simResp.GasUsed) * (1 + adjustment))
+
+	return uint64(gas), nil
 }
 
 // Balance fetches and returns the account balance for an account
@@ -247,10 +275,12 @@ func (c *Client) getTransactionsForBlock(
 	resultBlockResults *ctypes.ResultBlockResults,
 ) []*types.Transaction {
 	// returns transactions -- this will be number of txs + begin/end block (if there)
+	eventOpStatus := SuccessStatus
 	transactions := []*types.Transaction{}
 
 	beginBlockOps := EventsToOperations(
 		stringifyEvents(resultBlockResults.BeginBlockEvents),
+		&eventOpStatus,
 		0,
 	)
 
@@ -288,6 +318,7 @@ func (c *Client) getTransactionsForBlock(
 
 	endBlockOps := EventsToOperations(
 		stringifyEvents(resultBlockResults.EndBlockEvents),
+		&eventOpStatus,
 		0,
 	)
 
@@ -307,12 +338,22 @@ func (c *Client) getOperationsForTransaction(
 	tx *authtypes.StdTx,
 	result *abci.ResponseDeliverTx,
 ) []*types.Operation {
-	var status string
+	opStatus := SuccessStatus
+	feeStatus := SuccessStatus
 
-	if result.Code == abci.CodeTypeOK {
-		status = SuccessStatus
-	} else {
-		status = FailureStatus
+	if result.Code != abci.CodeTypeOK {
+		opStatus = FailureStatus
+	}
+
+	if result.Codespace == sdkerrors.RootCodespace {
+		switch result.Code {
+		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode():
+			feeStatus = FailureStatus
+		case sdkerrors.ErrInsufficientFunds.ABCICode():
+			if insufficientFee.MatchString(result.Log) {
+				feeStatus = FailureStatus
+			}
+		}
 	}
 
 	logs, err := sdk.ParseABCILogs(result.Log)
@@ -320,7 +361,7 @@ func (c *Client) getOperationsForTransaction(
 		logs = sdk.ABCIMessageLogs{}
 	}
 
-	return TxToOperations(tx, logs, &status)
+	return TxToOperations(tx, logs, &feeStatus, &opStatus)
 }
 
 func stringifyEvents(events []abci.Event) sdk.StringEvents {

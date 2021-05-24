@@ -3,7 +3,9 @@
 package mocks
 
 import (
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bytes "github.com/tendermint/tendermint/libs/bytes"
+
 	client "github.com/tendermint/tendermint/rpc/client"
 
 	context "context"
@@ -591,6 +593,29 @@ func (_m *RPCClient) Reset() error {
 // SetLogger provides a mock function with given fields: _a0
 func (_m *RPCClient) SetLogger(_a0 log.Logger) {
 	_m.Called(_a0)
+}
+
+// SimulateTx provides a mock function with given fields: tx
+func (_m *RPCClient) SimulateTx(tx *authtypes.StdTx) (*types.SimulationResponse, error) {
+	ret := _m.Called(tx)
+
+	var r0 *types.SimulationResponse
+	if rf, ok := ret.Get(0).(func(*authtypes.StdTx) *types.SimulationResponse); ok {
+		r0 = rf(tx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.SimulationResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*authtypes.StdTx) error); ok {
+		r1 = rf(tx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Start provides a mock function with given fields:
