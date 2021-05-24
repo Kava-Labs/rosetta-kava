@@ -37,7 +37,7 @@ func TestBlockRetry(t *testing.T) {
 		rerr *types.Error
 		err  error
 	}
-	errChan := make(chan serviceError)
+	errChan := make(chan serviceError, numJobs)
 
 	for i := 0; i < numJobs; i++ {
 		go func() {
@@ -69,6 +69,7 @@ func TestBlockRetry(t *testing.T) {
 				_, rosettaErr, err = client.BlockAPI.Block(ctx, request)
 				if rosettaErr != nil || err != nil {
 					errChan <- serviceError{rosettaErr, err}
+					return
 				}
 			}
 		}()
