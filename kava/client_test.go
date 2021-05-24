@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -37,6 +38,8 @@ import (
 	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
+	tmstate "github.com/tendermint/tendermint/state"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -832,6 +835,84 @@ func TestBlock_Transactions(t *testing.T) {
 
 	assert.Panics(t, func() {
 		_, _ = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	})
+}
+
+func TestBlock_BlockResultsRetry(t *testing.T) {
+	parentBlockIdentifier := &types.BlockIdentifier{
+		Index: 99,
+		Hash:  "8EA67B6F7927DB941F86501D1757AC6804C1D21B7A75B9DA3F16A3C81C397E50",
+	}
+	parentHashBytes, err := hex.DecodeString(parentBlockIdentifier.Hash)
+	require.NoError(t, err)
+
+	blockIdentifier := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(blockIdentifier.Hash)
+	require.NoError(t, err)
+
+	mockResultBlock := &ctypes.ResultBlock{
+		BlockID: tmtypes.BlockID{
+			Hash: hashBytes,
+		},
+		Block: &tmtypes.Block{
+			Header: tmtypes.Header{
+				Height: blockIdentifier.Index,
+				Time:   blockTime,
+				LastBlockID: tmtypes.BlockID{
+					Hash: parentHashBytes,
+				},
+			},
+		},
+	}
+
+	abciErr := tmstate.ErrNoABCIResponsesForHeight{Height: blockIdentifier.Index}
+	rpcErr := tmrpctypes.RPCInternalError(tmrpctypes.JSONRPCIntID(1), abciErr).Error
+	mockErr := fmt.Errorf("Block Result: %w", rpcErr)
+
+	t.Run("retries if there are no abci results yet", func(t *testing.T) {
+		ctx := context.Background()
+		mockRPCClient, _, client := setupClient(t)
+
+		mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+			mockResultBlock,
+			nil,
+		).Once()
+
+		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+			nil,
+			mockErr,
+		).Once()
+
+		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+			&ctypes.ResultBlockResults{},
+			nil,
+		).Once()
+
+		_, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+		require.NoError(t, err)
+	})
+
+	t.Run("retries a maximum of 5 times", func(t *testing.T) {
+		ctx := context.Background()
+		mockRPCClient, _, client := setupClient(t)
+
+		mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+			mockResultBlock,
+			nil,
+		).Once()
+
+		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+			nil,
+			mockErr,
+		).Times(5)
+
+		_, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+		require.Error(t, err)
+		mockRPCClient.AssertExpectations(t)
 	})
 }
 
