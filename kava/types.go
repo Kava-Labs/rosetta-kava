@@ -1,8 +1,7 @@
 // Copyright 2021 Kava Labs, Inc.
 // Copyright 2020 Coinbase, Inc.
 //
-// Derived from github.com/coinbase/rosetta-ethereum@f81889b
-//
+// Derived from github.com/coinbase/rosetta-ethereum@f81889b //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -21,6 +20,8 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -28,32 +29,41 @@ import (
 const (
 	// NodeVersion is the version of kvd we are using
 	NodeVersion = "v0.14.1"
-
 	// Blockchain is always Kava
 	Blockchain = "Kava"
-
 	// HistoricalBalanceSupported is whether historical balance is supported.
 	HistoricalBalanceSupported = true
-
-	// SuccessStatus is the status of any
-	// Kava operation considered successful.
-	SuccessStatus = "SUCCESS"
-
-	// FailureStatus is the status of any
-	// Kava operation considered unsuccessful.
-	FailureStatus = "FAILURE"
-
 	// IncludeMempoolCoins does not apply to rosetta-kava as it is not UTXO-based.
 	IncludeMempoolCoins = false
 
+	// SuccessStatus is the status of any
+	// Kava operation considered successful.
+	SuccessStatus = "success"
+	// FailureStatus is the status of any
+	// Kava operation considered unsuccessful.
+	FailureStatus = "failure"
+
 	// FeeOpType is used to reference fee operations
-	FeeOpType = "FEE"
-
+	FeeOpType = "fee"
 	// TransferOpType is used to reference transfer operations
-	TransferOpType = "TRANSFER"
-
+	TransferOpType = "transfer"
 	// MintOpType is used to reference mint operations
-	MintOpType = "MINT"
+	MintOpType = "mint"
+	// BurnOpType is used to reference burn operations
+	BurnOpType = "burn"
+
+	// AccLiquid represents spendable coins
+	AccLiquid = "liquid"
+	// AccLiquidDelegated represents delgated spendable coins
+	AccLiquidDelegated = "liquid_delegated"
+	// AccLiquidUnbonding represents unbonding spendable coins
+	AccLiquidUnbonding = "liquid_unbonding"
+	// AccVesting represents vesting (non-spendable) coins
+	AccVesting = "vesting"
+	// AccVestingDelegated represents vesting coins that are delegated
+	AccVestingDelegated = "vesting_delegated"
+	// AccVestingUnbonding represents vesting coins that are unbonding
+	AccVestingUnbonding = "vesting_unbonding"
 )
 
 var (
@@ -62,6 +72,7 @@ var (
 		FeeOpType,
 		TransferOpType,
 		MintOpType,
+		BurnOpType,
 	}
 
 	// OperationStatuses are all supported operation statuses.
@@ -80,7 +91,32 @@ var (
 	CallMethods = []string{}
 
 	// BalanceExemptions lists sub-accounts that are balance exempt
-	BalanceExemptions = []*types.BalanceExemption{}
+	BalanceExemptions = []*types.BalanceExemption{
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccLiquid),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccVesting),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccLiquidDelegated),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccVestingDelegated),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccLiquidUnbonding),
+			ExemptionType:     types.BalanceDynamic,
+		},
+		&types.BalanceExemption{
+			SubAccountAddress: strToPtr(AccVestingUnbonding),
+			ExemptionType:     types.BalanceDynamic,
+		},
+	}
 )
 
 // Currencies represents supported kava denom to rosetta currencies
@@ -112,4 +148,11 @@ type RPCClient interface {
 
 	BlockByHash([]byte) (*ctypes.ResultBlock, error)
 	Account(addr sdk.AccAddress, height int64) (authexported.Account, error)
+	Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error)
+	UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error)
+	SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error)
+}
+
+func strToPtr(s string) *string {
+	return &s
 }

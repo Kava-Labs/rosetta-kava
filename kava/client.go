@@ -17,40 +17,44 @@ package kava
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"math"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func init() {
-	// bootstrap cosmos-sdk config for kava chain
-	kavaConfig := sdk.GetConfig()
-	kava.SetBech32AddressPrefixes(kavaConfig)
-	kava.SetBip44CoinType(kavaConfig)
-	kavaConfig.Seal()
-}
+var insufficientFee = regexp.MustCompile("insufficient funds to pay for fees")
+var noBlockResultsForHeight = regexp.MustCompile("could not find results for height")
 
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
-	rpc RPCClient
-	cdc *codec.Codec
+	rpc            RPCClient
+	cdc            *codec.Codec
+	balanceFactory BalanceServiceFactory
 }
 
 // NewClient initialized a new Client with the provided rpc client
-func NewClient(rpc RPCClient) (*Client, error) {
+func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
 	cdc := kava.MakeCodec()
 
 	return &Client{
-		rpc: rpc,
-		cdc: cdc,
+		rpc:            rpc,
+		cdc:            cdc,
+		balanceFactory: balanceServiceFactory,
 	}, nil
 }
 
@@ -75,7 +79,6 @@ func (c *Client) Status(ctx context.Context) (
 	syncInfo := resultStatus.SyncInfo
 	tmPeers := resultNetInfo.Peers
 
-	// TODO: update when indexer is implemented
 	currentBlock := &types.BlockIdentifier{
 		Index: syncInfo.LatestBlockHeight,
 		Hash:  syncInfo.LatestBlockHash.String(),
@@ -88,7 +91,6 @@ func (c *Client) Status(ctx context.Context) (
 	}
 
 	synced := !syncInfo.CatchingUp
-	// TODO: update when indexer is implemented
 	syncStatus := &types.SyncStatus{
 		CurrentIndex: &syncInfo.LatestBlockHeight,
 		TargetIndex:  &syncInfo.LatestBlockHeight,
@@ -113,6 +115,28 @@ func (c *Client) Status(ctx context.Context) (
 	return currentBlock, currentTime, genesisBlock, syncStatus, peers, nil
 }
 
+// Account returns the account for the provided address at the latest block height
+func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexported.Account, error) {
+	account, err := c.rpc.Account(address, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+// EstimateGas returns a gas wanted estimate from a tx with a provided adjustment
+func (c *Client) EstimateGas(ctx context.Context, tx *authtypes.StdTx, adjustment float64) (uint64, error) {
+	simResp, err := c.rpc.SimulateTx(tx)
+	if err != nil {
+		return 0, err
+	}
+
+	gas := math.Round(float64(simResp.GasUsed) * (1 + adjustment))
+
+	return uint64(gas), nil
+}
+
 // Balance fetches and returns the account balance for an account
 func (c *Client) Balance(
 	ctx context.Context,
@@ -130,12 +154,31 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	acc, err := c.rpc.Account(addr, block.Block.Header.Height)
+	balanceService, err := c.balanceFactory(addr, &block.Block.Header)
 	if err != nil {
 		return nil, err
 	}
 
-	spendableCoins := acc.SpendableCoins(block.Block.Header.Time)
+	coins, err := balanceService.GetCoinsForSubAccount(accountIdentifier.SubAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	balances := c.getBalancesAndFilterByCurrency(coins, currencies)
+
+	return &types.AccountBalanceResponse{
+		BlockIdentifier: &types.BlockIdentifier{
+			Index: block.Block.Header.Height,
+			Hash:  block.BlockID.Hash.String(),
+		},
+		Balances: balances,
+	}, nil
+}
+
+func (c *Client) getBalancesAndFilterByCurrency(
+	coins sdk.Coins,
+	currencies []*types.Currency,
+) []*types.Amount {
 	var currencyLookup map[string]*types.Currency
 
 	if currencies == nil {
@@ -155,21 +198,15 @@ func (c *Client) Balance(
 	balances := []*types.Amount{}
 
 	for denom, currency := range currencyLookup {
-		spendableValue := spendableCoins.AmountOf(denom)
+		value := coins.AmountOf(denom)
 
 		balances = append(balances, &types.Amount{
-			Value:    spendableValue.String(),
+			Value:    value.String(),
 			Currency: currency,
 		})
 	}
 
-	return &types.AccountBalanceResponse{
-		BlockIdentifier: &types.BlockIdentifier{
-			Index: block.Block.Header.Height,
-			Hash:  block.BlockID.Hash.String(),
-		},
-		Balances: balances,
-	}, nil
+	return balances
 }
 
 // Block returns rosetta block for an index or hash
@@ -198,7 +235,7 @@ func (c *Client) Block(
 		}
 	}
 
-	deliverResults, err := c.rpc.BlockResults(&height)
+	deliverResults, err := c.getBlockDeliverResults(&height)
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +250,29 @@ func (c *Client) Block(
 			Transactions:          transactions,
 		},
 	}, nil
+}
+
+func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
+	backoff := 50 * time.Millisecond
+	for attempts := 0; attempts < 5; attempts++ {
+		blockResults, err = c.rpc.BlockResults(height)
+
+		if err != nil {
+			var rpcError *tmrpctypes.RPCError
+
+			if errors.As(err, &rpcError) {
+				if noBlockResultsForHeight.MatchString(rpcError.Data) {
+					time.Sleep(backoff)
+					backoff = 2 * backoff
+					continue
+				}
+			}
+		}
+
+		return
+	}
+
+	return
 }
 
 // getBlockResult returns the specified block by Index or Hash. If the
@@ -240,14 +300,13 @@ func (c *Client) getTransactionsForBlock(
 	resultBlockResults *ctypes.ResultBlockResults,
 ) []*types.Transaction {
 	// returns transactions -- this will be number of txs + begin/end block (if there)
+	eventOpStatus := SuccessStatus
 	transactions := []*types.Transaction{}
-
-	// TODO: vesting account operations (must be before being blocker operations)
-	//	add them before begin blocker ops, and pass updated index to op method
 
 	beginBlockOps := EventsToOperations(
 		stringifyEvents(resultBlockResults.BeginBlockEvents),
-		0, // TODO: update index to be after vesting ops
+		&eventOpStatus,
+		0,
 	)
 
 	if len(beginBlockOps) > 0 {
@@ -284,6 +343,7 @@ func (c *Client) getTransactionsForBlock(
 
 	endBlockOps := EventsToOperations(
 		stringifyEvents(resultBlockResults.EndBlockEvents),
+		&eventOpStatus,
 		0,
 	)
 
@@ -303,12 +363,22 @@ func (c *Client) getOperationsForTransaction(
 	tx *authtypes.StdTx,
 	result *abci.ResponseDeliverTx,
 ) []*types.Operation {
-	var status string
+	opStatus := SuccessStatus
+	feeStatus := SuccessStatus
 
-	if result.Code == abci.CodeTypeOK {
-		status = SuccessStatus
-	} else {
-		status = FailureStatus
+	if result.Code != abci.CodeTypeOK {
+		opStatus = FailureStatus
+	}
+
+	if result.Codespace == sdkerrors.RootCodespace {
+		switch result.Code {
+		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode():
+			feeStatus = FailureStatus
+		case sdkerrors.ErrInsufficientFunds.ABCICode():
+			if insufficientFee.MatchString(result.Log) {
+				feeStatus = FailureStatus
+			}
+		}
 	}
 
 	logs, err := sdk.ParseABCILogs(result.Log)
@@ -316,7 +386,7 @@ func (c *Client) getOperationsForTransaction(
 		logs = sdk.ABCIMessageLogs{}
 	}
 
-	return TxToOperations(tx, logs, &status)
+	return TxToOperations(tx, logs, &feeStatus, &opStatus)
 }
 
 func stringifyEvents(events []abci.Event) sdk.StringEvents {
@@ -327,4 +397,18 @@ func stringifyEvents(events []abci.Event) sdk.StringEvents {
 	}
 
 	return res
+}
+
+// PostTx broadcasts a transaction and returns an error if it does not get into mempool
+func (c *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, error) {
+	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	if txRes.Code != abci.CodeTypeOK {
+		return nil, errors.New(txRes.Log)
+	}
+
+	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, nil
 }

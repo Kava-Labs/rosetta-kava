@@ -18,100 +18,27 @@
 package services
 
 import (
-	"context"
-
 	"github.com/kava-labs/rosetta-kava/configuration"
 
-	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // ConstructionAPIService implements the server.ConstructionAPIServicer interface.
 type ConstructionAPIService struct {
 	config *configuration.Configuration
 	client Client
+	cdc    *codec.Codec
 }
 
 // NewConstructionAPIService creates a new instance of a ConstructionAPIService.
 func NewConstructionAPIService(
 	cfg *configuration.Configuration,
 	client Client,
+	cdc *codec.Codec,
 ) *ConstructionAPIService {
 	return &ConstructionAPIService{
 		config: cfg,
 		client: client,
+		cdc:    cdc,
 	}
-}
-
-// ConstructionDerive implements the /construction/derive endpoint.
-func (s *ConstructionAPIService) ConstructionDerive(
-	ctx context.Context,
-	request *types.ConstructionDeriveRequest,
-) (*types.ConstructionDeriveResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionPreprocess implements the /construction/preprocess
-// endpoint.
-func (s *ConstructionAPIService) ConstructionPreprocess(
-	ctx context.Context,
-	request *types.ConstructionPreprocessRequest,
-) (*types.ConstructionPreprocessResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionMetadata implements the /construction/metadata endpoint.
-func (s *ConstructionAPIService) ConstructionMetadata(
-	ctx context.Context,
-	request *types.ConstructionMetadataRequest,
-) (*types.ConstructionMetadataResponse, *types.Error) {
-	if s.config.Mode != configuration.Online {
-		return nil, ErrUnavailableOffline
-	}
-
-	return nil, ErrUnimplemented
-}
-
-// ConstructionPayloads implements the /construction/payloads endpoint.
-func (s *ConstructionAPIService) ConstructionPayloads(
-	ctx context.Context,
-	request *types.ConstructionPayloadsRequest,
-) (*types.ConstructionPayloadsResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionCombine implements the /construction/combine
-// endpoint.
-func (s *ConstructionAPIService) ConstructionCombine(
-	ctx context.Context,
-	request *types.ConstructionCombineRequest,
-) (*types.ConstructionCombineResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionHash implements the /construction/hash endpoint.
-func (s *ConstructionAPIService) ConstructionHash(
-	ctx context.Context,
-	request *types.ConstructionHashRequest,
-) (*types.TransactionIdentifierResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionParse implements the /construction/parse endpoint.
-func (s *ConstructionAPIService) ConstructionParse(
-	ctx context.Context,
-	request *types.ConstructionParseRequest,
-) (*types.ConstructionParseResponse, *types.Error) {
-	return nil, ErrUnimplemented
-}
-
-// ConstructionSubmit implements the /construction/submit endpoint.
-func (s *ConstructionAPIService) ConstructionSubmit(
-	ctx context.Context,
-	request *types.ConstructionSubmitRequest,
-) (*types.TransactionIdentifierResponse, *types.Error) {
-	if s.config.Mode != configuration.Online {
-		return nil, ErrUnavailableOffline
-	}
-
-	return nil, ErrUnimplemented
 }
