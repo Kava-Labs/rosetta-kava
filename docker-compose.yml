@@ -1,9 +1,0 @@
-version: "3"
-services:
-  rosetta:
-    image: rosetta:latest
-    build:
-      context: . # TODO: https://github.com/Kava-Labs/rosetta-kava.git
-      dockerfile: Dockerfile
-    volumes:
-      - ${HOME}/.kvd:/data/kvd
