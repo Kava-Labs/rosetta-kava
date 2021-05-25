@@ -5,7 +5,7 @@ start_kava_node()
 {
     echo "Starting Kava node"
 
-    kvd start --home /data/kvd &
+    kvd start --pruning custom --home /data/kvd &
     scripts/wait-for-it.sh --timeout=600 localhost:26657 # 10 minute timeout
     sleep 5
 }
