@@ -51,7 +51,7 @@ docker run -it -e "MODE=online" -e "NETWORK=kava-7" -e "PORT=8000" -v "$PWD/kava
 To run in offline mode:
 
 ```
-docker run -it -e "MODE=online" -e "NETWORK=kava-7" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+docker run -it -e "MODE=offline" -e "NETWORK=kava-7" -e "PORT=8000" -p 8000:8000 rosetta-kava
 ```
 
 
@@ -73,7 +73,7 @@ docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -
 To run in offline mode:
 
 ```
-docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+docker run -it -e "MODE=offline" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -p 8000:8000 rosetta-kava
 ```
 
 # Swagger
