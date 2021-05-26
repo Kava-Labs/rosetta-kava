@@ -53,9 +53,10 @@ ENV PATH=$PATH:/app/bin
 
 COPY --from=kava-rosetta-build /root/go/bin/kvd /app/bin/kvd
 COPY --from=kava-rosetta-build /root/go/bin/rosetta-kava /app/bin/rosetta-kava
+COPY --from=kava-rosetta-build /app/rosetta-kava/conf/start-services.sh /app/bin/start-services.sh
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/kill-supervisord.sh /app/bin/kill-supervisord.sh
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/supervisord.conf /etc/supervisor/conf.d/rosetta-kava.conf
 
 ENV KAVA_RPC_URL=http://localhost:26657
 
-CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+CMD ["/app/bin/start-services.sh"]
