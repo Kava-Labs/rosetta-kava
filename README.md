@@ -66,7 +66,11 @@ cp examples/kava-testnet-12000/app.toml kava-data/kvd/config/app.toml
 cp examples/kava-testnet-12000/config.toml kava-data/kvd/config/config.toml
 curl https://raw.githubusercontent.com/Kava-Labs/kava-testnets/master/12000/genesis.json > kava-data/kvd/config/genesis.json
 
+# before block 114270
 docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc1
+# after block 114270
+docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc2
+
 docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
 ```
 
