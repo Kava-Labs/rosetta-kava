@@ -22,9 +22,6 @@ Written in Golang with the [Rosetta Go SDK](https://github.com/coinbase/rosetta-
 
 To run `rosetta-kava`, [docker](https://docs.docker.com/get-docker/) is required.
 
-### Building docker container
-TODO
-
 
 ## System Requirements
 
@@ -32,11 +29,27 @@ TODO
 
 ## Usage
 
+As specified in the Rosetta API, the `rosetta-kava` implementation is deployable via Docker and supports running via either an `online` or `offline` mode.
+
+## Install
+
+The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-7` mainnet.
 
 ```
-make install
+mkdir -p kava-data/kvd/config
 
-MODE=online NETWORK=kava-7 PORT=8000 rosetta-kava run
+cp examples/kava-7/app.toml kava-data/kvd/config/app.toml
+cp examples/kava-7/config.toml kava-data/kvd/config/config.toml
+curl https://raw.githubusercontent.com/Kava-Labs/launch/master/kava-7/genesis.json > kava-data/kvd/config/genesis.json
+
+docker build . -t rosetta-kava
+docker run -it -e "MODE=online" -e "NETWORK=kava-7" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+```
+
+To run in offline mode:
+
+```
+docker run -it -e "MODE=online" -e "NETWORK=kava-7" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
 ```
 
 # Swagger
