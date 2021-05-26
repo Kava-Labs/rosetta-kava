@@ -1,0 +1,38 @@
+[
+  {
+    "account_identifier": {
+      "address":"kava1eu2ta269haf6j6z3lsj79a8rq3hsmnhu689g7z"
+    },
+    "currency": {
+      "symbol": "USDX",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3fwaj0s"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1tygms3xhhs3yv487phx3dw4a95jn7t7lawprey"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava10d07y265gmmuvt4z0w9aw880jnsr700jxh8cq5"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  }
+]
