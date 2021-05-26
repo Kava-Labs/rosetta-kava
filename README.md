@@ -33,6 +33,8 @@ As specified in the Rosetta API, the `rosetta-kava` implementation is deployable
 
 ## Install
 
+### Mainnet
+
 The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-7` mainnet.
 
 ```
@@ -50,6 +52,28 @@ To run in offline mode:
 
 ```
 docker run -it -e "MODE=online" -e "NETWORK=kava-7" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+```
+
+
+### Testnet
+
+The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-testnet-12000` testnet.
+
+```
+mkdir -p kava-data/kvd/config
+
+cp examples/kava-testnet-12000/app.toml kava-data/kvd/config/app.toml
+cp examples/kava-testnet-12000/config.toml kava-data/kvd/config/config.toml
+curl https://raw.githubusercontent.com/Kava-Labs/kava-testnets/master/12000/genesis.json > kava-data/kvd/config/genesis.json
+
+docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc1
+docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+```
+
+To run in offline mode:
+
+```
+docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
 ```
 
 # Swagger
