@@ -26,7 +26,8 @@ RUN apt-get update \
       && apt-get install -y git make gcc \
       && rm -rf /var/lib/apt/lists/*
 
-ENV KAVA_NODE_VERSION=v0.14.1
+ARG kava_node_version=v0.14.1
+ENV KAVA_NODE_VERSION=$kava_node_version
 
 RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
