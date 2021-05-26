@@ -1,0 +1,13 @@
+[
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "1000000000000"
+  }
+]
+
