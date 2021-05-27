@@ -34,3 +34,6 @@ halt-time = 0
 
 # InterBlockCache enables inter-block caching.
 inter-block-cache = true
+
+# upgrade to v0.14.0-rc2 at block 114270
+unsafe-skip-upgrades=[114270]
