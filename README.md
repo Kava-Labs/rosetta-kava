@@ -68,10 +68,16 @@ curl https://raw.githubusercontent.com/Kava-Labs/kava-testnets/master/12000/gene
 
 # before block 114270
 docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc1
-# after block 114270
-docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc2
-
+# will stop syncing at block 114270
 docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+
+# after block 114270 - add upgrade statement to app.toml
+cp examples/kava-testnet-12000/app-upgrade.toml kava-data/kvd/config/app.toml
+# rebuild image with upgraded version
+docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc2
+# sync will continue from 114270 to tip
+docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+
 ```
 
 To run in offline mode:
