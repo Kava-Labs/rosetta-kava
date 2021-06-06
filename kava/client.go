@@ -253,8 +253,9 @@ func (c *Client) Block(
 }
 
 func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
+	// backoff over 6,350 ms
 	backoff := 50 * time.Millisecond
-	for attempts := 0; attempts < 10; attempts++ {
+	for attempts := 0; attempts < 6; attempts++ {
 		blockResults, err = c.rpc.BlockResults(height)
 
 		if err != nil {
