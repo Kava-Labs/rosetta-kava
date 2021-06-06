@@ -38,6 +38,11 @@ properties:
       Transactions that are related to other transactions (like a cross-shard transaction) should include
       the tranaction_identifier of these transactions in the metadata.
     type: object
+    properties:
+      log:
+        type: string
+        description: |
+          Error message provided when a transaction fails.  Not set for successful transactions where all operations succeed.
+        example: "insufficient funds to pay for fees"
     example:
-      size: 12378
-      lockTime: 1582272577
+      log: "insufficient funds to pay for fees"

@@ -332,12 +332,14 @@ func (c *Client) getTransactionsForBlock(
 		}
 
 		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+		metadata := c.getMetadataForTransaction(resultBlockResults.TxsResults[i])
 
 		transactions = append(transactions, &types.Transaction{
 			TransactionIdentifier: &types.TransactionIdentifier{
 				Hash: hash,
 			},
 			Operations: operations,
+			Metadata:   metadata,
 		})
 	}
 
@@ -387,6 +389,18 @@ func (c *Client) getOperationsForTransaction(
 	}
 
 	return TxToOperations(tx, logs, &feeStatus, &opStatus)
+}
+
+func (c *Client) getMetadataForTransaction(
+	result *abci.ResponseDeliverTx,
+) map[string]interface{} {
+	metadata := make(map[string]interface{})
+
+	if result.Code != abci.CodeTypeOK {
+		metadata["log"] = result.Log
+	}
+
+	return metadata
 }
 
 func stringifyEvents(events []abci.Event) sdk.StringEvents {

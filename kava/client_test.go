@@ -740,10 +740,7 @@ func TestBlock_Transactions(t *testing.T) {
 	require.NoError(t, err)
 	mockDeliverTx2 := &abci.ResponseDeliverTx{
 		Code: 1,
-		Log: sdk.ABCIMessageLogs{
-			sdk.NewABCIMessageLog(0, "", []sdk.Event{}),
-			sdk.NewABCIMessageLog(1, "", []sdk.Event{}),
-		}.String(),
+		Log:  "some error message",
 	}
 
 	parentBlockIdentifier := &types.BlockIdentifier{
@@ -802,6 +799,16 @@ func TestBlock_Transactions(t *testing.T) {
 		assert.Equal(t, expectedHash, tx.TransactionIdentifier.Hash)
 
 		assert.Greater(t, len(tx.Operations), 1)
+
+		if mockDeliverTx.Code != 0 {
+			expectedLog := mockDeliverTx.Log
+			actualLog, ok := tx.Metadata["log"].(string)
+			require.True(t, ok)
+			assert.Equal(t, expectedLog, actualLog)
+		} else {
+			_, exists := tx.Metadata["log"]
+			assert.False(t, exists)
+		}
 
 		for index, operation := range tx.Operations {
 			currentIndex := int64(index)
