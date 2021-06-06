@@ -903,7 +903,7 @@ func TestBlock_BlockResultsRetry(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("retries a maximum of 5 times", func(t *testing.T) {
+	t.Run("retries a maximum of 6 times", func(t *testing.T) {
 		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
@@ -915,7 +915,7 @@ func TestBlock_BlockResultsRetry(t *testing.T) {
 		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
 			nil,
 			mockErr,
-		).Times(5)
+		).Times(6)
 
 		_, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 		require.Error(t, err)
