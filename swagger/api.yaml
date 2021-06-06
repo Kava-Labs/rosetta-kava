@@ -847,6 +847,23 @@ components:
             $ref: '#/components/schemas/Operation'
         metadata:
           type: object
+          properties:
+            gas_adjustment:
+              type: string
+              description: |
+                An optional decimal representing the amount to percent the estimated
+                gas when creating a transaction.
+
+                The default value is 0.5 and increases the gas estimated by 50%.  This
+                is the recommended value for the best reliability.
+              default: "0.5"
+              example: "0.2"
+            memo:
+              type: string
+              description: |
+                The memo set in the transaction, can be any string value under 256 bytes.
+              default: ""
+              example: "1234abcd"
         max_fee:
           type: array
           items:
