@@ -54,6 +54,9 @@ To run in offline mode:
 docker run -it -e "MODE=offline" -e "NETWORK=kava-7" -e "PORT=8000" -p 8000:8000 rosetta-kava
 ```
 
+#### Snapshots
+
+Weekly archive node snapshots and instructions for quicker syncing are available at [https://kava.quicksync.io/](https://kava.quicksync.io/).
 
 ### Testnet
 

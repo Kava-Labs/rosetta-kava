@@ -253,8 +253,9 @@ func (c *Client) Block(
 }
 
 func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
+	// backoff over 6,350 ms
 	backoff := 50 * time.Millisecond
-	for attempts := 0; attempts < 5; attempts++ {
+	for attempts := 0; attempts < 6; attempts++ {
 		blockResults, err = c.rpc.BlockResults(height)
 
 		if err != nil {
@@ -332,12 +333,14 @@ func (c *Client) getTransactionsForBlock(
 		}
 
 		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+		metadata := c.getMetadataForTransaction(resultBlockResults.TxsResults[i])
 
 		transactions = append(transactions, &types.Transaction{
 			TransactionIdentifier: &types.TransactionIdentifier{
 				Hash: hash,
 			},
 			Operations: operations,
+			Metadata:   metadata,
 		})
 	}
 
@@ -387,6 +390,18 @@ func (c *Client) getOperationsForTransaction(
 	}
 
 	return TxToOperations(tx, logs, &feeStatus, &opStatus)
+}
+
+func (c *Client) getMetadataForTransaction(
+	result *abci.ResponseDeliverTx,
+) map[string]interface{} {
+	metadata := make(map[string]interface{})
+
+	if result.Code != abci.CodeTypeOK {
+		metadata["log"] = result.Log
+	}
+
+	return metadata
 }
 
 func stringifyEvents(events []abci.Event) sdk.StringEvents {
