@@ -67,7 +67,7 @@ mkdir -p kava-data/kvd/config
 
 cp examples/kava-testnet-13000/app.toml kava-data/kvd/config/app.toml
 cp examples/kava-testnet-13000/config.toml kava-data/kvd/config/config.toml
-curl https://raw.githubuse2content.com/Kava-Labs/kava-testnets/master/13000/genesis.json > kava-data/kvd/config/genesis.json
+curl https://raw.githubusercontent.com/Kava-Labs/kava-testnets/master/13000/genesis.json > kava-data/kvd/config/genesis.json
 
 docker build . -t rosetta-kava
 docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-13000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
