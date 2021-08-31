@@ -35,23 +35,23 @@ As specified in the Rosetta API, the `rosetta-kava` implementation is deployable
 
 ### Mainnet
 
-The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-7` mainnet.
+The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-8` mainnet.
 
 ```
 mkdir -p kava-data/kvd/config
 
-cp examples/kava-7/app.toml kava-data/kvd/config/app.toml
-cp examples/kava-7/config.toml kava-data/kvd/config/config.toml
-curl https://raw.githubusercontent.com/Kava-Labs/launch/master/kava-7/genesis.json > kava-data/kvd/config/genesis.json
+cp examples/kava-8/app.toml kava-data/kvd/config/app.toml
+cp examples/kava-8/config.toml kava-data/kvd/config/config.toml
+curl https://kava-genesis-files.s3.amazonaws.com/kava-8-genesis-migrated-from-block-1878508.json > kava-data/kvd/config/genesis.json
 
 docker build . -t rosetta-kava
-docker run -it -e "MODE=online" -e "NETWORK=kava-7" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+docker run -it -e "MODE=online" -e "NETWORK=kava-8" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
 ```
 
 To run in offline mode:
 
 ```
-docker run -it -e "MODE=offline" -e "NETWORK=kava-7" -e "PORT=8000" -p 8000:8000 rosetta-kava
+docker run -it -e "MODE=offline" -e "NETWORK=kava-8" -e "PORT=8000" -p 8000:8000 rosetta-kava
 ```
 
 #### Snapshots
@@ -60,33 +60,24 @@ Weekly archive node snapshots and instructions for quicker syncing are available
 
 ### Testnet
 
-The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-testnet-12000` testnet.
+The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-testnet-13000` testnet.
 
 ```
 mkdir -p kava-data/kvd/config
 
-cp examples/kava-testnet-12000/app.toml kava-data/kvd/config/app.toml
-cp examples/kava-testnet-12000/config.toml kava-data/kvd/config/config.toml
-curl https://raw.githubusercontent.com/Kava-Labs/kava-testnets/master/12000/genesis.json > kava-data/kvd/config/genesis.json
+cp examples/kava-testnet-13000/app.toml kava-data/kvd/config/app.toml
+cp examples/kava-testnet-13000/config.toml kava-data/kvd/config/config.toml
+curl https://raw.githubuse2content.com/Kava-Labs/kava-testnets/master/13000/genesis.json > kava-data/kvd/config/genesis.json
 
-# before block 114270
-docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc1
-# will stop syncing at block 114270
-docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
-
-# after block 114270 - add upgrade statement to app.toml
-cp examples/kava-testnet-12000/app-upgrade.toml kava-data/kvd/config/app.toml
-# rebuild image with upgraded version
-docker build . -t rosetta-kava --build-arg kava_node_version=v0.14.0-rc2
-# sync will continue from 114270 to tip
-docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+docker build . -t rosetta-kava
+docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-13000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
 
 ```
 
 To run in offline mode:
 
 ```
-docker run -it -e "MODE=offline" -e "NETWORK=kava-testnet-12000" -e "PORT=8000" -p 8000:8000 rosetta-kava
+docker run -it -e "MODE=offline" -e "NETWORK=kava-testnet-13000" -e "PORT=8000" -p 8000:8000 rosetta-kava
 ```
 
 # Swagger

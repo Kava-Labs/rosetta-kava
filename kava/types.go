@@ -28,7 +28,7 @@ import (
 
 const (
 	// NodeVersion is the version of kvd we are using
-	NodeVersion = "v0.14.1"
+	NodeVersion = "v0.15.0"
 	// Blockchain is always Kava
 	Blockchain = "Kava"
 	// HistoricalBalanceSupported is whether historical balance is supported.
