@@ -22,6 +22,10 @@ build:
 run:
 	MODE=online NETWORK=kava-8 PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
 
+.PHONY: run-testnet
+run-testnet:
+	MODE=online NETWORK=kava-testnet-13000 PORT=8000 KAVA_RPC_URL=https://rpc.data-testnet.kava.io:443 go run . run
+
 .PHONY: run-local
 run-local:
 	MODE=online NETWORK=kava-localnet PORT=8000 KAVA_RPC_URL=http://localhost:26657 go run . run
