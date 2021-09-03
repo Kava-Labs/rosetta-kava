@@ -1,0 +1,32 @@
+[
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "9170572976774"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1tygms3xhhs3yv487phx3dw4a95jn7t7lawprey"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "3256549270042"
+  },
+  {
+    "account_identifier": {
+      "address":"kava195zrlq7sy8936zem3q9kltvmzpu3666dd2p2wq"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "360612914"
+  }
+]
