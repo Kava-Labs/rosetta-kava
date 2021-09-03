@@ -28,5 +28,26 @@
       "decimals":6
     },
     "value": "360612914"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1lyhywk3837dawp3vgyq5824277zsdfdf9eqhvg"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "992387"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1lnc0dwmsfnzypgvp7n6wfp90p4jjg78202mue2"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "14840574"
   }
 ]
+
