@@ -665,6 +665,11 @@ func TestMsgToOperations_BalanceTracking(t *testing.T) {
 			log:  readABCILogFromFile(t, "msg-send-tx-response.json"),
 		},
 		{
+			name: "cosmos-sdk.MsgMultiSend",
+			log:  readABCILogFromFile(t, "msg-multisend-tx-response.json"),
+			msg:  readMsgFromFile(t, "msg-multisend-tx-response.json"),
+		},
+		{
 			name: "cosmos-sdk.MsgDelegate",
 			log:  readABCILogFromFile(t, "msg-delegate-tx-response.json"),
 			msg:  readMsgFromFile(t, "msg-delegate-tx-response.json"),
@@ -824,7 +829,9 @@ func assertTransferOpsBalanceTrack(
 			value, err := types.AmountValue(op.Amount)
 			require.NoError(t, err)
 			if value.Sign() == 1 {
-				assert.Equal(t, 1, len(op.RelatedOperations))
+				if len(op.RelatedOperations) != 1 {
+					continue
+				}
 				relatedOpIndex := op.RelatedOperations[0].Index
 				relatedOp := ops[relatedOpIndex-ops[0].OperationIdentifier.Index]
 
@@ -846,15 +853,12 @@ func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 	coins := sdk.NewCoins()
 	for _, ev := range log.Events {
 		if ev.Type == bank.EventTypeTransfer {
-			unflattenedTransferEvents := unflattenEvents(ev, bank.EventTypeTransfer, 3)
-			for _, event := range unflattenedTransferEvents {
-				var amount sdk.Coins
-				for _, attr := range event.Attributes {
-					if attr.Key == "amount" {
-						amount = mustParseCoins(attr.Value)
-					}
-					coins = coins.Add(amount...)
+			var amount sdk.Coins
+			for _, attr := range ev.Attributes {
+				if attr.Key == "amount" {
+					amount = mustParseCoins(attr.Value)
 				}
+				coins = coins.Add(amount...)
 			}
 		}
 		if ev.Type == "delegate" {
@@ -912,11 +916,26 @@ func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, re
 	senderMap := make(map[string]sdk.Coins)
 	receiverMap := make(map[string]sdk.Coins)
 
+	var sender sdk.AccAddress
+	numTransferAttributes := 3
+
+	if _, ok := msg.(bank.MsgMultiSend); ok {
+		numTransferAttributes = 2
+		for _, ev := range log.Events {
+			if ev.Type == "message" {
+				for _, attr := range ev.Attributes {
+					if attr.Key == "sender" {
+						sender = mustAccAddressFromBech32(attr.Value)
+					}
+				}
+			}
+		}
+	}
+
 	for _, ev := range log.Events {
 		if ev.Type == bank.EventTypeTransfer {
-			unflattenedTransferEvents := unflattenEvents(ev, bank.EventTypeTransfer, 3)
+			unflattenedTransferEvents := unflattenEvents(ev, bank.EventTypeTransfer, numTransferAttributes)
 			for _, event := range unflattenedTransferEvents {
-				var sender sdk.AccAddress
 				var recipient sdk.AccAddress
 				var amount sdk.Coins
 				for _, attr := range event.Attributes {
