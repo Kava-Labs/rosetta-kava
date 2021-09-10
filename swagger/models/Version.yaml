@@ -36,7 +36,7 @@ properties:
       The node_version is the canonical version of the node
       runtime. This can help clients manage deployments.
     type: string
-    example: "v0.14.0"
+    example: "v0.15.0"
   middleware_version:
     description: |
       When a middleware server is used to adhere to the Rosetta

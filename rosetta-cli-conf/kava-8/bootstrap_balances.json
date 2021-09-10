@@ -1,0 +1,102 @@
+[
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "9170572976774"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1tygms3xhhs3yv487phx3dw4a95jn7t7lawprey"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "3256549270042"
+  },
+  {
+    "account_identifier": {
+      "address":"kava195zrlq7sy8936zem3q9kltvmzpu3666dd2p2wq"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "360612914"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1lyhywk3837dawp3vgyq5824277zsdfdf9eqhvg"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "992387"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1lnc0dwmsfnzypgvp7n6wfp90p4jjg78202mue2"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "14840574"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1sgwa2pgqut3c4ravu07u8amzrqjms09qltrwhj"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "157150"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1u9q26ryw62e265xkpw3cnv7hkje6gauc7tu2tx"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "236909"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1anh3r0772522jpj5zgwpgeyhxl8yhklmumnsvu"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "1710372"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1qctkz3qsu8mmdpcvfl30ygl277sru99r6s6l3h"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "2970053"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1462txly3pg6qhjvduq52uwm8frj2auyj8urf90"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "493513055"
+  }
+]
