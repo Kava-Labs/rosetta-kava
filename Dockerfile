@@ -42,7 +42,7 @@ RUN cd rosetta-kava \
 FROM ubuntu:20.04
 
 RUN apt-get update \
-      && apt-get install -y supervisor \
+      && apt-get install -y supervisor curl \
       && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app \
@@ -51,8 +51,14 @@ WORKDIR /app
 
 ENV PATH=$PATH:/app/bin
 
+# copy build binaries from build environemtn
 COPY --from=kava-rosetta-build /root/go/bin/kvd /app/bin/kvd
 COPY --from=kava-rosetta-build /root/go/bin/rosetta-kava /app/bin/rosetta-kava
+
+# copy config templates to automate setup
+COPY --from=kava-rosetta-build /app/rosetta-kava/examples /app/templates
+
+# copy scripts to run services
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/start-services.sh /app/bin/start-services.sh
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/kill-supervisord.sh /app/bin/kill-supervisord.sh
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/supervisord.conf /etc/supervisor/conf.d/rosetta-kava.conf
