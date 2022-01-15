@@ -129,6 +129,10 @@ var Currencies = map[string]*types.Currency{
 		Symbol:   "HARD",
 		Decimals: 6,
 	},
+	"swp": &types.Currency{
+		Symbol:   "SWP",
+		Decimals: 6,
+	},
 	"usdx": &types.Currency{
 		Symbol:   "USDX",
 		Decimals: 6,
@@ -139,6 +143,7 @@ var Currencies = map[string]*types.Currency{
 var Denoms = map[string]string{
 	"KAVA": "ukava",
 	"HARD": "hard",
+	"SWP":  "swp",
 	"USDX": "usdx",
 }
 
