@@ -83,7 +83,7 @@ func newResultNetInfo() *ctypes.ResultNetInfo {
 		NodeInfo: p2p.DefaultNodeInfo{
 			DefaultNodeID: "e5d74b3f06226fb0798509e36021e81b7bce934d",
 			Moniker:       "kava-node",
-			Network:       "kava-7",
+			Network:       "kava-9",
 			Version:       "0.33.9",
 			ListenAddr:    "tcp://192.168.1.1:26656",
 		},
@@ -399,9 +399,10 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 	t.Run("all supported coins are returned by default", func(t *testing.T) {
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 		require.NoError(t, err)
-		assert.Equal(t, len(accountResponse.Balances), 3)
+		assert.Equal(t, len(accountResponse.Balances), 4)
 		assert.NotNil(t, getBalance(accountResponse.Balances, "KAVA"))
 		assert.NotNil(t, getBalance(accountResponse.Balances, "HARD"))
+		assert.NotNil(t, getBalance(accountResponse.Balances, "SWP"))
 		assert.NotNil(t, getBalance(accountResponse.Balances, "USDX"))
 	})
 
@@ -414,6 +415,7 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 		assert.Equal(t, len(accountResponse.Balances), 1)
 		assert.NotNil(t, getBalance(accountResponse.Balances, "KAVA"))
 		assert.Nil(t, getBalance(accountResponse.Balances, "HARD"))
+		assert.Nil(t, getBalance(accountResponse.Balances, "SWP"))
 		assert.Nil(t, getBalance(accountResponse.Balances, "USDX"))
 	})
 
@@ -427,6 +429,7 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 		assert.Equal(t, len(accountResponse.Balances), 2)
 		assert.NotNil(t, getBalance(accountResponse.Balances, "KAVA"))
 		assert.Nil(t, getBalance(accountResponse.Balances, "HARD"))
+		assert.Nil(t, getBalance(accountResponse.Balances, "SWP"))
 		assert.NotNil(t, getBalance(accountResponse.Balances, "USDX"))
 	})
 
@@ -434,13 +437,15 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 		filter := []*types.Currency{
 			kava.Currencies["ukava"],
 			kava.Currencies["hard"],
+			kava.Currencies["swp"],
 			kava.Currencies["usdx"],
 		}
 		accountResponse, err := client.Balance(ctx, acc, nil, filter)
 		require.NoError(t, err)
-		assert.Equal(t, len(accountResponse.Balances), 3)
+		assert.Equal(t, len(accountResponse.Balances), 4)
 		assert.NotNil(t, getBalance(accountResponse.Balances, "KAVA"))
 		assert.NotNil(t, getBalance(accountResponse.Balances, "HARD"))
+		assert.NotNil(t, getBalance(accountResponse.Balances, "SWP"))
 		assert.NotNil(t, getBalance(accountResponse.Balances, "USDX"))
 	})
 }
@@ -466,9 +471,10 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	acc := &types.AccountIdentifier{Address: emptyTestAccount.Address.String()}
 	accountResponse, err := client.Balance(ctx, acc, nil, nil)
 	require.NoError(t, err)
-	assert.Equal(t, len(accountResponse.Balances), 3)
+	assert.Equal(t, len(accountResponse.Balances), 4)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "KAVA").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "SWP").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
 
 	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(partialTestAccount.GetCoins(), nil).Once()
@@ -481,9 +487,10 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	acc = &types.AccountIdentifier{Address: partialTestAccount.Address.String()}
 	accountResponse, err = client.Balance(ctx, acc, nil, nil)
 	require.NoError(t, err)
-	assert.Equal(t, len(accountResponse.Balances), 3)
+	assert.Equal(t, len(accountResponse.Balances), 4)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "KAVA").Value)
 	assert.NotEqual(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
+	assert.Equal(t, "0", getBalance(accountResponse.Balances, "SWP").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
 }
 
