@@ -7,8 +7,6 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	exported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-
 	mock "github.com/stretchr/testify/mock"
 
 	rosetta_sdk_gotypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -22,15 +20,15 @@ type Client struct {
 }
 
 // Account provides a mock function with given fields: _a0, _a1
-func (_m *Client) Account(_a0 context.Context, _a1 types.AccAddress) (exported.Account, error) {
+func (_m *Client) Account(_a0 context.Context, _a1 types.AccAddress) (authtypes.AccountI, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 exported.Account
-	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress) exported.Account); ok {
+	var r0 authtypes.AccountI
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress) authtypes.AccountI); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(exported.Account)
+			r0 = ret.Get(0).(authtypes.AccountI)
 		}
 	}
 

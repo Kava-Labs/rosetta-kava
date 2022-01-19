@@ -5,7 +5,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
 	staking "github.com/cosmos/cosmos-sdk/x/staking"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -55,7 +55,7 @@ func (b *nullBalance) GetCoinsForSubAccount(subAccount *types.SubAccountIdentifi
 
 type rpcBaseBalance struct {
 	rpc         RPCClient
-	acc         authexported.Account
+	acc         authtypes.AccountI
 	blockHeader *tmtypes.Header
 }
 

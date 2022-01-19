@@ -20,7 +20,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	kava "github.com/kava-labs/kava/app"
@@ -81,7 +80,7 @@ func (c *HTTPClient) BlockByHash(hash []byte) (*ctypes.ResultBlock, error) {
 }
 
 // Account returns the Account for a given address
-func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authexported.Account, error) {
+func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authtypes.AccountI, error) {
 	bz, err := c.cdc.MarshalJSON(authtypes.NewQueryAccountParams(addr))
 	if err != nil {
 		return nil, err
@@ -94,7 +93,7 @@ func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authexported.Ac
 		return nil, err
 	}
 
-	var account authexported.Account
+	var account authtypes.AccountI
 	err = c.cdc.UnmarshalJSON(data, &account)
 	if err != nil {
 		return nil, err

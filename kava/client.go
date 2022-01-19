@@ -28,7 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -116,7 +115,7 @@ func (c *Client) Status(ctx context.Context) (
 }
 
 // Account returns the account for the provided address at the latest block height
-func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexported.Account, error) {
+func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authtypes.AccountI, error) {
 	account, err := c.rpc.Account(address, 0)
 	if err != nil {
 		return nil, err

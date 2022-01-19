@@ -12,8 +12,6 @@ import (
 
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	exported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-
 	log "github.com/tendermint/tendermint/libs/log"
 
 	mock "github.com/stretchr/testify/mock"
@@ -100,15 +98,15 @@ func (_m *RPCClient) ABCIQueryWithOptions(path string, data bytes.HexBytes, opts
 }
 
 // Account provides a mock function with given fields: addr, height
-func (_m *RPCClient) Account(addr types.AccAddress, height int64) (exported.Account, error) {
+func (_m *RPCClient) Account(addr types.AccAddress, height int64) (authtypes.AccountI, error) {
 	ret := _m.Called(addr, height)
 
-	var r0 exported.Account
-	if rf, ok := ret.Get(0).(func(types.AccAddress, int64) exported.Account); ok {
+	var r0 authtypes.AccountI
+	if rf, ok := ret.Get(0).(func(types.AccAddress, int64) authtypes.AccountI); ok {
 		r0 = rf(addr, height)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(exported.Account)
+			r0 = ret.Get(0).(authtypes.AccountI)
 		}
 	}
 

@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +29,6 @@ import (
 	rclient "github.com/coinbase/rosetta-sdk-go/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
@@ -114,7 +115,7 @@ func TestMain(m *testing.M) {
 }
 
 // GetAccount gets an account
-func GetAccount(address string, height int64) (authexported.Account, error) {
+func GetAccount(address string, height int64) (authtypes.AccountI, error) {
 	addr, err := sdktypes.AccAddressFromBech32(address)
 	if err != nil {
 		return nil, err
@@ -133,7 +134,7 @@ func GetAccount(address string, height int64) (authexported.Account, error) {
 		return nil, err
 	}
 
-	var account authexported.Account
+	var account authtypes.AccountI
 	err = cdc.UnmarshalJSON(result, &account)
 	if err != nil {
 		return nil, err
