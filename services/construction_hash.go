@@ -40,7 +40,7 @@ func (s *ConstructionAPIService) ConstructionHash(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	var stdtx authtypes.StdTx
 	cdc.MustUnmarshalBinaryLengthPrefixed(bz, &stdtx)
 

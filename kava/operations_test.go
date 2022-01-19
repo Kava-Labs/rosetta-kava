@@ -878,7 +878,7 @@ func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 	if err != nil {
 		t.Fatalf("could not read %s: %v", file, err)
 	}
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	cdc.MustUnmarshalJSON(bz, &txResponse)
 	if len(txResponse.Logs) != 1 {
 		t.Fatalf("each transaction should have one log, found %d for %s", len(txResponse.Logs), file)
@@ -892,7 +892,7 @@ func readMsgFromFile(t *testing.T, file string) sdk.Msg {
 	if err != nil {
 		t.Fatalf("could not read %s: %v", file, err)
 	}
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	cdc.MustUnmarshalJSON(bz, &txResponse)
 	if len(txResponse.Tx.GetMsgs()) != 1 {
 		t.Fatalf("each transaction should have one msg, found %d for %s", len(txResponse.Tx.GetMsgs()), file)

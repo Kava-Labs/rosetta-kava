@@ -52,7 +52,7 @@ func TestConstructionCombine(t *testing.T) {
 		"some memo",
 	)
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	txBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 	require.NoError(t, err)
 	txPayload := hex.EncodeToString(txBytes)

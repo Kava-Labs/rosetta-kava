@@ -40,7 +40,7 @@ func TestConstructionSubmit(t *testing.T) {
 		Mode: configuration.Online,
 	}
 	mockClient := &mocks.Client{}
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
 
 	testCases := []struct {
@@ -79,7 +79,7 @@ func TestConstructionSubmit(t *testing.T) {
 		bz, err := ioutil.ReadFile(relPath)
 		require.NoError(t, err)
 
-		cdc := app.MakeCodec()
+		cdc := app.MakeEncodingConfig().Amino
 		var stdtx authtypes.StdTx
 		err = cdc.UnmarshalJSON(bz, &stdtx)
 		require.NoError(t, err)

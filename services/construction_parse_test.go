@@ -46,7 +46,7 @@ func TestConstructionParse_Unsigned(t *testing.T) {
 		"some memo",
 	)
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	txBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 	require.NoError(t, err)
 	txPayload := hex.EncodeToString(txBytes)
@@ -107,7 +107,7 @@ func TestConstructionParse_Signed(t *testing.T) {
 		"some memo",
 	)
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	txBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 	require.NoError(t, err)
 	txPayload := hex.EncodeToString(txBytes)

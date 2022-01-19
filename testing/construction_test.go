@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +48,7 @@ func createTransferOperations(from string, to string, amount string) []*types.Op
 
 func TestTransfer(t *testing.T) {
 	ctx := context.Background()
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 
 	// TODO: use /construction/dervice to generate bech32 addresses
 	operations := createTransferOperations(

@@ -697,7 +697,7 @@ func TestBlock_Transactions(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 
 	mockTx1 := &authtypes.StdTx{
 		Msgs: []sdk.Msg{
@@ -1010,7 +1010,7 @@ func TestPostTx(t *testing.T) {
 	txjson, err := ioutil.ReadFile("test-fixtures/txs/msg-send.json")
 	require.NoError(t, err)
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	var stdtx authtypes.StdTx
 	err = cdc.UnmarshalJSON(txjson, &stdtx)
 	require.NoError(t, err)

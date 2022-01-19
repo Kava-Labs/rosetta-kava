@@ -74,7 +74,7 @@ func TestConstructionMetadata_OptionsValidation_MissingFields(t *testing.T) {
 }
 
 func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	servicer, _ := setupConstructionAPIServicer()
 	servicer.config.Mode = configuration.Online
 
@@ -186,7 +186,7 @@ func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 }
 
 func TestConstructionMetadata_GasAndFee(t *testing.T) {
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
 	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"
 	amount := "5000001"
@@ -413,7 +413,7 @@ func TestConstructionMetadata_SignerData(t *testing.T) {
 	servicer, mockClient := setupConstructionAPIServicer()
 	servicer.config.Mode = configuration.Online
 	ctx := context.Background()
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
 	toAddress := "kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w"

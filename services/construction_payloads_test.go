@@ -94,7 +94,7 @@ func TestConstructionPayloads(t *testing.T) {
 	response, rerr := servicer.ConstructionPayloads(ctx, request)
 	require.Nil(t, rerr)
 
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	txBytes, err := hex.DecodeString(response.UnsignedTransaction)
 	require.NoError(t, err)
 	var tx auth.StdTx

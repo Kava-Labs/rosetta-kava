@@ -177,7 +177,7 @@ func TestConstructionPreprocess_Memo(t *testing.T) {
 }
 
 func TestConstructionPreprocess_MaxFee(t *testing.T) {
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
@@ -328,7 +328,7 @@ func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_TransferOperations(t *testing.T) {
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	servicer, _ := setupConstructionAPIServicer()
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
