@@ -19,6 +19,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -152,7 +153,7 @@ func cdpDrawEventToOperations(attributes map[string]string, status *string, inde
 }
 
 // TxToOperations returns rosetta operations from a transaction
-func TxToOperations(tx *authtypes.StdTx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+func TxToOperations(tx *legacytx.StdTx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
 	operationIndex := int64(0)
 	operations := []*types.Operation{}
 

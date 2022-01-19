@@ -29,6 +29,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank"
 	app "github.com/kava-labs/kava/app"
@@ -699,7 +700,7 @@ func TestBlock_Transactions(t *testing.T) {
 
 	cdc := app.MakeEncodingConfig().Amino
 
-	mockTx1 := &authtypes.StdTx{
+	mockTx1 := &legacytx.StdTx{
 		Msgs: []sdk.Msg{
 			bank.MsgSend{
 				FromAddress: sdk.AccAddress("test from address"),
@@ -723,7 +724,7 @@ func TestBlock_Transactions(t *testing.T) {
 		}.String(),
 	}
 
-	mockTx2 := &authtypes.StdTx{
+	mockTx2 := &legacytx.StdTx{
 		Msgs: []sdk.Msg{
 			bank.MsgSend{
 				FromAddress: sdk.AccAddress("test from address"),
@@ -1011,7 +1012,7 @@ func TestPostTx(t *testing.T) {
 	require.NoError(t, err)
 
 	cdc := app.MakeEncodingConfig().Amino
-	var stdtx authtypes.StdTx
+	var stdtx legacytx.StdTx
 	err = cdc.UnmarshalJSON(txjson, &stdtx)
 	require.NoError(t, err)
 

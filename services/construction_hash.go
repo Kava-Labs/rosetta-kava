@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/kava-labs/kava/app"
@@ -41,7 +41,7 @@ func (s *ConstructionAPIService) ConstructionHash(
 	}
 
 	cdc := app.MakeEncodingConfig().Amino
-	var stdtx authtypes.StdTx
+	var stdtx legacytx.StdTx
 	cdc.MustUnmarshalBinaryLengthPrefixed(bz, &stdtx)
 
 	err = stdtx.ValidateBasic()

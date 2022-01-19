@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/kava-labs/kava/app"
@@ -80,7 +80,7 @@ func TestConstructionSubmit(t *testing.T) {
 		require.NoError(t, err)
 
 		cdc := app.MakeEncodingConfig().Amino
-		var stdtx authtypes.StdTx
+		var stdtx legacytx.StdTx
 		err = cdc.UnmarshalJSON(bz, &stdtx)
 		require.NoError(t, err)
 

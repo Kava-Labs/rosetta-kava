@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bytes "github.com/tendermint/tendermint/libs/bytes"
 
@@ -594,11 +595,11 @@ func (_m *RPCClient) SetLogger(_a0 log.Logger) {
 }
 
 // SimulateTx provides a mock function with given fields: tx
-func (_m *RPCClient) SimulateTx(tx *authtypes.StdTx) (*types.SimulationResponse, error) {
+func (_m *RPCClient) SimulateTx(tx *legacytx.StdTx) (*types.SimulationResponse, error) {
 	ret := _m.Called(tx)
 
 	var r0 *types.SimulationResponse
-	if rf, ok := ret.Get(0).(func(*authtypes.StdTx) *types.SimulationResponse); ok {
+	if rf, ok := ret.Get(0).(func(*legacytx.StdTx) *types.SimulationResponse); ok {
 		r0 = rf(tx)
 	} else {
 		if ret.Get(0) != nil {
@@ -607,7 +608,7 @@ func (_m *RPCClient) SimulateTx(tx *authtypes.StdTx) (*types.SimulationResponse,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*authtypes.StdTx) error); ok {
+	if rf, ok := ret.Get(1).(func(*legacytx.StdTx) error); ok {
 		r1 = rf(tx)
 	} else {
 		r1 = ret.Error(1)

@@ -28,6 +28,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -125,7 +126,7 @@ func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authtypes
 }
 
 // EstimateGas returns a gas wanted estimate from a tx with a provided adjustment
-func (c *Client) EstimateGas(ctx context.Context, tx *authtypes.StdTx, adjustment float64) (uint64, error) {
+func (c *Client) EstimateGas(ctx context.Context, tx *legacytx.StdTx, adjustment float64) (uint64, error) {
 	simResp, err := c.rpc.SimulateTx(tx)
 	if err != nil {
 		return 0, err
@@ -322,7 +323,7 @@ func (c *Client) getTransactionsForBlock(
 	for i, rawTx := range resultBlock.Block.Data.Txs {
 		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
 
-		var tx authtypes.StdTx
+		var tx legacytx.StdTx
 		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
 		if err != nil {
 			panic(fmt.Sprintf(
@@ -362,7 +363,7 @@ func (c *Client) getTransactionsForBlock(
 }
 
 func (c *Client) getOperationsForTransaction(
-	tx *authtypes.StdTx,
+	tx *legacytx.StdTx,
 	result *abci.ResponseDeliverTx,
 ) []*types.Operation {
 	opStatus := SuccessStatus

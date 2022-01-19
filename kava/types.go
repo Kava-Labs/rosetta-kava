@@ -19,6 +19,7 @@ package kava
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
@@ -152,7 +153,7 @@ type RPCClient interface {
 	Account(addr sdk.AccAddress, height int64) (authtypes.AccountI, error)
 	Delegations(addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error)
 	UnbondingDelegations(addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error)
-	SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error)
+	SimulateTx(tx *legacytx.StdTx) (*sdk.SimulationResponse, error)
 }
 
 func strToPtr(s string) *string {

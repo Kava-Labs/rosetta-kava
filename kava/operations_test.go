@@ -27,6 +27,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -489,7 +490,7 @@ func TestTxToOperations(t *testing.T) {
 	failure := FailureStatus
 
 	t.Run("no fee", func(t *testing.T) {
-		tx := authtypes.StdTx{
+		tx := legacytx.StdTx{
 			Msgs: []sdk.Msg{msg1, msg2},
 			Fee:  authtypes.StdFee{Gas: 500000},
 		}
@@ -516,7 +517,7 @@ func TestTxToOperations(t *testing.T) {
 	})
 
 	t.Run("with fee", func(t *testing.T) {
-		tx := authtypes.StdTx{
+		tx := legacytx.StdTx{
 			Msgs: []sdk.Msg{msg1, msg2},
 			Fee:  authtypes.StdFee{Amount: generateCoins([]string{"ukava"}), Gas: 500000},
 		}

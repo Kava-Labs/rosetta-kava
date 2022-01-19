@@ -22,6 +22,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -39,7 +40,7 @@ type Client interface {
 
 	Block(context.Context, *types.PartialBlockIdentifier) (*types.BlockResponse, error)
 
-	EstimateGas(context.Context, *authtypes.StdTx, float64) (uint64, error)
+	EstimateGas(context.Context, *legacytx.StdTx, float64) (uint64, error)
 
 	Status(context.Context) (
 		*types.BlockIdentifier,

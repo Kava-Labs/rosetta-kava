@@ -20,6 +20,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	kava "github.com/kava-labs/kava/app"
@@ -138,7 +139,7 @@ func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (st
 }
 
 // SimulateTx simulates a transaction and returns the response containing the gas used and result
-func (c *HTTPClient) SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error) {
+func (c *HTTPClient) SimulateTx(tx *legacytx.StdTx) (*sdk.SimulationResponse, error) {
 	bz, err := c.cdc.MarshalBinaryLengthPrefixed(*tx)
 	if err != nil {
 		return nil, err

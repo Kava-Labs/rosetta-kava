@@ -28,7 +28,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
@@ -390,7 +390,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 
 func TestHTTPClient_SimulateTx(t *testing.T) {
 	cdc := app.MakeEncodingConfig().Amino
-	testTx := &authtypes.StdTx{}
+	testTx := &legacytx.StdTx{}
 
 	mockResponse := sdk.SimulationResponse{
 		GasInfo: sdk.GasInfo{
@@ -422,7 +422,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 
 		assert.Equal(t, "0", params.Height)
 
-		var tx authtypes.StdTx
+		var tx legacytx.StdTx
 		err = cdc.UnmarshalBinaryLengthPrefixed(params.Data, &tx)
 		require.NoError(t, err)
 
