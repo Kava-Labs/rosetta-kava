@@ -1,0 +1,218 @@
+[
+  {
+    "account_identifier": {
+      "address":"kava1eu2ta269haf6j6z3lsj79a8rq3hsmnhu689g7z"
+    },
+    "currency": {
+      "symbol": "USDX",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eu2ta269haf6j6z3lsj79a8rq3hsmnhu689g7z"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eu2ta269haf6j6z3lsj79a8rq3hsmnhu689g7z"
+    },
+    "currency": {
+      "symbol": "HARD",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eu2ta269haf6j6z3lsj79a8rq3hsmnhu689g7z"
+    },
+    "currency": {
+      "symbol": "SWP",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3fwaj0s"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1tygms3xhhs3yv487phx3dw4a95jn7t7lawprey"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava10d07y265gmmuvt4z0w9aw880jnsr700jxh8cq5"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava10d07y265gmmuvt4z0w9aw880jnsr700jxh8cq5"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1wq9ts6l7atfn45ryxrtg4a2gwegsh3xha9e6rp"
+    },
+    "currency": {
+      "symbol": "USDX",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1wq9ts6l7atfn45ryxrtg4a2gwegsh3xha9e6rp"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1wq9ts6l7atfn45ryxrtg4a2gwegsh3xha9e6rp"
+    },
+    "currency": {
+      "symbol": "HARD",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1wq9ts6l7atfn45ryxrtg4a2gwegsh3xha9e6rp"
+    },
+    "currency": {
+      "symbol": "SWP",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eyugkwc74zejgwdwl7mvm7pad4hzdnka4wmdmu"
+    },
+    "currency": {
+      "symbol": "USDX",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eyugkwc74zejgwdwl7mvm7pad4hzdnka4wmdmu"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eyugkwc74zejgwdwl7mvm7pad4hzdnka4wmdmu"
+    },
+    "currency": {
+      "symbol": "HARD",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eyugkwc74zejgwdwl7mvm7pad4hzdnka4wmdmu"
+    },
+    "currency": {
+      "symbol": "SWP",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1kuatfkj29h6fze6g2sqky8936rxu83yg3hn79g"
+    },
+    "currency": {
+      "symbol": "USDX",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1kuatfkj29h6fze6g2sqky8936rxu83yg3hn79g"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1kuatfkj29h6fze6g2sqky8936rxu83yg3hn79g"
+    },
+    "currency": {
+      "symbol": "HARD",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava1kuatfkj29h6fze6g2sqky8936rxu83yg3hn79g"
+    },
+    "currency": {
+      "symbol": "SWP",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava15asyc0tmjykt4phzggzcf2zekz2ymcwknh9gfd"
+    },
+    "currency": {
+      "symbol": "USDX",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava15asyc0tmjykt4phzggzcf2zekz2ymcwknh9gfd"
+    },
+    "currency": {
+      "symbol": "KAVA",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava15asyc0tmjykt4phzggzcf2zekz2ymcwknh9gfd"
+    },
+    "currency": {
+      "symbol": "HARD",
+      "decimals": 6
+    }
+  },
+  {
+    "account_identifier": {
+      "address":"kava15asyc0tmjykt4phzggzcf2zekz2ymcwknh9gfd"
+    },
+    "currency": {
+      "symbol": "SWP",
+      "decimals": 6
+    }
+  }
+]
