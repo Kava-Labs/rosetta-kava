@@ -15,6 +15,7 @@
 package kava
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -35,7 +36,7 @@ import (
 type HTTPClient struct {
 	*tmhttp.HTTP
 	caller *tmclient.Client
-	cdc    *codec.Codec
+	cdc    *codec.LegacyAmino
 }
 
 // NewHTTPClient returns a new HTTPClient with additional capabilities
@@ -54,13 +55,9 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	// set codec for tendermint rpc
-	cdc := rpc.Codec()
-	ctypes.RegisterAmino(cdc)
-	rpc.SetCodec(cdc)
 
 	// codec for cosmos-sdk/app level (Account, etc)
-	kavaCdc := kava.MakeCodec()
+	kavaCdc := kava.MakeEncodingConfig().Amino
 
 	return &HTTPClient{
 		HTTP:   http,
@@ -70,15 +67,15 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 }
 
 // Account returns the Account for a given address
-func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authtypes.AccountI, error) {
-	bz, err := c.cdc.MarshalJSON(authtypes.NewQueryAccountParams(addr))
+func (c *HTTPClient) Account(ctx context.Context, addr sdk.AccAddress, height int64) (authtypes.AccountI, error) {
+	bz, err := c.cdc.MarshalJSON(authtypes.QueryAccountRequest{Address: addr.String()})
 	if err != nil {
 		return nil, err
 	}
 
 	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
 
-	data, err := c.abciQuery(path, bz, height)
+	data, err := c.abciQuery(ctx, path, bz, height)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +90,7 @@ func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authtypes.Accou
 }
 
 // Delegations returns the delegations for an acc address
-func (c *HTTPClient) Delegations(addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error) {
+func (c *HTTPClient) Delegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error) {
 	bz, err := c.cdc.MarshalJSON(stakingtypes.NewQueryDelegatorParams(addr))
 	if err != nil {
 		return nil, err
@@ -101,7 +98,7 @@ func (c *HTTPClient) Delegations(addr sdk.AccAddress, height int64) (stakingtype
 
 	path := fmt.Sprintf("custom/%s/%s", stakingtypes.QuerierRoute, stakingtypes.QueryDelegatorDelegations)
 
-	data, err := c.abciQuery(path, bz, height)
+	data, err := c.abciQuery(ctx, path, bz, height)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +113,7 @@ func (c *HTTPClient) Delegations(addr sdk.AccAddress, height int64) (stakingtype
 }
 
 // UnbondingDelegations returns the unbonding delegations for an address
-func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error) {
+func (c *HTTPClient) UnbondingDelegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error) {
 	bz, err := c.cdc.MarshalJSON(stakingtypes.NewQueryDelegatorParams(addr))
 	if err != nil {
 		return nil, err
@@ -124,7 +121,7 @@ func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (st
 
 	path := fmt.Sprintf("custom/%s/%s", stakingtypes.QuerierRoute, stakingtypes.QueryDelegatorUnbondingDelegations)
 
-	data, err := c.abciQuery(path, bz, height)
+	data, err := c.abciQuery(ctx, path, bz, height)
 	if err != nil {
 		return nil, err
 	}
@@ -139,27 +136,27 @@ func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (st
 }
 
 // SimulateTx simulates a transaction and returns the response containing the gas used and result
-func (c *HTTPClient) SimulateTx(tx *legacytx.StdTx) (*sdk.SimulationResponse, error) {
-	bz, err := c.cdc.MarshalBinaryLengthPrefixed(*tx)
+func (c *HTTPClient) SimulateTx(ctx context.Context, tx *legacytx.StdTx) (*sdk.SimulationResponse, error) {
+	bz, err := c.cdc.MarshalLengthPrefixed(*tx)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := c.abciQuery("/app/simulate", bz, 0)
+	data, err := c.abciQuery(ctx, "/app/simulate", bz, 0)
 	if err != nil {
 		return nil, err
 	}
 
 	var simRes sdk.SimulationResponse
-	if err := c.cdc.UnmarshalBinaryBare(data, &simRes); err != nil {
+	if err := c.cdc.Unmarshal(data, &simRes); err != nil {
 		return nil, err
 	}
 	return &simRes, nil
 }
 
-func (c *HTTPClient) abciQuery(path string, data bytes.HexBytes, height int64) ([]byte, error) {
+func (c *HTTPClient) abciQuery(ctx context.Context, path string, data bytes.HexBytes, height int64) ([]byte, error) {
 	opts := tmrpcclient.ABCIQueryOptions{Height: height, Prove: false}
-	result, err := c.ABCIQueryWithOptions(path, data, opts)
+	result, err := c.ABCIQueryWithOptions(ctx, path, data, opts)
 	return ParseABCIResult(result, err)
 }
 

@@ -1022,7 +1022,7 @@ func TestPostTx(t *testing.T) {
 	rpcErr := errors.New("some rpc error")
 	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(nil, rpcErr).Once()
 
-	response, err := client.PostTx(txBytes)
+	response, err := client.PostTx(context.Background(), txBytes)
 	assert.Nil(t, response)
 	assert.Equal(t, rpcErr, err)
 
@@ -1032,7 +1032,7 @@ func TestPostTx(t *testing.T) {
 	}
 	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(txResult, nil).Once()
 
-	response, err = client.PostTx(txBytes)
+	response, err = client.PostTx(context.Background(), txBytes)
 	require.NoError(t, err)
 	assert.Equal(t, "4E218DC828F45B7112F7CF6B328563045B5307B07D8602549389553F3B27D997", response.Hash)
 
@@ -1043,7 +1043,7 @@ func TestPostTx(t *testing.T) {
 	}
 	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(txResult, nil).Once()
 
-	response, err = client.PostTx(txBytes)
+	response, err = client.PostTx(context.Background(), txBytes)
 	require.Nil(t, response)
 	assert.EqualError(t, err, "some tx error")
 }

@@ -51,5 +51,5 @@ type Client interface {
 		error,
 	)
 
-	PostTx(txBytes []byte) (*types.TransactionIdentifier, error)
+	PostTx(ctx context.Context, txBytes []byte) (*types.TransactionIdentifier, error)
 }

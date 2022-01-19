@@ -28,9 +28,8 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/kava-labs/kava/app"
 )
@@ -331,14 +330,14 @@ func assertTrackedBalance(
 
 func TestEventsToOperations(t *testing.T) {
 	testEvent1 := sdk.StringEvent{
-		Type: bank.EventTypeTransfer,
+		Type: banktypes.EventTypeTransfer,
 		Attributes: []sdk.Attribute{
 			{
-				Key:   bank.AttributeKeyRecipient,
+				Key:   banktypes.AttributeKeyRecipient,
 				Value: testAddresses[1],
 			},
 			{
-				Key:   bank.AttributeKeySender,
+				Key:   banktypes.AttributeKeySender,
 				Value: testAddresses[0],
 			},
 			{
@@ -349,14 +348,14 @@ func TestEventsToOperations(t *testing.T) {
 	}
 
 	testEvent2 := sdk.StringEvent{
-		Type: bank.EventTypeTransfer,
+		Type: banktypes.EventTypeTransfer,
 		Attributes: []sdk.Attribute{
 			{
-				Key:   bank.AttributeKeyRecipient,
+				Key:   banktypes.AttributeKeyRecipient,
 				Value: testAddresses[2],
 			},
 			{
-				Key:   bank.AttributeKeySender,
+				Key:   banktypes.AttributeKeySender,
 				Value: testAddresses[1],
 			},
 			{
@@ -400,14 +399,14 @@ func TestEventToOperations(t *testing.T) {
 			name: "mint (transfer from mint module acct)",
 			createFn: func(coins sdk.Coins) sdk.StringEvent {
 				return sdk.StringEvent{
-					Type: bank.EventTypeTransfer,
+					Type: banktypes.EventTypeTransfer,
 					Attributes: []sdk.Attribute{
 						{
-							Key:   bank.AttributeKeyRecipient,
+							Key:   banktypes.AttributeKeyRecipient,
 							Value: testAddresses[0],
 						},
 						{
-							Key:   bank.AttributeKeySender,
+							Key:   banktypes.AttributeKeySender,
 							Value: mintAddress,
 						},
 						{
@@ -427,14 +426,14 @@ func TestEventToOperations(t *testing.T) {
 			name: "trackable transfer (not mint or burn)",
 			createFn: func(coins sdk.Coins) sdk.StringEvent {
 				return sdk.StringEvent{
-					Type: bank.EventTypeTransfer,
+					Type: banktypes.EventTypeTransfer,
 					Attributes: []sdk.Attribute{
 						{
-							Key:   bank.AttributeKeyRecipient,
+							Key:   banktypes.AttributeKeyRecipient,
 							Value: testAddresses[1],
 						},
 						{
-							Key:   bank.AttributeKeySender,
+							Key:   banktypes.AttributeKeySender,
 							Value: testAddresses[0],
 						},
 						{
@@ -469,15 +468,15 @@ func TestEventToOperations(t *testing.T) {
 }
 
 func TestTxToOperations(t *testing.T) {
-	msg1 := bank.MsgSend{
-		FromAddress: getAccAddr(t, testAddresses[0]),
-		ToAddress:   getAccAddr(t, testAddresses[1]),
+	msg1 := banktypes.MsgSend{
+		FromAddress: getAccAddr(t, testAddresses[0]).String(),
+		ToAddress:   getAccAddr(t, testAddresses[1]).String(),
 		Amount:      generateDefaultCoins(),
 	}
 
-	msg2 := bank.MsgSend{
-		FromAddress: getAccAddr(t, testAddresses[0]),
-		ToAddress:   getAccAddr(t, testAddresses[1]),
+	msg2 := banktypes.MsgSend{
+		FromAddress: getAccAddr(t, testAddresses[0]).String(),
+		ToAddress:   getAccAddr(t, testAddresses[1]).String(),
 		Amount:      generateDefaultCoins(),
 	}
 
@@ -491,8 +490,8 @@ func TestTxToOperations(t *testing.T) {
 
 	t.Run("no fee", func(t *testing.T) {
 		tx := legacytx.StdTx{
-			Msgs: []sdk.Msg{msg1, msg2},
-			Fee:  authtypes.StdFee{Gas: 500000},
+			Msgs: []sdk.Msg{&msg1, &msg2},
+			Fee:  legacytx.StdFee{Gas: 500000},
 		}
 
 		// all ops succesful and indexed correctly
@@ -518,8 +517,8 @@ func TestTxToOperations(t *testing.T) {
 
 	t.Run("with fee", func(t *testing.T) {
 		tx := legacytx.StdTx{
-			Msgs: []sdk.Msg{msg1, msg2},
-			Fee:  authtypes.StdFee{Amount: generateCoins([]string{"ukava"}), Gas: 500000},
+			Msgs: []sdk.Msg{&msg1, &msg2},
+			Fee:  legacytx.StdFee{Amount: generateCoins([]string{"ukava"}), Gas: 500000},
 		}
 
 		// all ops succesful and indexed correctly
@@ -853,11 +852,11 @@ func assertTransferOpsBalanceTrack(
 func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 	coins := sdk.NewCoins()
 	for _, ev := range log.Events {
-		if ev.Type == bank.EventTypeTransfer {
+		if ev.Type == banktypes.EventTypeTransfer {
 			var amount sdk.Coins
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = mustParseCoins(attr.Value)
+					amount = mustParseCoinsNormalized(attr.Value)
 				}
 				coins = coins.Add(amount...)
 			}
@@ -920,7 +919,7 @@ func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, re
 	var sender sdk.AccAddress
 	numTransferAttributes := 3
 
-	if _, ok := msg.(bank.MsgMultiSend); ok {
+	if _, ok := msg.(*banktypes.MsgMultiSend); ok {
 		numTransferAttributes = 2
 		for _, ev := range log.Events {
 			if ev.Type == "message" {
@@ -934,8 +933,8 @@ func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, re
 	}
 
 	for _, ev := range log.Events {
-		if ev.Type == bank.EventTypeTransfer {
-			unflattenedTransferEvents := unflattenEvents(ev, bank.EventTypeTransfer, numTransferAttributes)
+		if ev.Type == banktypes.EventTypeTransfer {
+			unflattenedTransferEvents := unflattenEvents(ev, banktypes.EventTypeTransfer, numTransferAttributes)
 			for _, event := range unflattenedTransferEvents {
 				var recipient sdk.AccAddress
 				var amount sdk.Coins
@@ -948,7 +947,7 @@ func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, re
 						recipient = mustAccAddressFromBech32(attr.Value)
 					}
 					if attr.Key == "amount" {
-						amount = mustParseCoins(attr.Value)
+						amount = mustParseCoinsNormalized(attr.Value)
 					}
 				}
 				filteredCoins := filterCoins(amount)
@@ -980,9 +979,9 @@ func calculateSendersReceivers(msg sdk.Msg, log sdk.ABCIMessageLog) (senders, re
 		receivers = append(receivers, accountBalance{Account: mustAccAddressFromBech32(receiver), Balance: balance})
 	}
 	switch msg.(type) {
-	case staking.MsgDelegate:
+	case *stakingtypes.MsgDelegate:
 		senders, receivers = calcDelegationSendersReceivers(senders, receivers, log)
-	case staking.MsgCreateValidator:
+	case *stakingtypes.MsgCreateValidator:
 		senders, receivers = calcCreateValdiatorSendersReceivers(senders, receivers, log)
 	}
 	return senders, receivers

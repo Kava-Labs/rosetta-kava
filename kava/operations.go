@@ -80,7 +80,7 @@ func bankTransferEventToOperations(attributes map[string]string, status *string,
 		Address: attributes[banktypes.AttributeKeyRecipient],
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -101,7 +101,7 @@ func kavaDistEventToOperations(attributes map[string]string, status *string, ind
 		Address: kavaDistModuleAddress.String(),
 	}
 
-	amount, err := sdk.ParseCoins(attributes[kavadisttypes.AttributeKeyInflation])
+	amount, err := sdk.ParseCoinsNormalized(attributes[kavadisttypes.AttributeKeyInflation])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[kavadisttypes.AttributeKeyInflation]))
 	}
@@ -114,7 +114,7 @@ func completeUnbondingEventToOperations(attributes map[string]string, status *st
 		Address: attributes[stakingtypes.AttributeKeyDelegator],
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -131,7 +131,7 @@ func cdpRepayEventToOperations(attributes map[string]string, status *string, ind
 		Address: cdpModuleAddress.String(),
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -144,7 +144,7 @@ func cdpDrawEventToOperations(attributes map[string]string, status *string, inde
 		Address: cdpModuleAddress.String(),
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -169,7 +169,7 @@ func TxToOperations(tx *legacytx.StdTx, logs sdk.ABCIMessageLogs, feeStatus *str
 			log = logs[msgIndex]
 		} else {
 			log = sdk.ABCIMessageLog{
-				MsgIndex: uint16(msgIndex),
+				MsgIndex: uint32(msgIndex),
 			}
 		}
 
@@ -182,8 +182,8 @@ func TxToOperations(tx *legacytx.StdTx, logs sdk.ABCIMessageLogs, feeStatus *str
 
 // FeeToOperations returns rosetta operations from a transaction fee
 func FeeToOperations(feePayer sdk.AccAddress, amount sdk.Coins, status *string, index int64) []*types.Operation {
-	sender := newAccountID(feePayer)
-	recipient := newAccountID(feeCollectorAddress)
+	sender := newAccountID(feePayer.String())
+	recipient := newAccountID(feeCollectorAddress.String())
 
 	return balanceTrackingOps(FeeOpType, sender, amount, recipient, status, index)
 }
@@ -210,9 +210,9 @@ func newOpID(index int64) *types.OperationIdentifier {
 	}
 }
 
-func newAccountID(addr sdk.AccAddress) *types.AccountIdentifier {
+func newAccountID(addr string) *types.AccountIdentifier {
 	return &types.AccountIdentifier{
-		Address: addr.String(),
+		Address: addr,
 	}
 }
 
@@ -302,7 +302,7 @@ func accountBalanceOps(
 func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
 	var ops []*types.Operation
 
-	if m, ok := msg.(banktypes.MsgMultiSend); ok {
+	if m, ok := msg.(*banktypes.MsgMultiSend); ok {
 		transferOps := msgMultiSendToTransferOperations(m, status, index)
 		ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
 		return ops
@@ -328,15 +328,15 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 		}
 	}
 	switch msg.(type) {
-	case stakingtypes.MsgDelegate:
+	case *stakingtypes.MsgDelegate:
 		return msgDelegateToOperations(ops, log, status, index)
-	case stakingtypes.MsgCreateValidator:
+	case *stakingtypes.MsgCreateValidator:
 		return msgCreateValidatorToOperations(ops, log, status, index)
 	}
 
 	if *status != SuccessStatus {
 		switch m := msg.(type) {
-		case banktypes.MsgSend:
+		case *banktypes.MsgSend:
 			transferOps := msgSendToTransferOperations(m, status, index)
 			ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
 		}
@@ -344,7 +344,7 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 	return ops
 }
 
-func msgSendToTransferOperations(msg banktypes.MsgSend, status *string, index int64) []*types.Operation {
+func msgSendToTransferOperations(msg *banktypes.MsgSend, status *string, index int64) []*types.Operation {
 	sender := newAccountID(msg.FromAddress)
 	recipient := newAccountID(msg.ToAddress)
 	amount := msg.Amount
@@ -352,7 +352,7 @@ func msgSendToTransferOperations(msg banktypes.MsgSend, status *string, index in
 	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
 }
 
-func msgMultiSendToTransferOperations(msg banktypes.MsgMultiSend, status *string, index int64) []*types.Operation {
+func msgMultiSendToTransferOperations(msg *banktypes.MsgMultiSend, status *string, index int64) []*types.Operation {
 	ops := []*types.Operation{}
 
 	for _, input := range msg.Inputs {
@@ -410,7 +410,7 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 			}
 		}
 	}
-	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
+	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), sdk.NewCoins(amount), newAccountID(recipient.String()), status, index)
 	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
 }
 
@@ -441,7 +441,7 @@ func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageL
 			}
 		}
 	}
-	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
+	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), sdk.NewCoins(amount), newAccountID(recipient.String()), status, index)
 	return appendOperationsAndUpdateIndex(ops, createValidatorOps, &index)
 }
 
@@ -453,8 +453,8 @@ func mustAccAddressFromBech32(addr string) sdk.AccAddress {
 	return acc
 }
 
-func mustParseCoins(coinsStr string) sdk.Coins {
-	coins, err := sdk.ParseCoins(coinsStr)
+func mustParseCoinsNormalized(coinsStr string) sdk.Coins {
+	coins, err := sdk.ParseCoinsNormalized(coinsStr)
 	if err != nil {
 		panic(err)
 	}

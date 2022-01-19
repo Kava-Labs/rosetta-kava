@@ -67,11 +67,11 @@ func (c *Client) Status(ctx context.Context) (
 	[]*types.Peer,
 	error,
 ) {
-	resultStatus, err := c.rpc.Status()
+	resultStatus, err := c.rpc.Status(ctx)
 	if err != nil {
 		return nil, int64(-1), nil, nil, nil, err
 	}
-	resultNetInfo, err := c.rpc.NetInfo()
+	resultNetInfo, err := c.rpc.NetInfo(ctx)
 	if err != nil {
 		return nil, int64(-1), nil, nil, nil, err
 	}
@@ -117,7 +117,7 @@ func (c *Client) Status(ctx context.Context) (
 
 // Account returns the account for the provided address at the latest block height
 func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authtypes.AccountI, error) {
-	account, err := c.rpc.Account(address, 0)
+	account, err := c.rpc.Account(ctx, address, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authtypes
 
 // EstimateGas returns a gas wanted estimate from a tx with a provided adjustment
 func (c *Client) EstimateGas(ctx context.Context, tx *legacytx.StdTx, adjustment float64) (uint64, error) {
-	simResp, err := c.rpc.SimulateTx(tx)
+	simResp, err := c.rpc.SimulateTx(ctx, tx)
 	if err != nil {
 		return 0, err
 	}
@@ -149,17 +149,17 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	block, err := c.getBlockResult(blockIdentifier)
+	block, err := c.getBlockResult(ctx, blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
-	balanceService, err := c.balanceFactory(addr, &block.Block.Header)
+	balanceService, err := c.balanceFactory(ctx, addr, &block.Block.Header)
 	if err != nil {
 		return nil, err
 	}
 
-	coins, err := balanceService.GetCoinsForSubAccount(accountIdentifier.SubAccount)
+	coins, err := balanceService.GetCoinsForSubAccount(ctx, accountIdentifier.SubAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (c *Client) Block(
 	ctx context.Context,
 	blockIdentifier *types.PartialBlockIdentifier,
 ) (*types.BlockResponse, error) {
-	block, err := c.getBlockResult(blockIdentifier)
+	block, err := c.getBlockResult(ctx, blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (c *Client) Block(
 		}
 	}
 
-	deliverResults, err := c.getBlockDeliverResults(&height)
+	deliverResults, err := c.getBlockDeliverResults(ctx, &height)
 	if err != nil {
 		return nil, err
 	}
@@ -252,11 +252,11 @@ func (c *Client) Block(
 	}, nil
 }
 
-func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
+func (c *Client) getBlockDeliverResults(ctx context.Context, height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
 	// backoff over 6,350 ms
 	backoff := 50 * time.Millisecond
 	for attempts := 0; attempts < 6; attempts++ {
-		blockResults, err = c.rpc.BlockResults(height)
+		blockResults, err = c.rpc.BlockResults(ctx, height)
 
 		if err != nil {
 			var rpcError *tmrpctypes.RPCError
@@ -278,19 +278,19 @@ func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.Res
 
 // getBlockResult returns the specified block by Index or Hash. If the
 // block identifier is not provided, then the latest block is returned
-func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
+func (c *Client) getBlockResult(ctx context.Context, blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
 	switch {
 	case blockIdentifier == nil:
 		// fetch the latest block by passing (*int64)(nil) to tendermint rpc
-		block, err = c.rpc.Block(nil)
+		block, err = c.rpc.Block(ctx, nil)
 	case blockIdentifier.Index != nil:
-		block, err = c.rpc.Block(blockIdentifier.Index)
+		block, err = c.rpc.Block(ctx, blockIdentifier.Index)
 	case blockIdentifier.Hash != nil:
 		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
-		block, err = c.rpc.BlockByHash(hashBytes)
+		block, err = c.rpc.BlockByHash(ctx, hashBytes)
 	}
 
 	return
@@ -324,7 +324,7 @@ func (c *Client) getTransactionsForBlock(
 		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
 
 		var tx legacytx.StdTx
-		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
+		err := c.cdc.UnmarshalLengthPrefixed(rawTx, &tx)
 		if err != nil {
 			panic(fmt.Sprintf(
 				"unable to unmarshal transaction at index %d of block %d: %s",
@@ -415,8 +415,8 @@ func stringifyEvents(events []abci.Event) sdk.StringEvents {
 }
 
 // PostTx broadcasts a transaction and returns an error if it does not get into mempool
-func (c *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, error) {
-	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
+func (c *Client) PostTx(ctx context.Context, txBytes []byte) (*types.TransactionIdentifier, error) {
+	txRes, err := c.rpc.BroadcastTxSync(ctx, tmtypes.Tx(txBytes))
 	if err != nil {
 		return nil, err
 	}

@@ -94,15 +94,16 @@ func TestConstructionSubmit(t *testing.T) {
 		err = stdtx.ValidateBasic()
 		mockErr := err
 
+		ctx := context.Background()
 		mockClient.On(
 			"PostTx",
+			ctx,
 			payload,
 		).Return(
 			txIndentifier,
 			mockErr,
 		).Once()
 
-		ctx := context.Background()
 		request := &types.ConstructionSubmitRequest{
 			SignedTransaction: hex.EncodeToString(payload),
 		}
