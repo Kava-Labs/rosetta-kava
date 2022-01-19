@@ -21,9 +21,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	kava "github.com/kava-labs/kava/app"
-	pkgerrors "github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/bytes"
 	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
 	tmhttp "github.com/tendermint/tendermint/rpc/client/http"
@@ -38,7 +37,7 @@ type HTTPClient struct {
 	cdc    *codec.Codec
 }
 
-// NewHTTPClient returns a new HTTPClient with BlockByHash capabilities
+// NewHTTPClient returns a new HTTPClient with additional capabilities
 func NewHTTPClient(remote string) (*HTTPClient, error) {
 	client, err := tmclient.DefaultHTTPClient(remote)
 	if err != nil {
@@ -69,16 +68,6 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 	}, nil
 }
 
-// BlockByHash fetches a block by it's hash value and return the resulting block
-func (c *HTTPClient) BlockByHash(hash []byte) (*ctypes.ResultBlock, error) {
-	result := new(ctypes.ResultBlock)
-	_, err := c.caller.Call("block_by_hash", map[string]interface{}{"hash": hash}, result)
-	if err != nil {
-		return nil, pkgerrors.Wrap(err, "BlockByHash")
-	}
-	return result, nil
-}
-
 // Account returns the Account for a given address
 func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authtypes.AccountI, error) {
 	bz, err := c.cdc.MarshalJSON(authtypes.NewQueryAccountParams(addr))
@@ -103,20 +92,20 @@ func (c *HTTPClient) Account(addr sdk.AccAddress, height int64) (authtypes.Accou
 }
 
 // Delegations returns the delegations for an acc address
-func (c *HTTPClient) Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error) {
-	bz, err := c.cdc.MarshalJSON(staking.NewQueryDelegatorParams(addr))
+func (c *HTTPClient) Delegations(addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error) {
+	bz, err := c.cdc.MarshalJSON(stakingtypes.NewQueryDelegatorParams(addr))
 	if err != nil {
 		return nil, err
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", staking.QuerierRoute, staking.QueryDelegatorDelegations)
+	path := fmt.Sprintf("custom/%s/%s", stakingtypes.QuerierRoute, stakingtypes.QueryDelegatorDelegations)
 
 	data, err := c.abciQuery(path, bz, height)
 	if err != nil {
 		return nil, err
 	}
 
-	var delegations staking.DelegationResponses
+	var delegations stakingtypes.DelegationResponses
 	err = c.cdc.UnmarshalJSON(data, &delegations)
 	if err != nil {
 		return nil, err
@@ -126,20 +115,20 @@ func (c *HTTPClient) Delegations(addr sdk.AccAddress, height int64) (staking.Del
 }
 
 // UnbondingDelegations returns the unbonding delegations for an address
-func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error) {
-	bz, err := c.cdc.MarshalJSON(staking.NewQueryDelegatorParams(addr))
+func (c *HTTPClient) UnbondingDelegations(addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error) {
+	bz, err := c.cdc.MarshalJSON(stakingtypes.NewQueryDelegatorParams(addr))
 	if err != nil {
 		return nil, err
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", staking.QuerierRoute, staking.QueryDelegatorUnbondingDelegations)
+	path := fmt.Sprintf("custom/%s/%s", stakingtypes.QuerierRoute, stakingtypes.QueryDelegatorUnbondingDelegations)
 
 	data, err := c.abciQuery(path, bz, height)
 	if err != nil {
 		return nil, err
 	}
 
-	var unbondingDelegations staking.UnbondingDelegations
+	var unbondingDelegations stakingtypes.UnbondingDelegations
 	err = c.cdc.UnmarshalJSON(data, &unbondingDelegations)
 	if err != nil {
 		return nil, err

@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
-	staking "github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -193,7 +193,7 @@ func (b *rpcVestingBalance) totalUnbondingDelegations() (sdk.Coins, error) {
 	return sumUnbondingDelegations(unbondingDelegations), nil
 }
 
-func sumDelegations(delegations staking.DelegationResponses) sdk.Coins {
+func sumDelegations(delegations stakingtypes.DelegationResponses) sdk.Coins {
 	coins := sdk.Coins{}
 	for _, d := range delegations {
 		coins = coins.Add(d.Balance)
@@ -202,7 +202,7 @@ func sumDelegations(delegations staking.DelegationResponses) sdk.Coins {
 	return coins
 }
 
-func sumUnbondingDelegations(unbondingDelegations staking.UnbondingDelegations) sdk.Coins {
+func sumUnbondingDelegations(unbondingDelegations stakingtypes.UnbondingDelegations) sdk.Coins {
 	totalBalance := sdk.ZeroInt()
 	for _, u := range unbondingDelegations {
 		for _, e := range u.Entries {

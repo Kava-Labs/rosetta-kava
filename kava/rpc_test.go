@@ -389,7 +389,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 }
 
 func TestHTTPClient_SimulateTx(t *testing.T) {
-	cdc := app.MakeCodec()
+	cdc := app.MakeEncodingConfig().Amino
 	testTx := &authtypes.StdTx{}
 
 	mockResponse := sdk.SimulationResponse{

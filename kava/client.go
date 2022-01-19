@@ -42,17 +42,17 @@ var noBlockResultsForHeight = regexp.MustCompile("could not find results for hei
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
 	rpc            RPCClient
-	cdc            *codec.Codec
+	cdc            *codec.LegacyAmino
 	balanceFactory BalanceServiceFactory
 }
 
 // NewClient initialized a new Client with the provided rpc client
 func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
-	cdc := kava.MakeCodec()
+	encodingConfig := kava.MakeEncodingConfig()
 
 	return &Client{
 		rpc:            rpc,
-		cdc:            cdc,
+		cdc:            encodingConfig.Amino,
 		balanceFactory: balanceServiceFactory,
 	}, nil
 }

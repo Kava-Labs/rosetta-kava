@@ -20,9 +20,8 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 const (
@@ -150,10 +149,9 @@ var Denoms = map[string]string{
 type RPCClient interface {
 	tmclient.Client
 
-	BlockByHash([]byte) (*ctypes.ResultBlock, error)
 	Account(addr sdk.AccAddress, height int64) (authtypes.AccountI, error)
-	Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error)
-	UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error)
+	Delegations(addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error)
+	UnbondingDelegations(addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error)
 	SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error)
 }
 
