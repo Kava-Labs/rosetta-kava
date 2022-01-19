@@ -65,6 +65,7 @@ func NewRouter(config *configuration.Configuration) (http.Handler, error) {
 		[]*types.NetworkIdentifier{config.NetworkIdentifier},
 		kava.CallMethods,
 		kava.IncludeMempoolCoins,
+		"",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not initialize server asserter", err)
