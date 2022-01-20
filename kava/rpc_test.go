@@ -126,7 +126,7 @@ func TestHTTPClient_BlockByHash(t *testing.T) {
 	block, err = client.BlockByHash(context.Background(), testHash)
 	assert.Error(t, err)
 	assert.Nil(t, block)
-	assert.EqualError(t, err, "BlockByHash: RPC error 1 - invalid hash")
+	assert.EqualError(t, err, "RPC error 1 - invalid hash")
 }
 
 func TestHTTPClient_Account(t *testing.T) {
@@ -197,7 +197,7 @@ func TestHTTPClient_Account(t *testing.T) {
 	}
 	acc, err = client.Account(context.Background(), addr, height)
 	assert.Nil(t, acc)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - invalid account")
+	assert.EqualError(t, err, "RPC error 1 - invalid account")
 
 	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
@@ -284,7 +284,7 @@ func TestHTTPClient_Delegated(t *testing.T) {
 	}
 	delegations, err = client.Delegations(context.Background(), addr, height)
 	assert.Nil(t, delegations)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+	assert.EqualError(t, err, "RPC error 1 - something went wrong")
 
 	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
@@ -371,7 +371,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 	}
 	unbonding, err = client.UnbondingDelegations(context.Background(), addr, height)
 	assert.Nil(t, unbonding)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+	assert.EqualError(t, err, "RPC error 1 - something went wrong")
 
 	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
@@ -457,7 +457,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 	}
 	simResp, err = client.SimulateTx(context.Background(), testTx)
 	assert.Nil(t, simResp)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+	assert.EqualError(t, err, "RPC error 1 - something went wrong")
 
 	simulateResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		abciResult := ctypes.ResultABCIQuery{
@@ -600,7 +600,7 @@ func TestHTTPClient_Balance(t *testing.T) {
 	}
 	bal, err = client.Balance(context.Background(), addr, height)
 	assert.Nil(t, bal)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - balance not found")
+	assert.EqualError(t, err, "RPC error 1 - balance not found")
 
 	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
