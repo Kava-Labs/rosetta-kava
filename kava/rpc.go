@@ -23,6 +23,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/tendermint/tendermint/libs/bytes"
@@ -87,6 +88,30 @@ func (c *HTTPClient) Account(ctx context.Context, addr sdk.AccAddress, height in
 	}
 
 	return account, nil
+}
+
+// Balance returns the Balance for a given address
+func (c *HTTPClient) Balance(ctx context.Context, addr sdk.AccAddress, height int64) (sdk.Coins, error) {
+	// legacy querier does not paginate -- Pagination parameter set to nil to ignore
+	bz, err := c.cdc.MarshalJSON(banktypes.NewQueryAllBalancesRequest(addr, nil))
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("custom/%s/%s", banktypes.QuerierRoute, banktypes.QueryAllBalances)
+
+	data, err := c.abciQuery(ctx, path, bz, height)
+	if err != nil {
+		return nil, err
+	}
+
+	var balance sdk.Coins
+	err = c.cdc.UnmarshalJSON(data, &balance)
+	if err != nil {
+		return nil, err
+	}
+
+	return balance, nil
 }
 
 // Delegations returns the delegations for an acc address
