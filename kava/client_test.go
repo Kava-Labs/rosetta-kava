@@ -134,12 +134,12 @@ func setupClient(t *testing.T) (*mocks.RPCClient, *mocks.BalanceServiceFactory, 
 
 func TestStatus(t *testing.T) {
 	t.Run("rpc error when getting node status", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
 		rpcErr := errors.New("unable to contact node")
-		mockRPCClient.On("Status").Return(nil, rpcErr)
+		mockRPCClient.On("Status", ctx).Return(nil, rpcErr)
 
-		ctx := context.Background()
 		currentBlock, currentTime, genesisBlock, syncStatus, peers, err := client.Status(ctx)
 
 		assert.Nil(t, currentBlock)
@@ -151,13 +151,13 @@ func TestStatus(t *testing.T) {
 	})
 
 	t.Run("rpc error when getting net info for peers", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
-		mockRPCClient.On("Status").Return(newResultStatus(t), nil)
+		mockRPCClient.On("Status", ctx).Return(newResultStatus(t), nil)
 		rpcErr := errors.New("unable to contact node")
-		mockRPCClient.On("NetInfo").Return(nil, rpcErr).Once()
+		mockRPCClient.On("NetInfo", ctx).Return(nil, rpcErr).Once()
 
-		ctx := context.Background()
 		currentBlock, currentTime, genesisBlock, syncStatus, peers, err := client.Status(ctx)
 
 		assert.Nil(t, currentBlock)
@@ -169,12 +169,12 @@ func TestStatus(t *testing.T) {
 	})
 
 	t.Run("successful response", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
-		mockRPCClient.On("Status").Return(newResultStatus(t), nil)
-		mockRPCClient.On("NetInfo").Return(newResultNetInfo(), nil)
+		mockRPCClient.On("Status", ctx).Return(newResultStatus(t), nil)
+		mockRPCClient.On("NetInfo", ctx).Return(newResultNetInfo(), nil)
 
-		ctx := context.Background()
 		currentBlock, currentTime, genesisBlock, syncStatus, peers, err := client.Status(ctx)
 		require.NoError(t, err)
 
@@ -221,14 +221,14 @@ func TestBalance_InvalidAddress(t *testing.T) {
 
 func TestBalance_NoFilters(t *testing.T) {
 	t.Run("error fetching latest block", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
 		testAccount, _ := newTestAccount(t)
 		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		blockErr := errors.New("error getting block")
-		mockRPCClient.On("Block", (*int64)(nil)).Return(nil, blockErr).Once()
+		mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(nil, blockErr).Once()
 
-		ctx := context.Background()
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 
 		assert.Nil(t, accountResponse)
@@ -236,20 +236,20 @@ func TestBalance_NoFilters(t *testing.T) {
 	})
 
 	t.Run("error getting balance service for account", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 		testAccount, _ := newTestAccount(t)
 		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		_, resultBlock := newBlockWithResult(t)
 
-		mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
+		mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(resultBlock, nil)
 		balErr := errors.New("could not find account")
-		mockBalanceFactory.On("Execute", testAccount.Address, &resultBlock.Block.Header).Return(
+		mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, testAccount.Address), &resultBlock.Block.Header).Return(
 			nil,
 			balErr,
 		)
 
-		ctx := context.Background()
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 
 		assert.Nil(t, accountResponse)
@@ -257,22 +257,22 @@ func TestBalance_NoFilters(t *testing.T) {
 	})
 
 	t.Run("error getting coins for account", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 		testAccount, _ := newTestAccount(t)
 		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		_, resultBlock := newBlockWithResult(t)
 
-		mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
+		mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(resultBlock, nil)
 		mockBalanceService := &mocks.AccountBalanceService{}
-		mockBalanceFactory.On("Execute", testAccount.Address, &resultBlock.Block.Header).Return(
+		mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, testAccount.Address), &resultBlock.Block.Header).Return(
 			mockBalanceService,
 			nil,
 		)
 		balErr := errors.New("could not get coins for account")
-		mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(nil, balErr)
+		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(nil, balErr)
 
-		ctx := context.Background()
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 		assert.Nil(t, accountResponse)
 		assert.EqualError(t, err, balErr.Error())
@@ -280,22 +280,22 @@ func TestBalance_NoFilters(t *testing.T) {
 	})
 
 	t.Run("successful balance response", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 		testAccount, _ := newTestAccount(t)
 		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		block, resultBlock := newBlockWithResult(t)
 
-		mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
+		mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(resultBlock, nil)
 		mockBalanceService := &mocks.AccountBalanceService{}
-		mockBalanceFactory.On("Execute", testAccount.Address, &resultBlock.Block.Header).Return(
+		mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, testAccount.Address), &resultBlock.Block.Header).Return(
 			mockBalanceService,
 			nil,
 		)
 		coins := generateDefaultCoins()
-		mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
 
-		ctx := context.Background()
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 		require.NoError(t, err)
 
@@ -314,29 +314,29 @@ func TestBalance_NoFilters(t *testing.T) {
 
 func TestBalance_BlockFilter(t *testing.T) {
 	t.Run("filter by block index", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 		testAccount, _ := newTestAccount(t)
 		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		block, resultBlock := newBlockWithResult(t)
 
-		mockRPCClient.On("Block", &block.Index).Return(resultBlock, nil).Once()
+		mockRPCClient.On("Block", ctx, &block.Index).Return(resultBlock, nil).Once()
 		mockBalanceService := &mocks.AccountBalanceService{}
-		mockBalanceFactory.On("Execute", testAccount.Address, &resultBlock.Block.Header).Return(
+		mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, testAccount.Address), &resultBlock.Block.Header).Return(
 			mockBalanceService,
 			nil,
 		)
 		coins := generateDefaultCoins()
-		mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
 
-		ctx := context.Background()
 		blockFilter := &types.PartialBlockIdentifier{Index: &block.Index}
 		accountResponse, err := client.Balance(ctx, acc, blockFilter, nil)
 		require.NoError(t, err)
 		assert.Equal(t, block, accountResponse.BlockIdentifier)
 
 		blockErr := errors.New("some block index error")
-		mockRPCClient.On("Block", &block.Index).Return(nil, blockErr).Once()
+		mockRPCClient.On("Block", ctx, &block.Index).Return(nil, blockErr).Once()
 
 		accountResponse, err = client.Balance(ctx, acc, blockFilter, nil)
 		assert.Nil(t, accountResponse)
@@ -344,29 +344,29 @@ func TestBalance_BlockFilter(t *testing.T) {
 	})
 
 	t.Run("filter by block hash", func(t *testing.T) {
+		ctx := context.Background()
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 		testAccount, _ := newTestAccount(t)
 		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		block, resultBlock := newBlockWithResult(t)
 
-		mockRPCClient.On("BlockByHash", []byte(resultBlock.BlockID.Hash)).Return(resultBlock, nil).Once()
+		mockRPCClient.On("BlockByHash", ctx, []byte(resultBlock.BlockID.Hash)).Return(resultBlock, nil).Once()
 		mockBalanceService := &mocks.AccountBalanceService{}
-		mockBalanceFactory.On("Execute", testAccount.Address, &resultBlock.Block.Header).Return(
+		mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, testAccount.Address), &resultBlock.Block.Header).Return(
 			mockBalanceService,
 			nil,
 		)
 		coins := generateDefaultCoins()
-		mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
 
-		ctx := context.Background()
 		blockFilter := &types.PartialBlockIdentifier{Hash: &block.Hash}
 		accountResponse, err := client.Balance(ctx, acc, blockFilter, nil)
 		require.NoError(t, err)
 		assert.Equal(t, block, accountResponse.BlockIdentifier)
 
 		blockErr := errors.New("some block index error")
-		mockRPCClient.On("BlockByHash", []byte(resultBlock.BlockID.Hash)).Return(nil, blockErr).Once()
+		mockRPCClient.On("BlockByHash", ctx, []byte(resultBlock.BlockID.Hash)).Return(nil, blockErr).Once()
 
 		accountResponse, err = client.Balance(ctx, acc, blockFilter, nil)
 		assert.Nil(t, accountResponse)
@@ -381,21 +381,21 @@ func TestBalance_BlockFilter(t *testing.T) {
 }
 
 func TestBalance_CurrencyFilter(t *testing.T) {
+	ctx := context.Background()
 	mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 	testAccount, _ := newTestAccount(t)
 	acc := &types.AccountIdentifier{Address: testAccount.Address}
 	_, resultBlock := newBlockWithResult(t)
 
-	mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
+	mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(resultBlock, nil)
 	mockBalanceService := &mocks.AccountBalanceService{}
-	mockBalanceFactory.On("Execute", testAccount.Address, &resultBlock.Block.Header).Return(
+	mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, testAccount.Address), &resultBlock.Block.Header).Return(
 		mockBalanceService,
 		nil,
 	)
 	coins := generateDefaultCoins()
-	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
-	ctx := context.Background()
+	mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
 
 	t.Run("all supported coins are returned by default", func(t *testing.T) {
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
@@ -452,19 +452,19 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 }
 
 func TestBalance_DefaultZeroCurrency(t *testing.T) {
+	ctx := context.Background()
 	mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
 	emptyTestAccount, emptyAccountBalance := newEmptyTestAccount(t)
 	partialTestAccount, partialAccountBalance := newPartialTestAccount(t)
 
-	ctx := context.Background()
 	_, resultBlock := newBlockWithResult(t)
 
-	mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
+	mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(resultBlock, nil)
 	mockBalanceService := &mocks.AccountBalanceService{}
-	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(emptyAccountBalance, nil).Once()
+	mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(emptyAccountBalance, nil).Once()
 
-	mockBalanceFactory.On("Execute", emptyTestAccount.Address, &resultBlock.Block.Header).Return(
+	mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, emptyTestAccount.Address), &resultBlock.Block.Header).Return(
 		mockBalanceService,
 		nil,
 	).Once()
@@ -478,8 +478,8 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "SWP").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
 
-	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(partialAccountBalance, nil).Once()
-	mockBalanceFactory.On("Execute", partialTestAccount.Address, &resultBlock.Block.Header).Return(
+	mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(partialAccountBalance, nil).Once()
+	mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, partialTestAccount.Address), &resultBlock.Block.Header).Return(
 		mockBalanceService,
 		nil,
 	).Once()
@@ -551,12 +551,12 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 
 	mockBlockErr := errors.New("some block error")
 
-	mockRPCClient.On("Block", (*int64)(nil)).Return(
+	mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(
 		mockResultBlock,
 		nil,
 	).Once()
 
-	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+	mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(
 		&ctypes.ResultBlockResults{},
 		nil,
 	)
@@ -569,7 +569,7 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
-	mockRPCClient.On("Block", (*int64)(nil)).Return(
+	mockRPCClient.On("Block", ctx, (*int64)(nil)).Return(
 		nil,
 		mockBlockErr,
 	).Once()
@@ -578,7 +578,7 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Nil(t, blockResponse)
 	assert.Equal(t, err, mockBlockErr)
 
-	mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+	mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(
 		mockResultBlock,
 		nil,
 	).Once()
@@ -596,7 +596,7 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
-	mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+	mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(
 		nil,
 		mockBlockErr,
 	).Once()
@@ -610,7 +610,7 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Nil(t, blockResponse)
 	assert.Equal(t, err, mockBlockErr)
 
-	mockRPCClient.On("BlockByHash", hashBytes).Return(
+	mockRPCClient.On("BlockByHash", ctx, hashBytes).Return(
 		mockResultBlock,
 		nil,
 	).Once()
@@ -628,7 +628,7 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
-	mockRPCClient.On("BlockByHash", hashBytes).Return(
+	mockRPCClient.On("BlockByHash", ctx, hashBytes).Return(
 		nil,
 		mockBlockErr,
 	).Once()
@@ -642,12 +642,12 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Nil(t, blockResponse)
 	assert.Equal(t, err, mockBlockErr)
 
-	mockRPCClient.On("Block", &genesisBlockIdentifier.Index).Return(
+	mockRPCClient.On("Block", ctx, &genesisBlockIdentifier.Index).Return(
 		mockGenesisResultBlock,
 		nil,
 	).Once()
 
-	mockRPCClient.On("BlockResults", &genesisBlockIdentifier.Index).Return(
+	mockRPCClient.On("BlockResults", ctx, &genesisBlockIdentifier.Index).Return(
 		&ctypes.ResultBlockResults{},
 		nil,
 	)
@@ -665,7 +665,7 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 	assert.Equal(t, 0, len(blockResponse.Block.Transactions))
 	assert.Nil(t, blockResponse.OtherTransactions)
 
-	mockRPCClient.On("BlockByHash", genesisHashBytes).Return(
+	mockRPCClient.On("BlockByHash", ctx, genesisHashBytes).Return(
 		mockGenesisResultBlock,
 		nil,
 	).Once()
@@ -792,8 +792,8 @@ func TestBlock_Transactions(t *testing.T) {
 		EndBlockEvents:   []abci.Event{abci.Event{}},
 	}
 
-	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
-	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
+	mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
 
 	blockResponse, err := client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	require.NoError(t, err)
@@ -834,9 +834,9 @@ func TestBlock_Transactions(t *testing.T) {
 		}
 	}
 
-	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
 	rpcErr := errors.New("block results error")
-	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(nil, rpcErr).Once()
+	mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(nil, rpcErr).Once()
 
 	blockResponse, err = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	assert.Nil(t, blockResponse)
@@ -845,8 +845,8 @@ func TestBlock_Transactions(t *testing.T) {
 
 	badTx := tmtypes.Tx("invalid tx")
 	mockResultBlock.Block.Data.Txs = []tmtypes.Tx{badTx}
-	mockRPCClient.On("Block", &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
-	mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
+	mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
 
 	assert.Panics(t, func() {
 		_, _ = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
@@ -892,17 +892,17 @@ func TestBlock_BlockResultsRetry(t *testing.T) {
 		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
-		mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+		mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(
 			mockResultBlock,
 			nil,
 		).Once()
 
-		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+		mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(
 			nil,
 			mockErr,
 		).Once()
 
-		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+		mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(
 			&ctypes.ResultBlockResults{},
 			nil,
 		).Once()
@@ -915,12 +915,12 @@ func TestBlock_BlockResultsRetry(t *testing.T) {
 		ctx := context.Background()
 		mockRPCClient, _, client := setupClient(t)
 
-		mockRPCClient.On("Block", &blockIdentifier.Index).Return(
+		mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(
 			mockResultBlock,
 			nil,
 		).Once()
 
-		mockRPCClient.On("BlockResults", &blockIdentifier.Index).Return(
+		mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(
 			nil,
 			mockErr,
 		).Times(6)
@@ -932,20 +932,20 @@ func TestBlock_BlockResultsRetry(t *testing.T) {
 }
 
 func TestAccount(t *testing.T) {
+	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
 	addr, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
 	require.NoError(t, err)
 
 	accErr := errors.New("error retrieving account")
-	mockRPCClient.On("Account", addr, int64(0)).Return(nil, accErr).Once()
+	mockRPCClient.On("Account", ctx, addr, int64(0)).Return(nil, accErr).Once()
 
-	ctx := context.Background()
 	account, err := client.Account(ctx, addr)
 	assert.Nil(t, account)
 	assert.EqualError(t, err, accErr.Error())
 
 	expectedAccount := &authtypes.BaseAccount{}
-	mockRPCClient.On("Account", addr, int64(0)).Return(expectedAccount, nil).Once()
+	mockRPCClient.On("Account", ctx, addr, int64(0)).Return(expectedAccount, nil).Once()
 
 	ctx = context.Background()
 	account, err = client.Account(ctx, addr)
@@ -954,6 +954,7 @@ func TestAccount(t *testing.T) {
 }
 
 func TestEstimateGas(t *testing.T) {
+	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
 
 	addr1, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
@@ -983,9 +984,8 @@ func TestEstimateGas(t *testing.T) {
 	gasAdjusment := float64(0.1)
 
 	simErr := errors.New("could not simulate tx")
-	mockRPCClient.On("SimulateTx", &tx).Return(nil, simErr).Once()
+	mockRPCClient.On("SimulateTx", ctx, &tx).Return(nil, simErr).Once()
 
-	ctx := context.Background()
 	gas, err := client.EstimateGas(ctx, &tx, gasAdjusment)
 	assert.Equal(t, uint64(0), gas)
 	assert.EqualError(t, err, simErr.Error())
@@ -998,7 +998,7 @@ func TestEstimateGas(t *testing.T) {
 		},
 	}
 
-	mockRPCClient.On("SimulateTx", &tx).Return(simResp, nil).Once()
+	mockRPCClient.On("SimulateTx", ctx, &tx).Return(simResp, nil).Once()
 	ctx = context.Background()
 	gas, err = client.EstimateGas(ctx, &tx, gasAdjusment)
 	require.Nil(t, err)
@@ -1006,6 +1006,7 @@ func TestEstimateGas(t *testing.T) {
 }
 
 func TestPostTx(t *testing.T) {
+	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
 
 	txjson, err := ioutil.ReadFile("test-fixtures/txs/msg-send.json")
@@ -1020,7 +1021,7 @@ func TestPostTx(t *testing.T) {
 	require.NoError(t, err)
 
 	rpcErr := errors.New("some rpc error")
-	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(nil, rpcErr).Once()
+	mockRPCClient.On("BroadcastTxSync", ctx, tmtypes.Tx(txBytes)).Return(nil, rpcErr).Once()
 
 	response, err := client.PostTx(context.Background(), txBytes)
 	assert.Nil(t, response)
@@ -1030,18 +1031,18 @@ func TestPostTx(t *testing.T) {
 		Code: abci.CodeTypeOK,
 		Hash: tmtypes.Tx(txBytes).Hash(),
 	}
-	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(txResult, nil).Once()
+	mockRPCClient.On("BroadcastTxSync", ctx, tmtypes.Tx(txBytes)).Return(txResult, nil).Once()
 
 	response, err = client.PostTx(context.Background(), txBytes)
 	require.NoError(t, err)
-	assert.Equal(t, "4E218DC828F45B7112F7CF6B328563045B5307B07D8602549389553F3B27D997", response.Hash)
+	assert.Equal(t, "3A3FB732715054D56313354A8CEB135848363AB97E9323559E419F3D09BA4B31", response.Hash)
 
 	txResult = &ctypes.ResultBroadcastTx{
 		Code: 4,
 		Hash: tmtypes.Tx(txBytes).Hash(),
 		Log:  "some tx error",
 	}
-	mockRPCClient.On("BroadcastTxSync", tmtypes.Tx(txBytes)).Return(txResult, nil).Once()
+	mockRPCClient.On("BroadcastTxSync", ctx, tmtypes.Tx(txBytes)).Return(txResult, nil).Once()
 
 	response, err = client.PostTx(context.Background(), txBytes)
 	require.Nil(t, response)

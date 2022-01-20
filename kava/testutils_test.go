@@ -97,3 +97,9 @@ func generateCoins(denoms []string) sdk.Coins {
 
 	return coins.Sort()
 }
+
+func mustAccAddrFromStr(t *testing.T, addr string) sdk.AccAddress {
+	accAddr, err := sdk.AccAddressFromBech32(addr)
+	require.NoError(t, err)
+	return accAddr
+}
