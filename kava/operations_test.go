@@ -80,9 +80,11 @@ func accountEqual(a1 *types.AccountIdentifier, a2 *types.AccountIdentifier) bool
 func generateDefaultCoins() sdk.Coins {
 	denoms := []string{
 		// native
-		"ukava", "hard", "usdx",
-		// not native
+		"ukava", "hard", "usdx", "swp",
+		// not native bep2 assets
 		"bnb", "busd", "btcb",
+		// ibc assets
+		"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2A",
 	}
 
 	return generateCoins(denoms)
