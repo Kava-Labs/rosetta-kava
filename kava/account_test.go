@@ -181,10 +181,10 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 
 			acc := &authtypes.BaseAccount{
 				Address: addr,
-				Coins:   coins,
 			}
 
 			mockRPCClient.On("Account", addr, blockHeader.Height).Return(acc, nil)
+			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(coins, nil)
 			balanceService, err := serviceFactory(addr, blockHeader)
 			require.NoError(t, err)
 
@@ -518,7 +518,6 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 				BaseVestingAccount: &vestingtypes.BaseVestingAccount{
 					BaseAccount: &authtypes.BaseAccount{
 						Address: addr,
-						Coins:   tc.baseCoins,
 					},
 					OriginalVesting:  tc.originalVesting,
 					DelegatedVesting: tc.delegatedVesting,
@@ -530,6 +529,7 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			}
 
 			mockRPCClient.On("Account", addr, blockHeader.Height).Return(acc, nil)
+			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(bal, nil)
 			balanceService, err := serviceFactory(addr, blockHeader)
 			require.NoError(t, err)
 
