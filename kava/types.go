@@ -153,6 +153,7 @@ type RPCClient interface {
 	tmclient.Client
 
 	Account(ctx context.Context, addr sdk.AccAddress, height int64) (authtypes.AccountI, error)
+	Balance(ctx context.Context, addr sdk.AccAddress, height int64) (sdk.Coins, error)
 	Delegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error)
 	UnbondingDelegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error)
 	SimulateTx(ctx context.Context, tx *legacytx.StdTx) (*sdk.SimulationResponse, error)
