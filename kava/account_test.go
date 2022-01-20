@@ -33,24 +33,26 @@ func setupFactory(t *testing.T, blockTime time.Time) (sdk.AccAddress, *tmtypes.H
 }
 
 func TestRPCAccountBalance_AccountError(t *testing.T) {
+	ctx := context.Background()
 	addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
 	accErr := errors.New("error retrieving account")
-	mockRPCClient.On("Account", addr, blockHeader.Height).Return(nil, accErr)
+	mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(nil, accErr)
 
-	service, err := serviceFactory(context.Background(), addr, blockHeader)
+	service, err := serviceFactory(ctx, addr, blockHeader)
 
 	assert.Nil(t, service)
 	assert.EqualError(t, err, accErr.Error())
 }
 
 func TestRPCAccountBalance_NullAccount(t *testing.T) {
+	ctx := context.Background()
 	addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
 	accErr := errors.New("unknown address kava1abc...")
-	mockRPCClient.On("Account", addr, blockHeader.Height).Return(nil, accErr)
+	mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(nil, accErr)
 
-	service, err := serviceFactory(context.Background(), addr, blockHeader)
+	service, err := serviceFactory(ctx, addr, blockHeader)
 	assert.NoError(t, err)
 
 	balance, err := service.GetCoinsForSubAccount(context.Background(), &types.SubAccountIdentifier{Address: kava.AccLiquid})
@@ -60,12 +62,14 @@ func TestRPCAccountBalance_NullAccount(t *testing.T) {
 }
 
 func TestRPCAccountBalance_BalanceError(t *testing.T) {
+	ctx := context.Background()
 	addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
 	balErr := errors.New("error retrieving balance")
-	mockRPCClient.On("Balance", addr, blockHeader.Height).Return(nil, balErr)
+	mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(&authtypes.BaseAccount{}, nil)
+	mockRPCClient.On("Balance", ctx, addr, blockHeader.Height).Return(nil, balErr)
 
-	service, err := serviceFactory(context.Background(), addr, blockHeader)
+	service, err := serviceFactory(ctx, addr, blockHeader)
 
 	assert.Nil(t, service)
 	assert.EqualError(t, err, balErr.Error())
@@ -190,15 +194,16 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
 			acc := &authtypes.BaseAccount{
 				Address: addr.String(),
 			}
 
-			mockRPCClient.On("Account", addr, blockHeader.Height).Return(acc, nil)
-			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(coins, nil)
-			balanceService, err := serviceFactory(context.Background(), addr, blockHeader)
+			mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(acc, nil)
+			mockRPCClient.On("Balance", ctx, addr, blockHeader.Height).Return(coins, nil)
+			balanceService, err := serviceFactory(ctx, addr, blockHeader)
 			require.NoError(t, err)
 
 			delegations := stakingtypes.DelegationResponses{}
@@ -209,9 +214,9 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			}
 
 			if tc.delegatedErr == nil {
-				mockRPCClient.On("Delegations", addr, blockHeader.Height).Return(delegations, nil)
+				mockRPCClient.On("Delegations", ctx, addr, blockHeader.Height).Return(delegations, nil)
 			} else {
-				mockRPCClient.On("Delegations", addr, blockHeader.Height).Return(nil, tc.delegatedErr)
+				mockRPCClient.On("Delegations", ctx, addr, blockHeader.Height).Return(nil, tc.delegatedErr)
 			}
 
 			unbondingDelegations := stakingtypes.UnbondingDelegations{}
@@ -226,12 +231,12 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			}
 
 			if tc.unbondingErr == nil {
-				mockRPCClient.On("UnbondingDelegations", addr, blockHeader.Height).Return(unbondingDelegations, nil)
+				mockRPCClient.On("UnbondingDelegations", ctx, addr, blockHeader.Height).Return(unbondingDelegations, nil)
 			} else {
-				mockRPCClient.On("UnbondingDelegations", addr, blockHeader.Height).Return(nil, tc.unbondingErr)
+				mockRPCClient.On("UnbondingDelegations", ctx, addr, blockHeader.Height).Return(nil, tc.unbondingErr)
 			}
 
-			coins, err := balanceService.GetCoinsForSubAccount(context.Background(), tc.subType)
+			coins, err := balanceService.GetCoinsForSubAccount(ctx, tc.subType)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedCoins, coins)
@@ -525,6 +530,7 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, tc.blockTime)
 
 			acc := &vestingtypes.PeriodicVestingAccount{
@@ -541,9 +547,9 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 				VestingPeriods: vestingPeriods,
 			}
 
-			mockRPCClient.On("Account", addr, blockHeader.Height).Return(acc, nil)
-			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(tc.baseCoins, nil)
-			balanceService, err := serviceFactory(context.Background(), addr, blockHeader)
+			mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(acc, nil)
+			mockRPCClient.On("Balance", ctx, addr, blockHeader.Height).Return(tc.baseCoins, nil)
+			balanceService, err := serviceFactory(ctx, addr, blockHeader)
 			require.NoError(t, err)
 
 			delegations := stakingtypes.DelegationResponses{}
@@ -554,9 +560,9 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			}
 
 			if tc.delegatedErr == nil {
-				mockRPCClient.On("Delegations", addr, blockHeader.Height).Return(delegations, nil)
+				mockRPCClient.On("Delegations", ctx, addr, blockHeader.Height).Return(delegations, nil)
 			} else {
-				mockRPCClient.On("Delegations", addr, blockHeader.Height).Return(nil, tc.delegatedErr)
+				mockRPCClient.On("Delegations", ctx, addr, blockHeader.Height).Return(nil, tc.delegatedErr)
 			}
 
 			unbondingDelegations := stakingtypes.UnbondingDelegations{}
@@ -571,12 +577,12 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			}
 
 			if tc.unbondingErr == nil {
-				mockRPCClient.On("UnbondingDelegations", addr, blockHeader.Height).Return(unbondingDelegations, nil)
+				mockRPCClient.On("UnbondingDelegations", ctx, addr, blockHeader.Height).Return(unbondingDelegations, nil)
 			} else {
-				mockRPCClient.On("UnbondingDelegations", addr, blockHeader.Height).Return(nil, tc.unbondingErr)
+				mockRPCClient.On("UnbondingDelegations", ctx, addr, blockHeader.Height).Return(nil, tc.unbondingErr)
 			}
 
-			coins, err := balanceService.GetCoinsForSubAccount(context.Background(), tc.subType)
+			coins, err := balanceService.GetCoinsForSubAccount(ctx, tc.subType)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedCoins, coins)
