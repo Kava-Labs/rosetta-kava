@@ -31,7 +31,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	app "github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -223,8 +223,8 @@ func TestBalance_NoFilters(t *testing.T) {
 	t.Run("error fetching latest block", func(t *testing.T) {
 		mockRPCClient, _, client := setupClient(t)
 
-		testAccount := newTestAccount(t)
-		acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+		testAccount, _ := newTestAccount(t)
+		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		blockErr := errors.New("error getting block")
 		mockRPCClient.On("Block", (*int64)(nil)).Return(nil, blockErr).Once()
 
@@ -238,8 +238,8 @@ func TestBalance_NoFilters(t *testing.T) {
 	t.Run("error getting balance service for account", func(t *testing.T) {
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-		testAccount := newTestAccount(t)
-		acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+		testAccount, _ := newTestAccount(t)
+		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		_, resultBlock := newBlockWithResult(t)
 
 		mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
@@ -259,8 +259,8 @@ func TestBalance_NoFilters(t *testing.T) {
 	t.Run("error getting coins for account", func(t *testing.T) {
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-		testAccount := newTestAccount(t)
-		acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+		testAccount, _ := newTestAccount(t)
+		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		_, resultBlock := newBlockWithResult(t)
 
 		mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
@@ -282,8 +282,8 @@ func TestBalance_NoFilters(t *testing.T) {
 	t.Run("successful balance response", func(t *testing.T) {
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-		testAccount := newTestAccount(t)
-		acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+		testAccount, _ := newTestAccount(t)
+		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		block, resultBlock := newBlockWithResult(t)
 
 		mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
@@ -316,8 +316,8 @@ func TestBalance_BlockFilter(t *testing.T) {
 	t.Run("filter by block index", func(t *testing.T) {
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-		testAccount := newTestAccount(t)
-		acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+		testAccount, _ := newTestAccount(t)
+		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		block, resultBlock := newBlockWithResult(t)
 
 		mockRPCClient.On("Block", &block.Index).Return(resultBlock, nil).Once()
@@ -346,8 +346,8 @@ func TestBalance_BlockFilter(t *testing.T) {
 	t.Run("filter by block hash", func(t *testing.T) {
 		mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-		testAccount := newTestAccount(t)
-		acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+		testAccount, _ := newTestAccount(t)
+		acc := &types.AccountIdentifier{Address: testAccount.Address}
 		block, resultBlock := newBlockWithResult(t)
 
 		mockRPCClient.On("BlockByHash", []byte(resultBlock.BlockID.Hash)).Return(resultBlock, nil).Once()
@@ -383,8 +383,8 @@ func TestBalance_BlockFilter(t *testing.T) {
 func TestBalance_CurrencyFilter(t *testing.T) {
 	mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-	testAccount := newTestAccount(t)
-	acc := &types.AccountIdentifier{Address: testAccount.Address.String()}
+	testAccount, _ := newTestAccount(t)
+	acc := &types.AccountIdentifier{Address: testAccount.Address}
 	_, resultBlock := newBlockWithResult(t)
 
 	mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
@@ -454,22 +454,22 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	mockRPCClient, mockBalanceFactory, client := setupClient(t)
 
-	emptyTestAccount := newEmptyTestAccount(t)
-	partialTestAccount := newPartialTestAccount(t)
+	emptyTestAccount, emptyAccountBalance := newEmptyTestAccount(t)
+	partialTestAccount, partialAccountBalance := newPartialTestAccount(t)
 
 	ctx := context.Background()
 	_, resultBlock := newBlockWithResult(t)
 
 	mockRPCClient.On("Block", (*int64)(nil)).Return(resultBlock, nil)
 	mockBalanceService := &mocks.AccountBalanceService{}
-	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(emptyTestAccount.GetCoins(), nil).Once()
+	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(emptyAccountBalance, nil).Once()
 
 	mockBalanceFactory.On("Execute", emptyTestAccount.Address, &resultBlock.Block.Header).Return(
 		mockBalanceService,
 		nil,
 	).Once()
 
-	acc := &types.AccountIdentifier{Address: emptyTestAccount.Address.String()}
+	acc := &types.AccountIdentifier{Address: emptyTestAccount.Address}
 	accountResponse, err := client.Balance(ctx, acc, nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, len(accountResponse.Balances), 4)
@@ -478,14 +478,14 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "SWP").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
 
-	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(partialTestAccount.GetCoins(), nil).Once()
+	mockBalanceService.On("GetCoinsForSubAccount", (*types.SubAccountIdentifier)(nil)).Return(partialAccountBalance, nil).Once()
 	mockBalanceFactory.On("Execute", partialTestAccount.Address, &resultBlock.Block.Header).Return(
 		mockBalanceService,
 		nil,
 	).Once()
 
 	// test that partial account returns zero balances for unspecified coins
-	acc = &types.AccountIdentifier{Address: partialTestAccount.Address.String()}
+	acc = &types.AccountIdentifier{Address: partialTestAccount.Address}
 	accountResponse, err = client.Balance(ctx, acc, nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, len(accountResponse.Balances), 4)
@@ -702,20 +702,20 @@ func TestBlock_Transactions(t *testing.T) {
 
 	mockTx1 := &legacytx.StdTx{
 		Msgs: []sdk.Msg{
-			bank.MsgSend{
-				FromAddress: sdk.AccAddress("test from address"),
-				ToAddress:   sdk.AccAddress("test to address"),
+			&banktypes.MsgSend{
+				FromAddress: sdk.AccAddress("test from address").String(),
+				ToAddress:   sdk.AccAddress("test to address").String(),
 				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(100))},
 			},
 		},
-		Fee: authtypes.StdFee{
+		Fee: legacytx.StdFee{
 			Amount: sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}},
 			Gas:    100000,
 		},
 		Memo: "mock transaction 1",
 	}
 	var rawMockTx1 tmtypes.Tx
-	rawMockTx1, err := cdc.MarshalBinaryLengthPrefixed(&mockTx1)
+	rawMockTx1, err := cdc.MarshalLengthPrefixed(&mockTx1)
 	require.NoError(t, err)
 	mockDeliverTx1 := &abci.ResponseDeliverTx{
 		Code: 0,
@@ -726,25 +726,25 @@ func TestBlock_Transactions(t *testing.T) {
 
 	mockTx2 := &legacytx.StdTx{
 		Msgs: []sdk.Msg{
-			bank.MsgSend{
-				FromAddress: sdk.AccAddress("test from address"),
-				ToAddress:   sdk.AccAddress("test to address"),
+			&banktypes.MsgSend{
+				FromAddress: sdk.AccAddress("test from address").String(),
+				ToAddress:   sdk.AccAddress("test to address").String(),
 				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
 			},
-			bank.MsgSend{
-				FromAddress: sdk.AccAddress("test from address"),
-				ToAddress:   sdk.AccAddress("test to address"),
+			&banktypes.MsgSend{
+				FromAddress: sdk.AccAddress("test from address").String(),
+				ToAddress:   sdk.AccAddress("test to address").String(),
 				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
 			},
 		},
-		Fee: authtypes.StdFee{
+		Fee: legacytx.StdFee{
 			Amount: sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(10000)}},
 			Gas:    200000,
 		},
 		Memo: "mock transaction 2",
 	}
 	var rawMockTx2 tmtypes.Tx
-	rawMockTx2, err = cdc.MarshalBinaryLengthPrefixed(&mockTx2)
+	rawMockTx2, err = cdc.MarshalLengthPrefixed(&mockTx2)
 	require.NoError(t, err)
 	mockDeliverTx2 := &abci.ResponseDeliverTx{
 		Code: 1,
@@ -962,22 +962,22 @@ func TestEstimateGas(t *testing.T) {
 	require.NoError(t, err)
 
 	msgs := []sdk.Msg{
-		bank.MsgSend{
-			FromAddress: addr1,
-			ToAddress:   addr2,
+		&banktypes.MsgSend{
+			FromAddress: addr1.String(),
+			ToAddress:   addr2.String(),
 			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000))),
 		},
-		bank.MsgSend{
-			FromAddress: addr1,
-			ToAddress:   addr2,
+		&banktypes.MsgSend{
+			FromAddress: addr1.String(),
+			ToAddress:   addr2.String(),
 			Amount:      sdk.NewCoins(sdk.NewCoin("hard", sdk.NewInt(2000000))),
 		},
 	}
 
-	tx := authtypes.NewStdTx(
+	tx := legacytx.NewStdTx(
 		msgs,
-		authtypes.StdFee{},
-		[]authtypes.StdSignature{{}},
+		legacytx.StdFee{},
+		[]legacytx.StdSignature{{}},
 		"a memo",
 	)
 	gasAdjusment := float64(0.1)
@@ -1016,7 +1016,7 @@ func TestPostTx(t *testing.T) {
 	err = cdc.UnmarshalJSON(txjson, &stdtx)
 	require.NoError(t, err)
 
-	txBytes, err := cdc.MarshalBinaryLengthPrefixed(stdtx)
+	txBytes, err := cdc.MarshalLengthPrefixed(stdtx)
 	require.NoError(t, err)
 
 	rpcErr := errors.New("some rpc error")

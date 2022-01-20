@@ -1,6 +1,7 @@
 package kava_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -12,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	staking "github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -37,7 +38,7 @@ func TestRPCAccountBalance_AccountError(t *testing.T) {
 	accErr := errors.New("error retrieving account")
 	mockRPCClient.On("Account", addr, blockHeader.Height).Return(nil, accErr)
 
-	service, err := serviceFactory(addr, blockHeader)
+	service, err := serviceFactory(context.Background(), addr, blockHeader)
 
 	assert.Nil(t, service)
 	assert.EqualError(t, err, accErr.Error())
@@ -49,13 +50,25 @@ func TestRPCAccountBalance_NullAccount(t *testing.T) {
 	accErr := errors.New("unknown address kava1abc...")
 	mockRPCClient.On("Account", addr, blockHeader.Height).Return(nil, accErr)
 
-	service, err := serviceFactory(addr, blockHeader)
+	service, err := serviceFactory(context.Background(), addr, blockHeader)
 	assert.NoError(t, err)
 
-	balance, err := service.GetCoinsForSubAccount(&types.SubAccountIdentifier{Address: kava.AccLiquid})
+	balance, err := service.GetCoinsForSubAccount(context.Background(), &types.SubAccountIdentifier{Address: kava.AccLiquid})
 	assert.NoError(t, err)
 
 	assert.Equal(t, sdk.Coins{}, balance)
+}
+
+func TestRPCAccountBalance_BalanceError(t *testing.T) {
+	addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
+
+	balErr := errors.New("error retrieving balance")
+	mockRPCClient.On("Balance", addr, blockHeader.Height).Return(nil, balErr)
+
+	service, err := serviceFactory(context.Background(), addr, blockHeader)
+
+	assert.Nil(t, service)
+	assert.EqualError(t, err, balErr.Error())
 }
 
 func TestRPCAccountBalance_BaseAccount(t *testing.T) {
@@ -180,17 +193,17 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
 			acc := &authtypes.BaseAccount{
-				Address: addr,
+				Address: addr.String(),
 			}
 
 			mockRPCClient.On("Account", addr, blockHeader.Height).Return(acc, nil)
 			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(coins, nil)
-			balanceService, err := serviceFactory(addr, blockHeader)
+			balanceService, err := serviceFactory(context.Background(), addr, blockHeader)
 			require.NoError(t, err)
 
-			delegations := staking.DelegationResponses{}
+			delegations := stakingtypes.DelegationResponses{}
 			for _, dc := range tc.delegatedCoins {
-				delegations = append(delegations, staking.DelegationResponse{
+				delegations = append(delegations, stakingtypes.DelegationResponse{
 					Balance: dc,
 				})
 			}
@@ -201,10 +214,10 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 				mockRPCClient.On("Delegations", addr, blockHeader.Height).Return(nil, tc.delegatedErr)
 			}
 
-			unbondingDelegations := staking.UnbondingDelegations{}
+			unbondingDelegations := stakingtypes.UnbondingDelegations{}
 			for _, dc := range tc.unbondingCoins {
-				unbondingDelegations = append(unbondingDelegations, staking.UnbondingDelegation{
-					Entries: []staking.UnbondingDelegationEntry{
+				unbondingDelegations = append(unbondingDelegations, stakingtypes.UnbondingDelegation{
+					Entries: []stakingtypes.UnbondingDelegationEntry{
 						{
 							Balance: dc.Amount,
 						},
@@ -218,7 +231,7 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 				mockRPCClient.On("UnbondingDelegations", addr, blockHeader.Height).Return(nil, tc.unbondingErr)
 			}
 
-			coins, err := balanceService.GetCoinsForSubAccount(tc.subType)
+			coins, err := balanceService.GetCoinsForSubAccount(context.Background(), tc.subType)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedCoins, coins)
@@ -517,7 +530,7 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			acc := &vestingtypes.PeriodicVestingAccount{
 				BaseVestingAccount: &vestingtypes.BaseVestingAccount{
 					BaseAccount: &authtypes.BaseAccount{
-						Address: addr,
+						Address: addr.String(),
 					},
 					OriginalVesting:  tc.originalVesting,
 					DelegatedVesting: tc.delegatedVesting,
@@ -529,13 +542,13 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			}
 
 			mockRPCClient.On("Account", addr, blockHeader.Height).Return(acc, nil)
-			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(bal, nil)
-			balanceService, err := serviceFactory(addr, blockHeader)
+			mockRPCClient.On("Balance", addr, blockHeader.Height).Return(tc.baseCoins, nil)
+			balanceService, err := serviceFactory(context.Background(), addr, blockHeader)
 			require.NoError(t, err)
 
-			delegations := staking.DelegationResponses{}
+			delegations := stakingtypes.DelegationResponses{}
 			for _, dc := range tc.delegatedCoins {
-				delegations = append(delegations, staking.DelegationResponse{
+				delegations = append(delegations, stakingtypes.DelegationResponse{
 					Balance: dc,
 				})
 			}
@@ -546,10 +559,10 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 				mockRPCClient.On("Delegations", addr, blockHeader.Height).Return(nil, tc.delegatedErr)
 			}
 
-			unbondingDelegations := staking.UnbondingDelegations{}
+			unbondingDelegations := stakingtypes.UnbondingDelegations{}
 			for _, dc := range tc.unbondingCoins {
-				unbondingDelegations = append(unbondingDelegations, staking.UnbondingDelegation{
-					Entries: []staking.UnbondingDelegationEntry{
+				unbondingDelegations = append(unbondingDelegations, stakingtypes.UnbondingDelegation{
+					Entries: []stakingtypes.UnbondingDelegationEntry{
 						{
 							Balance: dc.Amount,
 						},
@@ -563,7 +576,7 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 				mockRPCClient.On("UnbondingDelegations", addr, blockHeader.Height).Return(nil, tc.unbondingErr)
 			}
 
-			coins, err := balanceService.GetCoinsForSubAccount(tc.subType)
+			coins, err := balanceService.GetCoinsForSubAccount(context.Background(), tc.subType)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedCoins, coins)

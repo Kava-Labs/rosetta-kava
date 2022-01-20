@@ -39,11 +39,16 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 			return nil, err
 		}
 
+		bal, err := rpc.Balance(ctx, addr, blockHeader.Height)
+		if err != nil {
+			return nil, err
+		}
+
 		switch acc := acc.(type) {
 		case vestingexported.VestingAccount:
-			return &rpcVestingBalance{rpc: rpc, vacc: acc, blockHeader: blockHeader}, nil
+			return &rpcVestingBalance{rpc: rpc, vacc: acc, bal: bal, blockHeader: blockHeader}, nil
 		default:
-			return &rpcBaseBalance{rpc: rpc, acc: acc, blockHeader: blockHeader}, nil
+			return &rpcBaseBalance{rpc: rpc, acc: acc, bal: bal, blockHeader: blockHeader}, nil
 		}
 	}
 }
@@ -58,18 +63,19 @@ func (b *nullBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *typ
 type rpcBaseBalance struct {
 	rpc         RPCClient
 	acc         authtypes.AccountI
+	bal         sdk.Coins
 	blockHeader *tmtypes.Header
 }
 
 func (b *rpcBaseBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
 	if subAccount == nil {
-		coins = b.acc.GetCoins()
+		coins = b.bal
 		return
 	}
 
 	switch subAccount.Address {
 	case AccLiquid:
-		coins = b.acc.SpendableCoins(b.blockHeader.Time)
+		coins = b.bal
 	case AccLiquidDelegated:
 		coins, err = b.totalDelegated(ctx)
 	case AccLiquidUnbonding:
@@ -102,18 +108,21 @@ func (b *rpcBaseBalance) totalUnbondingDelegations(ctx context.Context) (sdk.Coi
 type rpcVestingBalance struct {
 	rpc         RPCClient
 	vacc        vestingexported.VestingAccount
+	bal         sdk.Coins
 	blockHeader *tmtypes.Header
 }
 
 func (b *rpcVestingBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
 	if subAccount == nil {
-		coins = b.vacc.GetCoins()
+		coins = b.bal
 		return
 	}
 
 	switch subAccount.Address {
 	case AccLiquid:
-		coins = b.vacc.SpendableCoins(b.blockHeader.Time)
+		// TODO: this doesn't seem correct?  Can be negative??
+		coins = b.bal.Sub(b.vacc.LockedCoins(b.blockHeader.Time))
+		//coins = b.vacc.SpendableCoins(b.blockHeader.Time)
 	case AccVesting:
 		coins = b.vacc.GetVestingCoins(b.blockHeader.Time)
 	case AccLiquidDelegated:
