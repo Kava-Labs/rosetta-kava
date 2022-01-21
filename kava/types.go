@@ -21,7 +21,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
@@ -156,7 +156,7 @@ type RPCClient interface {
 	Balance(ctx context.Context, addr sdk.AccAddress, height int64) (sdk.Coins, error)
 	Delegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error)
 	UnbondingDelegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error)
-	SimulateTx(ctx context.Context, tx *legacytx.StdTx) (*sdk.SimulationResponse, error)
+	SimulateTx(ctx context.Context, tx authsigning.Tx) (*sdk.SimulationResponse, error)
 }
 
 func strToPtr(s string) *string {
