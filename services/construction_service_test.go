@@ -34,8 +34,8 @@ func setupConstructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
 		Mode: configuration.Offline,
 	}
 	mockClient := &mocks.Client{}
-	cdc := app.MakeEncodingConfig().Amino
-	return NewConstructionAPIService(cfg, mockClient, cdc), mockClient
+	encodingConfig := app.MakeEncodingConfig()
+	return NewConstructionAPIService(cfg, mockClient, encodingConfig.Amino, encodingConfig), mockClient
 }
 
 func TestConstructionService_Offline(t *testing.T) {
@@ -44,8 +44,8 @@ func TestConstructionService_Offline(t *testing.T) {
 	}
 
 	mockClient := &mocks.Client{}
-	cdc := app.MakeEncodingConfig().Amino
-	servicer := NewConstructionAPIService(cfg, mockClient, cdc)
+	encodingConfig := app.MakeEncodingConfig()
+	servicer := NewConstructionAPIService(cfg, mockClient, encodingConfig.Amino, encodingConfig)
 	ctx := context.Background()
 
 	// Test Metadata
