@@ -131,13 +131,19 @@ var (
 	// ErrMissingPublicKey is returned when a public key is missing from a request
 	ErrMissingPublicKey = &types.Error{
 		Code:    13,
-		Message: "Invalid missing Public Key",
+		Message: "Missing Public Key",
 	}
 
 	// ErrInvalidTx is returned by invalid transactions.
 	ErrInvalidTx = &types.Error{
 		Code:    14,
 		Message: "Invalid transaction",
+	}
+
+	// ErrMissingSignature is returned by invalid transactions.
+	ErrMissingSignature = &types.Error{
+		Code:    15,
+		Message: "Missing Signature",
 	}
 )
 

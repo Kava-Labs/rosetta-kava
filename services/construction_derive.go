@@ -41,8 +41,9 @@ func (s *ConstructionAPIService) ConstructionDerive(ctx context.Context, request
 	}, nil
 }
 
-func parsePublicKey(pubKey *types.PublicKey) (secp256k1.PubKeySecp256k1, *types.Error) {
-	var tmPubKey secp256k1.PubKeySecp256k1
+// TODO: use cosmos-sdk/crypto/keys instead of tendermint?
+func parsePublicKey(pubKey *types.PublicKey) (secp256k1.PubKey, *types.Error) {
+	tmPubKey := make([]byte, secp256k1.PubKeySize)
 
 	if pubKey.CurveType != types.Secp256k1 {
 		return tmPubKey, ErrUnsupportedCurveType

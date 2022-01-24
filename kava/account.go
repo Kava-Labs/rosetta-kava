@@ -1,13 +1,14 @@
 package kava
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
-	staking "github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -18,17 +19,18 @@ var unknownAddress = regexp.MustCompile("unknown address")
 // AccountBalanceService provides an interface fetch a balance from an account subtype
 type AccountBalanceService interface {
 	GetCoinsForSubAccount(
+		ctx context.Context,
 		subAccount *types.SubAccountIdentifier,
 	) (sdk.Coins, error)
 }
 
 // BalanceServiceFactory provides an interface for creating a balance service for specifc a account and block
-type BalanceServiceFactory func(addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error)
+type BalanceServiceFactory func(ctx context.Context, addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error)
 
 // NewRPCBalanceFactory returns a balance service factory that uses an RPCClient to get an accounts balance
 func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
-	return func(addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
-		acc, err := rpc.Account(addr, blockHeader.Height)
+	return func(ctx context.Context, addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
+		acc, err := rpc.Account(ctx, addr, blockHeader.Height)
 		if err != nil {
 			if unknownAddress.MatchString(err.Error()) {
 				return &nullBalance{}, nil
@@ -37,11 +39,16 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 			return nil, err
 		}
 
+		bal, err := rpc.Balance(ctx, addr, blockHeader.Height)
+		if err != nil {
+			return nil, err
+		}
+
 		switch acc := acc.(type) {
 		case vestingexported.VestingAccount:
-			return &rpcVestingBalance{rpc: rpc, vacc: acc, blockHeader: blockHeader}, nil
+			return &rpcVestingBalance{rpc: rpc, vacc: acc, bal: bal, blockHeader: blockHeader}, nil
 		default:
-			return &rpcBaseBalance{rpc: rpc, acc: acc, blockHeader: blockHeader}, nil
+			return &rpcBaseBalance{rpc: rpc, acc: acc, bal: bal, blockHeader: blockHeader}, nil
 		}
 	}
 }
@@ -49,29 +56,30 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 type nullBalance struct {
 }
 
-func (b *nullBalance) GetCoinsForSubAccount(subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
+func (b *nullBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
 	return sdk.Coins{}, nil
 }
 
 type rpcBaseBalance struct {
 	rpc         RPCClient
-	acc         authexported.Account
+	acc         authtypes.AccountI
+	bal         sdk.Coins
 	blockHeader *tmtypes.Header
 }
 
-func (b *rpcBaseBalance) GetCoinsForSubAccount(subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
+func (b *rpcBaseBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
 	if subAccount == nil {
-		coins = b.acc.GetCoins()
+		coins = b.bal
 		return
 	}
 
 	switch subAccount.Address {
 	case AccLiquid:
-		coins = b.acc.SpendableCoins(b.blockHeader.Time)
+		coins = b.bal
 	case AccLiquidDelegated:
-		coins, err = b.totalDelegated()
+		coins, err = b.totalDelegated(ctx)
 	case AccLiquidUnbonding:
-		coins, err = b.totalUnbondingDelegations()
+		coins, err = b.totalUnbondingDelegations(ctx)
 	default:
 		coins = sdk.Coins{}
 	}
@@ -79,8 +87,8 @@ func (b *rpcBaseBalance) GetCoinsForSubAccount(subAccount *types.SubAccountIdent
 	return
 }
 
-func (b *rpcBaseBalance) totalDelegated() (sdk.Coins, error) {
-	delegations, err := b.rpc.Delegations(b.acc.GetAddress(), b.blockHeader.Height)
+func (b *rpcBaseBalance) totalDelegated(ctx context.Context) (sdk.Coins, error) {
+	delegations, err := b.rpc.Delegations(ctx, b.acc.GetAddress(), b.blockHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +96,8 @@ func (b *rpcBaseBalance) totalDelegated() (sdk.Coins, error) {
 	return sumDelegations(delegations), nil
 }
 
-func (b *rpcBaseBalance) totalUnbondingDelegations() (sdk.Coins, error) {
-	unbondingDelegations, err := b.rpc.UnbondingDelegations(b.acc.GetAddress(), b.blockHeader.Height)
+func (b *rpcBaseBalance) totalUnbondingDelegations(ctx context.Context) (sdk.Coins, error) {
+	unbondingDelegations, err := b.rpc.UnbondingDelegations(ctx, b.acc.GetAddress(), b.blockHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -100,28 +108,31 @@ func (b *rpcBaseBalance) totalUnbondingDelegations() (sdk.Coins, error) {
 type rpcVestingBalance struct {
 	rpc         RPCClient
 	vacc        vestingexported.VestingAccount
+	bal         sdk.Coins
 	blockHeader *tmtypes.Header
 }
 
-func (b *rpcVestingBalance) GetCoinsForSubAccount(subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
+func (b *rpcVestingBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
 	if subAccount == nil {
-		coins = b.vacc.GetCoins()
+		coins = b.bal
 		return
 	}
 
 	switch subAccount.Address {
 	case AccLiquid:
-		coins = b.vacc.SpendableCoins(b.blockHeader.Time)
+		// TODO: this doesn't seem correct?  Can be negative??
+		coins = b.bal.Sub(b.vacc.LockedCoins(b.blockHeader.Time))
+		//coins = b.vacc.SpendableCoins(b.blockHeader.Time)
 	case AccVesting:
 		coins = b.vacc.GetVestingCoins(b.blockHeader.Time)
 	case AccLiquidDelegated:
-		coins, _, err = b.delegated()
+		coins, _, err = b.delegated(ctx)
 	case AccVestingDelegated:
-		_, coins, err = b.delegated()
+		_, coins, err = b.delegated(ctx)
 	case AccLiquidUnbonding:
-		coins, _, err = b.unbonding()
+		coins, _, err = b.unbonding(ctx)
 	case AccVestingUnbonding:
-		_, coins, err = b.unbonding()
+		_, coins, err = b.unbonding(ctx)
 	default:
 		coins = sdk.Coins{}
 	}
@@ -130,12 +141,12 @@ func (b *rpcVestingBalance) GetCoinsForSubAccount(subAccount *types.SubAccountId
 }
 
 // delegated returns liquid and vesting coins that are staked
-func (b *rpcVestingBalance) delegated() (sdk.Coins, sdk.Coins, error) {
-	delegatedCoins, err := b.totalDelegated()
+func (b *rpcVestingBalance) delegated(ctx context.Context) (sdk.Coins, sdk.Coins, error) {
+	delegatedCoins, err := b.totalDelegated(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	unbondingCoins, err := b.totalUnbondingDelegations()
+	unbondingCoins, err := b.totalUnbondingDelegations(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -158,8 +169,8 @@ func (b *rpcVestingBalance) delegated() (sdk.Coins, sdk.Coins, error) {
 }
 
 // unbonding returns liquid and vesting coins that are unbonding
-func (b *rpcVestingBalance) unbonding() (sdk.Coins, sdk.Coins, error) {
-	unbondingCoins, err := b.totalUnbondingDelegations()
+func (b *rpcVestingBalance) unbonding(ctx context.Context) (sdk.Coins, sdk.Coins, error) {
+	unbondingCoins, err := b.totalUnbondingDelegations(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -175,8 +186,8 @@ func (b *rpcVestingBalance) unbonding() (sdk.Coins, sdk.Coins, error) {
 	return liquidCoins, vestingCoins, nil
 }
 
-func (b *rpcVestingBalance) totalDelegated() (sdk.Coins, error) {
-	delegations, err := b.rpc.Delegations(b.vacc.GetAddress(), b.blockHeader.Height)
+func (b *rpcVestingBalance) totalDelegated(ctx context.Context) (sdk.Coins, error) {
+	delegations, err := b.rpc.Delegations(ctx, b.vacc.GetAddress(), b.blockHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +195,8 @@ func (b *rpcVestingBalance) totalDelegated() (sdk.Coins, error) {
 	return sumDelegations(delegations), nil
 }
 
-func (b *rpcVestingBalance) totalUnbondingDelegations() (sdk.Coins, error) {
-	unbondingDelegations, err := b.rpc.UnbondingDelegations(b.vacc.GetAddress(), b.blockHeader.Height)
+func (b *rpcVestingBalance) totalUnbondingDelegations(ctx context.Context) (sdk.Coins, error) {
+	unbondingDelegations, err := b.rpc.UnbondingDelegations(ctx, b.vacc.GetAddress(), b.blockHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +204,7 @@ func (b *rpcVestingBalance) totalUnbondingDelegations() (sdk.Coins, error) {
 	return sumUnbondingDelegations(unbondingDelegations), nil
 }
 
-func sumDelegations(delegations staking.DelegationResponses) sdk.Coins {
+func sumDelegations(delegations stakingtypes.DelegationResponses) sdk.Coins {
 	coins := sdk.Coins{}
 	for _, d := range delegations {
 		coins = coins.Add(d.Balance)
@@ -202,7 +213,7 @@ func sumDelegations(delegations staking.DelegationResponses) sdk.Coins {
 	return coins
 }
 
-func sumUnbondingDelegations(unbondingDelegations staking.UnbondingDelegations) sdk.Coins {
+func sumUnbondingDelegations(unbondingDelegations stakingtypes.UnbondingDelegations) sdk.Coins {
 	totalBalance := sdk.ZeroInt()
 	for _, u := range unbondingDelegations {
 		for _, e := range u.Entries {

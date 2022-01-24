@@ -15,6 +15,7 @@
 package kava_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -28,8 +29,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -66,7 +66,6 @@ func rpcTestServer(
 
 func TestHTTPClient_BlockByHash(t *testing.T) {
 	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
 
 	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		assert.Equal(t, "block_by_hash", request.Method)
@@ -118,20 +117,19 @@ func TestHTTPClient_BlockByHash(t *testing.T) {
 	require.NoError(t, err)
 
 	testHash := []byte("D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75")
-	block, err := client.BlockByHash(testHash)
+	block, err := client.BlockByHash(context.Background(), testHash)
 	assert.NoError(t, err)
 	assert.Equal(t, testHash, []byte(block.BlockID.Hash))
 
 	testHash = []byte{}
-	block, err = client.BlockByHash(testHash)
+	block, err = client.BlockByHash(context.Background(), testHash)
 	assert.Error(t, err)
 	assert.Nil(t, block)
-	assert.EqualError(t, err, "BlockByHash: RPC error 1 - invalid hash")
+	assert.EqualError(t, err, "RPC error 1 - invalid hash")
 }
 
 func TestHTTPClient_Account(t *testing.T) {
 	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
 	height := int64(100)
 
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
@@ -139,7 +137,7 @@ func TestHTTPClient_Account(t *testing.T) {
 	mockAccount, err := ioutil.ReadFile(mockAccountPath)
 	require.NoError(t, err)
 
-	var accountRPCReponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+	var accountRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
 
 	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		assert.Equal(t, "abci_query", request.Method)
@@ -156,7 +154,7 @@ func TestHTTPClient_Account(t *testing.T) {
 
 		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
 
-		return accountRPCReponse(request)
+		return accountRPCResponse(request)
 	})
 	defer ts.Close()
 
@@ -166,7 +164,7 @@ func TestHTTPClient_Account(t *testing.T) {
 	addr, err := sdk.AccAddressFromBech32(testAddr)
 	require.NoError(t, err)
 
-	accountRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		abciResult := ctypes.ResultABCIQuery{
 			Response: abci.ResponseQuery{
 				Value: mockAccount,
@@ -182,11 +180,11 @@ func TestHTTPClient_Account(t *testing.T) {
 			Result:  json.RawMessage(data),
 		}
 	}
-	acc, err := client.Account(addr, height)
+	acc, err := client.Account(context.Background(), addr, height)
 	assert.NoError(t, err)
 	assert.NotNil(t, acc)
 
-	accountRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
 			JSONRPC: request.JSONRPC,
 			ID:      request.ID,
@@ -196,25 +194,24 @@ func TestHTTPClient_Account(t *testing.T) {
 			},
 		}
 	}
-	acc, err = client.Account(addr, height)
+	acc, err = client.Account(context.Background(), addr, height)
 	assert.Nil(t, acc)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - invalid account")
+	assert.EqualError(t, err, "RPC error 1 - invalid account")
 
-	accountRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
 			JSONRPC: request.JSONRPC,
 			ID:      request.ID,
 			Result:  json.RawMessage("{}"),
 		}
 	}
-	acc, err = client.Account(addr, height)
+	acc, err = client.Account(context.Background(), addr, height)
 	assert.Nil(t, acc)
 	assert.Contains(t, err.Error(), "UnmarshalJSON")
 }
 
 func TestHTTPClient_Delegated(t *testing.T) {
 	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
 	height := int64(100)
 
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
@@ -222,11 +219,11 @@ func TestHTTPClient_Delegated(t *testing.T) {
 	mockDelegations, err := ioutil.ReadFile(mockDelegationsPath)
 	require.NoError(t, err)
 
-	var delegationsRPCReponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+	var delegationsRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
 
 	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		assert.Equal(t, "abci_query", request.Method)
-		return delegationsRPCReponse(request)
+		return delegationsRPCResponse(request)
 	})
 	defer ts.Close()
 
@@ -236,7 +233,7 @@ func TestHTTPClient_Delegated(t *testing.T) {
 	addr, err := sdk.AccAddressFromBech32(testAddr)
 	require.NoError(t, err)
 
-	delegationsRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		var params struct {
 			Path   string
 			Data   bytes.HexBytes
@@ -249,7 +246,7 @@ func TestHTTPClient_Delegated(t *testing.T) {
 
 		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
 
-		var queryParams staking.QueryDelegatorParams
+		var queryParams stakingtypes.QueryDelegatorParams
 		err = cdc.UnmarshalJSON(params.Data, &queryParams)
 		require.NoError(t, err)
 
@@ -270,11 +267,11 @@ func TestHTTPClient_Delegated(t *testing.T) {
 			Result:  json.RawMessage(data),
 		}
 	}
-	delegations, err := client.Delegations(addr, height)
+	delegations, err := client.Delegations(context.Background(), addr, height)
 	assert.NoError(t, err)
 	assert.NotNil(t, delegations)
 
-	delegationsRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
 			JSONRPC: request.JSONRPC,
 			ID:      request.ID,
@@ -284,25 +281,24 @@ func TestHTTPClient_Delegated(t *testing.T) {
 			},
 		}
 	}
-	delegations, err = client.Delegations(addr, height)
+	delegations, err = client.Delegations(context.Background(), addr, height)
 	assert.Nil(t, delegations)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+	assert.EqualError(t, err, "RPC error 1 - something went wrong")
 
-	delegationsRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
 			JSONRPC: request.JSONRPC,
 			ID:      request.ID,
 			Result:  json.RawMessage("{}"),
 		}
 	}
-	delegations, err = client.Delegations(addr, height)
+	delegations, err = client.Delegations(context.Background(), addr, height)
 	assert.Nil(t, delegations)
 	assert.Contains(t, err.Error(), "UnmarshalJSON")
 }
 
 func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
 	height := int64(100)
 
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
@@ -310,11 +306,11 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 	mockUnbonding, err := ioutil.ReadFile(mockUnbondingPath)
 	require.NoError(t, err)
 
-	var unbondingRPCReponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+	var unbondingRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
 
 	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		assert.Equal(t, "abci_query", request.Method)
-		return unbondingRPCReponse(request)
+		return unbondingRPCResponse(request)
 	})
 	defer ts.Close()
 
@@ -324,7 +320,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 	addr, err := sdk.AccAddressFromBech32(testAddr)
 	require.NoError(t, err)
 
-	unbondingRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		var params struct {
 			Path   string
 			Data   bytes.HexBytes
@@ -337,7 +333,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 
 		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
 
-		var queryParams staking.QueryDelegatorParams
+		var queryParams stakingtypes.QueryDelegatorParams
 		err = cdc.UnmarshalJSON(params.Data, &queryParams)
 		require.NoError(t, err)
 
@@ -358,11 +354,11 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 			Result:  json.RawMessage(data),
 		}
 	}
-	unbonding, err := client.UnbondingDelegations(addr, height)
+	unbonding, err := client.UnbondingDelegations(context.Background(), addr, height)
 	assert.NoError(t, err)
 	assert.NotNil(t, unbonding)
 
-	unbondingRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
 			JSONRPC: request.JSONRPC,
 			ID:      request.ID,
@@ -372,25 +368,25 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 			},
 		}
 	}
-	unbonding, err = client.UnbondingDelegations(addr, height)
+	unbonding, err = client.UnbondingDelegations(context.Background(), addr, height)
 	assert.Nil(t, unbonding)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+	assert.EqualError(t, err, "RPC error 1 - something went wrong")
 
-	unbondingRPCReponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		return jsonrpctypes.RPCResponse{
 			JSONRPC: request.JSONRPC,
 			ID:      request.ID,
 			Result:  json.RawMessage("{}"),
 		}
 	}
-	unbonding, err = client.UnbondingDelegations(addr, height)
+	unbonding, err = client.UnbondingDelegations(context.Background(), addr, height)
 	assert.Nil(t, unbonding)
 	assert.Contains(t, err.Error(), "UnmarshalJSON")
 }
 
 func TestHTTPClient_SimulateTx(t *testing.T) {
-	cdc := app.MakeCodec()
-	testTx := &authtypes.StdTx{}
+	encodingConfig := app.MakeEncodingConfig()
+	testTx := encodingConfig.TxConfig.NewTxBuilder().GetTx()
 
 	mockResponse := sdk.SimulationResponse{
 		GasInfo: sdk.GasInfo{
@@ -422,11 +418,10 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 
 		assert.Equal(t, "0", params.Height)
 
-		var tx authtypes.StdTx
-		err = cdc.UnmarshalBinaryLengthPrefixed(params.Data, &tx)
+		_, err = encodingConfig.TxConfig.TxDecoder()(params.Data)
 		require.NoError(t, err)
 
-		respValue, err := cdc.MarshalBinaryBare(mockResponse)
+		respValue, err := encodingConfig.Marshaler.MarshalJSON(&mockResponse)
 		require.NoError(t, err)
 
 		abciResult := ctypes.ResultABCIQuery{
@@ -435,7 +430,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			},
 		}
 
-		data, err := cdc.MarshalJSON(&abciResult)
+		data, err := json.Marshal(&abciResult)
 		require.NoError(t, err)
 
 		return jsonrpctypes.RPCResponse{
@@ -444,7 +439,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			Result:  json.RawMessage(data),
 		}
 	}
-	simResp, err := client.SimulateTx(testTx)
+	simResp, err := client.SimulateTx(context.Background(), testTx)
 	assert.NoError(t, err)
 	assert.Equal(t, mockResponse, *simResp)
 
@@ -458,9 +453,9 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			},
 		}
 	}
-	simResp, err = client.SimulateTx(testTx)
+	simResp, err = client.SimulateTx(context.Background(), testTx)
 	assert.Nil(t, simResp)
-	assert.EqualError(t, err, "ABCIQuery: RPC error 1 - something went wrong")
+	assert.EqualError(t, err, "RPC error 1 - something went wrong")
 
 	simulateResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		abciResult := ctypes.ResultABCIQuery{
@@ -469,7 +464,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			},
 		}
 
-		data, err := cdc.MarshalJSON(&abciResult)
+		data, err := json.Marshal(&abciResult)
 		require.NoError(t, err)
 
 		return jsonrpctypes.RPCResponse{
@@ -478,7 +473,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			Result:  data,
 		}
 	}
-	simResp, err = client.SimulateTx(testTx)
+	simResp, err = client.SimulateTx(context.Background(), testTx)
 	assert.Nil(t, simResp)
 	assert.Error(t, err)
 }
@@ -520,7 +515,7 @@ func TestParseABCIResult(t *testing.T) {
 	assert.Equal(t, []byte{}, data)
 	assert.Equal(t, errors.New(mockNotOKResponse.Response.Log), err)
 
-	// if response is OK , we return nil error with Reponse value
+	// if response is OK , we return nil error with Response value
 	data, err = kava.ParseABCIResult(mockOKResponse, nil)
 	assert.Equal(t, mockOKResponse.Response.Value, data)
 	assert.Nil(t, err)
@@ -529,4 +524,90 @@ func TestParseABCIResult(t *testing.T) {
 	data, err = kava.ParseABCIResult(mockNilByteResponse, nil)
 	assert.Equal(t, []byte{}, data)
 	assert.Nil(t, err)
+}
+
+func TestHTTPClient_Balance(t *testing.T) {
+	cdc := amino.NewCodec()
+	height := int64(100)
+
+	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
+
+	mockBalances := sdk.NewCoins(
+		sdk.NewCoin("ukava", sdk.NewInt(1e6)),
+		sdk.NewCoin("swp", sdk.NewInt(1e6)),
+		sdk.NewCoin("bnb", sdk.NewInt(1e8)),
+	)
+
+	mockBalancesResp := cdc.MustMarshalJSON(mockBalances)
+
+	var balanceRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+
+	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		assert.Equal(t, "abci_query", request.Method)
+
+		var params struct {
+			Path   string
+			Data   bytes.HexBytes
+			Height string
+			Prove  bool
+		}
+
+		err := json.Unmarshal(request.Params, &params)
+		require.NoError(t, err)
+
+		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
+		return balanceRPCResponse(request)
+	})
+	defer ts.Close()
+
+	client, err := kava.NewHTTPClient(ts.URL)
+	require.NoError(t, err)
+
+	addr, err := sdk.AccAddressFromBech32(testAddr)
+	require.NoError(t, err)
+
+	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		abciResult := ctypes.ResultABCIQuery{
+			Response: abci.ResponseQuery{
+				Value: mockBalancesResp,
+			},
+		}
+
+		data, err := cdc.MarshalJSON(&abciResult)
+		require.NoError(t, err)
+
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Result:  json.RawMessage(data),
+		}
+	}
+	bal, err := client.Balance(context.Background(), addr, height)
+	assert.NoError(t, err)
+	assert.NotNil(t, bal)
+
+	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Error: &jsonrpctypes.RPCError{
+				Code:    1,
+				Message: "balance not found",
+			},
+		}
+	}
+	bal, err = client.Balance(context.Background(), addr, height)
+	assert.Nil(t, bal)
+	assert.EqualError(t, err, "RPC error 1 - balance not found")
+
+	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Result:  json.RawMessage("{}"),
+		}
+	}
+	bal, err = client.Balance(context.Background(), addr, height)
+	assert.Nil(t, bal)
+	assert.Contains(t, err.Error(), "UnmarshalJSON")
 }

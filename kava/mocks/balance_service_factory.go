@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	kava "github.com/kava-labs/rosetta-kava/kava"
 	mock "github.com/stretchr/testify/mock"
 
@@ -16,13 +18,13 @@ type BalanceServiceFactory struct {
 	mock.Mock
 }
 
-// Execute provides a mock function with given fields: addr, blockHeader
-func (_m *BalanceServiceFactory) Execute(addr types.AccAddress, blockHeader *tenderminttypes.Header) (kava.AccountBalanceService, error) {
-	ret := _m.Called(addr, blockHeader)
+// Execute provides a mock function with given fields: ctx, addr, blockHeader
+func (_m *BalanceServiceFactory) Execute(ctx context.Context, addr types.AccAddress, blockHeader *tenderminttypes.Header) (kava.AccountBalanceService, error) {
+	ret := _m.Called(ctx, addr, blockHeader)
 
 	var r0 kava.AccountBalanceService
-	if rf, ok := ret.Get(0).(func(types.AccAddress, *tenderminttypes.Header) kava.AccountBalanceService); ok {
-		r0 = rf(addr, blockHeader)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, *tenderminttypes.Header) kava.AccountBalanceService); ok {
+		r0 = rf(ctx, addr, blockHeader)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(kava.AccountBalanceService)
@@ -30,8 +32,8 @@ func (_m *BalanceServiceFactory) Execute(addr types.AccAddress, blockHeader *ten
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AccAddress, *tenderminttypes.Header) error); ok {
-		r1 = rf(addr, blockHeader)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AccAddress, *tenderminttypes.Header) error); ok {
+		r1 = rf(ctx, addr, blockHeader)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -25,12 +25,12 @@ import (
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
+	"github.com/kava-labs/kava/app/params"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
@@ -43,17 +43,17 @@ var noBlockResultsForHeight = regexp.MustCompile("could not find results for hei
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
 	rpc            RPCClient
-	cdc            *codec.Codec
+	encodingConfig params.EncodingConfig
 	balanceFactory BalanceServiceFactory
 }
 
 // NewClient initialized a new Client with the provided rpc client
 func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
-	cdc := kava.MakeCodec()
+	encodingConfig := kava.MakeEncodingConfig()
 
 	return &Client{
 		rpc:            rpc,
-		cdc:            cdc,
+		encodingConfig: encodingConfig,
 		balanceFactory: balanceServiceFactory,
 	}, nil
 }
@@ -67,11 +67,11 @@ func (c *Client) Status(ctx context.Context) (
 	[]*types.Peer,
 	error,
 ) {
-	resultStatus, err := c.rpc.Status()
+	resultStatus, err := c.rpc.Status(ctx)
 	if err != nil {
 		return nil, int64(-1), nil, nil, nil, err
 	}
-	resultNetInfo, err := c.rpc.NetInfo()
+	resultNetInfo, err := c.rpc.NetInfo(ctx)
 	if err != nil {
 		return nil, int64(-1), nil, nil, nil, err
 	}
@@ -116,8 +116,8 @@ func (c *Client) Status(ctx context.Context) (
 }
 
 // Account returns the account for the provided address at the latest block height
-func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexported.Account, error) {
-	account, err := c.rpc.Account(address, 0)
+func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authtypes.AccountI, error) {
+	account, err := c.rpc.Account(ctx, address, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +126,8 @@ func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authexpor
 }
 
 // EstimateGas returns a gas wanted estimate from a tx with a provided adjustment
-func (c *Client) EstimateGas(ctx context.Context, tx *authtypes.StdTx, adjustment float64) (uint64, error) {
-	simResp, err := c.rpc.SimulateTx(tx)
+func (c *Client) EstimateGas(ctx context.Context, tx authsigning.Tx, adjustment float64) (uint64, error) {
+	simResp, err := c.rpc.SimulateTx(ctx, tx)
 	if err != nil {
 		return 0, err
 	}
@@ -149,17 +149,17 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	block, err := c.getBlockResult(blockIdentifier)
+	block, err := c.getBlockResult(ctx, blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
-	balanceService, err := c.balanceFactory(addr, &block.Block.Header)
+	balanceService, err := c.balanceFactory(ctx, addr, &block.Block.Header)
 	if err != nil {
 		return nil, err
 	}
 
-	coins, err := balanceService.GetCoinsForSubAccount(accountIdentifier.SubAccount)
+	coins, err := balanceService.GetCoinsForSubAccount(ctx, accountIdentifier.SubAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (c *Client) Block(
 	ctx context.Context,
 	blockIdentifier *types.PartialBlockIdentifier,
 ) (*types.BlockResponse, error) {
-	block, err := c.getBlockResult(blockIdentifier)
+	block, err := c.getBlockResult(ctx, blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (c *Client) Block(
 		}
 	}
 
-	deliverResults, err := c.getBlockDeliverResults(&height)
+	deliverResults, err := c.getBlockDeliverResults(ctx, &height)
 	if err != nil {
 		return nil, err
 	}
@@ -252,11 +252,11 @@ func (c *Client) Block(
 	}, nil
 }
 
-func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
+func (c *Client) getBlockDeliverResults(ctx context.Context, height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
 	// backoff over 6,350 ms
 	backoff := 50 * time.Millisecond
 	for attempts := 0; attempts < 6; attempts++ {
-		blockResults, err = c.rpc.BlockResults(height)
+		blockResults, err = c.rpc.BlockResults(ctx, height)
 
 		if err != nil {
 			var rpcError *tmrpctypes.RPCError
@@ -278,19 +278,19 @@ func (c *Client) getBlockDeliverResults(height *int64) (blockResults *ctypes.Res
 
 // getBlockResult returns the specified block by Index or Hash. If the
 // block identifier is not provided, then the latest block is returned
-func (c *Client) getBlockResult(blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
+func (c *Client) getBlockResult(ctx context.Context, blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
 	switch {
 	case blockIdentifier == nil:
 		// fetch the latest block by passing (*int64)(nil) to tendermint rpc
-		block, err = c.rpc.Block(nil)
+		block, err = c.rpc.Block(ctx, nil)
 	case blockIdentifier.Index != nil:
-		block, err = c.rpc.Block(blockIdentifier.Index)
+		block, err = c.rpc.Block(ctx, blockIdentifier.Index)
 	case blockIdentifier.Hash != nil:
 		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
-		block, err = c.rpc.BlockByHash(hashBytes)
+		block, err = c.rpc.BlockByHash(ctx, hashBytes)
 	}
 
 	return
@@ -323,8 +323,7 @@ func (c *Client) getTransactionsForBlock(
 	for i, rawTx := range resultBlock.Block.Data.Txs {
 		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
 
-		var tx authtypes.StdTx
-		err := c.cdc.UnmarshalBinaryLengthPrefixed(rawTx, &tx)
+		tx, err := c.encodingConfig.TxConfig.TxDecoder()(rawTx)
 		if err != nil {
 			panic(fmt.Sprintf(
 				"unable to unmarshal transaction at index %d of block %d: %s",
@@ -332,7 +331,15 @@ func (c *Client) getTransactionsForBlock(
 			))
 		}
 
-		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+		sigTx, ok := tx.(authsigning.Tx)
+		if !ok {
+			panic(fmt.Sprintf(
+				"unable to cast transaction at index %d of block %d: %s",
+				i, resultBlock.Block.Header.Height, err,
+			))
+		}
+
+		operations := c.getOperationsForTransaction(sigTx, resultBlockResults.TxsResults[i])
 		metadata := c.getMetadataForTransaction(resultBlockResults.TxsResults[i])
 
 		transactions = append(transactions, &types.Transaction{
@@ -363,7 +370,7 @@ func (c *Client) getTransactionsForBlock(
 }
 
 func (c *Client) getOperationsForTransaction(
-	tx *authtypes.StdTx,
+	tx authsigning.Tx,
 	result *abci.ResponseDeliverTx,
 ) []*types.Operation {
 	opStatus := SuccessStatus
@@ -375,7 +382,7 @@ func (c *Client) getOperationsForTransaction(
 
 	if result.Codespace == sdkerrors.RootCodespace {
 		switch result.Code {
-		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode():
+		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
 		case sdkerrors.ErrInsufficientFunds.ABCICode():
 			if insufficientFee.MatchString(result.Log) {
@@ -415,8 +422,8 @@ func stringifyEvents(events []abci.Event) sdk.StringEvents {
 }
 
 // PostTx broadcasts a transaction and returns an error if it does not get into mempool
-func (c *Client) PostTx(txBytes []byte) (*types.TransactionIdentifier, error) {
-	txRes, err := c.rpc.BroadcastTxSync(tmtypes.Tx(txBytes))
+func (c *Client) PostTx(ctx context.Context, txBytes []byte) (*types.TransactionIdentifier, error) {
+	txRes, err := c.rpc.BroadcastTxSync(ctx, tmtypes.Tx(txBytes))
 	if err != nil {
 		return nil, err
 	}

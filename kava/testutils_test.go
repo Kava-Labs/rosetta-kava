@@ -24,49 +24,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestAccount(t *testing.T) *authtypes.BaseAccount {
+func newTestAccount(t *testing.T) (*authtypes.BaseAccount, sdk.Coins) {
 	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
 	require.NoError(t, err)
 
 	return &authtypes.BaseAccount{
-		Address: addr,
-		Coins: sdk.NewCoins(
+			Address:       addr.String(),
+			AccountNumber: 2,
+			Sequence:      5,
+		}, sdk.NewCoins(
 			sdk.NewCoin("ukava", sdk.NewInt(100)),
 			sdk.NewCoin("hard", sdk.NewInt(200)),
 			sdk.NewCoin("usdx", sdk.NewInt(300)),
 			sdk.NewCoin("bnb", sdk.NewInt(10)),
 			sdk.NewCoin("btcb", sdk.NewInt(1)),
 			sdk.NewCoin("busd", sdk.NewInt(1000)),
-		),
-		AccountNumber: 2,
-		Sequence:      5,
-	}
+		)
 }
 
-func newEmptyTestAccount(t *testing.T) *authtypes.BaseAccount {
+func newEmptyTestAccount(t *testing.T) (*authtypes.BaseAccount, sdk.Coins) {
 	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
 	require.NoError(t, err)
 
 	return &authtypes.BaseAccount{
-		Address:       addr,
-		Coins:         sdk.NewCoins(),
+		Address:       addr.String(),
 		AccountNumber: 3,
 		Sequence:      6,
-	}
+	}, sdk.NewCoins()
 }
 
-func newPartialTestAccount(t *testing.T) *authtypes.BaseAccount {
+func newPartialTestAccount(t *testing.T) (*authtypes.BaseAccount, sdk.Coins) {
 	addr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
 	require.NoError(t, err)
 
 	return &authtypes.BaseAccount{
-		Address: addr,
-		Coins: sdk.NewCoins(
-			sdk.NewCoin("hard", sdk.NewInt(10)),
-		),
+		Address:       addr.String(),
 		AccountNumber: 4,
 		Sequence:      7,
-	}
+	}, sdk.NewCoins(sdk.NewCoin("hard", sdk.NewInt(10)))
 }
 
 func getBalance(balances []*types.Amount, symbol string) *types.Amount {
@@ -101,4 +96,10 @@ func generateCoins(denoms []string) sdk.Coins {
 	}
 
 	return coins.Sort()
+}
+
+func mustAccAddrFromStr(t *testing.T, addr string) sdk.AccAddress {
+	accAddr, err := sdk.AccAddressFromBech32(addr)
+	require.NoError(t, err)
+	return accAddr
 }

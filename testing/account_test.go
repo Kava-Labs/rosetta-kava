@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,7 +109,8 @@ func TestAccountBalanceOnline(t *testing.T) {
 
 	account, err := GetAccount(testAccountAddress, accountBalance.BlockIdentifier.Index)
 	require.NoError(t, err)
-	ownedCoins := account.GetCoins()
+	ownedCoins, err := GetBalance(account.GetAddress(), accountBalance.BlockIdentifier.Index)
+	require.NoError(t, err)
 
 	for _, amount := range accountBalance.Balances {
 		rosettaSymbol := amount.Currency.Symbol
@@ -122,7 +125,7 @@ func TestAccountBalanceOnline(t *testing.T) {
 		assert.Equal(t, amount.Value, ownedAmount.String())
 
 		decimals := amount.Currency.Decimals
-		if kavaSymbol == "ukava" || kavaSymbol == "hard" || kavaSymbol == "usdx" {
+		if kavaSymbol == "ukava" || kavaSymbol == "hard" || kavaSymbol == "usdx" || kavaSymbol == "swp" {
 			assert.Equal(t, int32(6), decimals)
 		} else {
 			assert.Equal(t, int32(8), decimals)

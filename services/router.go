@@ -52,8 +52,8 @@ func NewBlockchainRouter(
 		asserter,
 	)
 
-	cdc := app.MakeCodec()
-	constructionAPIService := NewConstructionAPIService(config, client, cdc)
+	encodingConfig := app.MakeEncodingConfig()
+	constructionAPIService := NewConstructionAPIService(config, client, encodingConfig)
 	constructionAPIController := server.NewConstructionAPIController(
 		constructionAPIService,
 		asserter,

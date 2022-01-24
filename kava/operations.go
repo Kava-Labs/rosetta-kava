@@ -19,24 +19,24 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/kava-labs/kava/x/cdp"
-	"github.com/kava-labs/kava/x/kavadist"
+	cdptypes "github.com/kava-labs/kava/x/cdp/types"
+	kavadisttypes "github.com/kava-labs/kava/x/kavadist/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var (
 	feeCollectorAddress    = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
-	mintModuleAddress      = sdk.AccAddress(crypto.AddressHash([]byte(mint.ModuleName)))
-	kavaDistModuleAddress  = sdk.AccAddress(crypto.AddressHash([]byte(kavadist.ModuleName)))
-	stakingModuleAddress   = sdk.AccAddress(crypto.AddressHash([]byte(staking.BondedPoolName)))
-	unbondingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(staking.NotBondedPoolName)))
-	cdpModuleAddress       = sdk.AccAddress(crypto.AddressHash([]byte(cdp.ModuleName)))
+	mintModuleAddress      = sdk.AccAddress(crypto.AddressHash([]byte(minttypes.ModuleName)))
+	kavaDistModuleAddress  = sdk.AccAddress(crypto.AddressHash([]byte(kavadisttypes.ModuleName)))
+	stakingModuleAddress   = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.BondedPoolName)))
+	unbondingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.NotBondedPoolName)))
+	cdpModuleAddress       = sdk.AccAddress(crypto.AddressHash([]byte(cdptypes.ModuleName)))
 )
 
 // EventsToOperations returns rosetta operations from abci block events
@@ -60,15 +60,15 @@ func EventToOperations(event sdk.StringEvent, status *string, index int64) []*ty
 	}
 
 	switch event.Type {
-	case bank.EventTypeTransfer:
+	case banktypes.EventTypeTransfer:
 		return bankTransferEventToOperations(attributeMap, status, index)
-	case kavadist.EventTypeKavaDist:
+	case kavadisttypes.EventTypeKavaDist:
 		return kavaDistEventToOperations(attributeMap, status, index)
 	case stakingtypes.EventTypeCompleteUnbonding:
 		return completeUnbondingEventToOperations(attributeMap, status, index)
-	case cdp.EventTypeCdpRepay:
+	case cdptypes.EventTypeCdpRepay:
 		return cdpRepayEventToOperations(attributeMap, status, index)
-	case cdp.EventTypeCdpDraw:
+	case cdptypes.EventTypeCdpDraw:
 		return cdpDrawEventToOperations(attributeMap, status, index)
 	}
 
@@ -77,20 +77,20 @@ func EventToOperations(event sdk.StringEvent, status *string, index int64) []*ty
 
 func bankTransferEventToOperations(attributes map[string]string, status *string, index int64) []*types.Operation {
 	recipient := &types.AccountIdentifier{
-		Address: attributes[bank.AttributeKeyRecipient],
+		Address: attributes[banktypes.AttributeKeyRecipient],
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
 
-	if attributes[bank.AttributeKeySender] == mintModuleAddress.String() {
+	if attributes[banktypes.AttributeKeySender] == mintModuleAddress.String() {
 		return accountBalanceOps(MintOpType, amount, false, recipient, status, index)
 	}
 
 	sender := &types.AccountIdentifier{
-		Address: attributes[bank.AttributeKeySender],
+		Address: attributes[banktypes.AttributeKeySender],
 	}
 
 	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
@@ -101,9 +101,9 @@ func kavaDistEventToOperations(attributes map[string]string, status *string, ind
 		Address: kavaDistModuleAddress.String(),
 	}
 
-	amount, err := sdk.ParseCoins(attributes[kavadist.AttributeKeyInflation])
+	amount, err := sdk.ParseCoinsNormalized(attributes[kavadisttypes.AttributeKeyInflation])
 	if err != nil {
-		panic(fmt.Sprintf("could not parse coins: %s", attributes[kavadist.AttributeKeyInflation]))
+		panic(fmt.Sprintf("could not parse coins: %s", attributes[kavadisttypes.AttributeKeyInflation]))
 	}
 
 	return accountBalanceOps(MintOpType, amount, false, account, status, index)
@@ -114,7 +114,7 @@ func completeUnbondingEventToOperations(attributes map[string]string, status *st
 		Address: attributes[stakingtypes.AttributeKeyDelegator],
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -131,7 +131,7 @@ func cdpRepayEventToOperations(attributes map[string]string, status *string, ind
 		Address: cdpModuleAddress.String(),
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -144,7 +144,7 @@ func cdpDrawEventToOperations(attributes map[string]string, status *string, inde
 		Address: cdpModuleAddress.String(),
 	}
 
-	amount, err := sdk.ParseCoins(attributes[sdk.AttributeKeyAmount])
+	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 	if err != nil {
 		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
 	}
@@ -153,12 +153,12 @@ func cdpDrawEventToOperations(attributes map[string]string, status *string, inde
 }
 
 // TxToOperations returns rosetta operations from a transaction
-func TxToOperations(tx *authtypes.StdTx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+func TxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
 	operationIndex := int64(0)
 	operations := []*types.Operation{}
 
-	if !tx.Fee.Amount.Empty() {
-		feeOps := FeeToOperations(tx.FeePayer(), tx.Fee.Amount, feeStatus, operationIndex)
+	if !tx.GetFee().Empty() {
+		feeOps := FeeToOperations(tx.FeePayer(), tx.GetFee(), feeStatus, operationIndex)
 		operations = appendOperationsAndUpdateIndex(operations, feeOps, &operationIndex)
 	}
 
@@ -169,7 +169,7 @@ func TxToOperations(tx *authtypes.StdTx, logs sdk.ABCIMessageLogs, feeStatus *st
 			log = logs[msgIndex]
 		} else {
 			log = sdk.ABCIMessageLog{
-				MsgIndex: uint16(msgIndex),
+				MsgIndex: uint32(msgIndex),
 			}
 		}
 
@@ -182,8 +182,8 @@ func TxToOperations(tx *authtypes.StdTx, logs sdk.ABCIMessageLogs, feeStatus *st
 
 // FeeToOperations returns rosetta operations from a transaction fee
 func FeeToOperations(feePayer sdk.AccAddress, amount sdk.Coins, status *string, index int64) []*types.Operation {
-	sender := newAccountID(feePayer)
-	recipient := newAccountID(feeCollectorAddress)
+	sender := newAccountID(feePayer.String())
+	recipient := newAccountID(feeCollectorAddress.String())
 
 	return balanceTrackingOps(FeeOpType, sender, amount, recipient, status, index)
 }
@@ -210,9 +210,9 @@ func newOpID(index int64) *types.OperationIdentifier {
 	}
 }
 
-func newAccountID(addr sdk.AccAddress) *types.AccountIdentifier {
+func newAccountID(addr string) *types.AccountIdentifier {
 	return &types.AccountIdentifier{
-		Address: addr.String(),
+		Address: addr,
 	}
 }
 
@@ -302,41 +302,41 @@ func accountBalanceOps(
 func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
 	var ops []*types.Operation
 
-	if m, ok := msg.(bank.MsgMultiSend); ok {
+	if m, ok := msg.(*banktypes.MsgMultiSend); ok {
 		transferOps := msgMultiSendToTransferOperations(m, status, index)
 		ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
 		return ops
 	}
 
 	for _, ev := range log.Events {
-		if ev.Type == bank.EventTypeTransfer {
-			events := unflattenEvents(ev, bank.EventTypeTransfer, 3)
+		if ev.Type == banktypes.EventTypeTransfer {
+			events := unflattenEvents(ev, banktypes.EventTypeTransfer, 3)
 			transferOps := EventsToOperations(events, status, index)
 			ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
 		}
 
-		if ev.Type == cdp.EventTypeCdpRepay {
-			events := unflattenEvents(ev, cdp.EventTypeCdpRepay, 2)
+		if ev.Type == cdptypes.EventTypeCdpRepay {
+			events := unflattenEvents(ev, cdptypes.EventTypeCdpRepay, 2)
 			burnOps := EventsToOperations(events, status, index)
 			ops = appendOperationsAndUpdateIndex(ops, burnOps, &index)
 		}
 
-		if ev.Type == cdp.EventTypeCdpDraw {
-			events := unflattenEvents(ev, cdp.EventTypeCdpDraw, 2)
+		if ev.Type == cdptypes.EventTypeCdpDraw {
+			events := unflattenEvents(ev, cdptypes.EventTypeCdpDraw, 2)
 			burnOps := EventsToOperations(events, status, index)
 			ops = appendOperationsAndUpdateIndex(ops, burnOps, &index)
 		}
 	}
 	switch msg.(type) {
-	case staking.MsgDelegate:
+	case *stakingtypes.MsgDelegate:
 		return msgDelegateToOperations(ops, log, status, index)
-	case staking.MsgCreateValidator:
+	case *stakingtypes.MsgCreateValidator:
 		return msgCreateValidatorToOperations(ops, log, status, index)
 	}
 
 	if *status != SuccessStatus {
 		switch m := msg.(type) {
-		case bank.MsgSend:
+		case *banktypes.MsgSend:
 			transferOps := msgSendToTransferOperations(m, status, index)
 			ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
 		}
@@ -344,7 +344,7 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 	return ops
 }
 
-func msgSendToTransferOperations(msg bank.MsgSend, status *string, index int64) []*types.Operation {
+func msgSendToTransferOperations(msg *banktypes.MsgSend, status *string, index int64) []*types.Operation {
 	sender := newAccountID(msg.FromAddress)
 	recipient := newAccountID(msg.ToAddress)
 	amount := msg.Amount
@@ -352,7 +352,7 @@ func msgSendToTransferOperations(msg bank.MsgSend, status *string, index int64) 
 	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
 }
 
-func msgMultiSendToTransferOperations(msg bank.MsgMultiSend, status *string, index int64) []*types.Operation {
+func msgMultiSendToTransferOperations(msg *banktypes.MsgMultiSend, status *string, index int64) []*types.Operation {
 	ops := []*types.Operation{}
 
 	for _, input := range msg.Inputs {
@@ -393,13 +393,13 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 	}
 
 	recipient := stakingModuleAddress
-	var amount sdk.Coin
+	var amount sdk.Coins
 	var sender sdk.AccAddress
 	for _, ev := range log.Events {
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					amount = mustParseCoinsNormalized(attr.Value)
 				}
 			}
 		} else if ev.Type == "message" {
@@ -410,7 +410,7 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 			}
 		}
 	}
-	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
+	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), amount, newAccountID(recipient.String()), status, index)
 	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
 }
 
@@ -424,13 +424,13 @@ func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageL
 	}
 
 	recipient := stakingModuleAddress
-	var amount sdk.Coin
+	var amount sdk.Coins
 	var sender sdk.AccAddress
 	for _, ev := range log.Events {
 		if ev.Type == "create_validator" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					amount = mustParseCoinsNormalized(attr.Value)
 				}
 			}
 		} else if ev.Type == "message" {
@@ -441,7 +441,7 @@ func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageL
 			}
 		}
 	}
-	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender), sdk.NewCoins(amount), newAccountID(recipient), status, index)
+	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), amount, newAccountID(recipient.String()), status, index)
 	return appendOperationsAndUpdateIndex(ops, createValidatorOps, &index)
 }
 
@@ -453,18 +453,10 @@ func mustAccAddressFromBech32(addr string) sdk.AccAddress {
 	return acc
 }
 
-func mustParseCoins(coinsStr string) sdk.Coins {
-	coins, err := sdk.ParseCoins(coinsStr)
+func mustParseCoinsNormalized(coinsStr string) sdk.Coins {
+	coins, err := sdk.ParseCoinsNormalized(coinsStr)
 	if err != nil {
 		panic(err)
 	}
 	return coins
-}
-
-func mustNewIntFromStr(s string) sdk.Int {
-	i, ok := sdk.NewIntFromString(s)
-	if !ok {
-		panic(fmt.Sprintf("error when converting %s to sdk.Int", s))
-	}
-	return i
 }

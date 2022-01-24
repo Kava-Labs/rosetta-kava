@@ -41,8 +41,8 @@ func TestCurrencies(t *testing.T) {
 		assert.Equal(t, symbol, currency.Symbol)
 	}
 
-	// bnb, busd, btcb, xrpb, hbtc not defined
-	for _, denom := range []string{"bnb", "busd", "btcb", "xrpb", "hbtc"} {
+	// bnb, busd, btcb, xrpb, hbtc, (atom direct from hub) not defined
+	for _, denom := range []string{"bnb", "busd", "btcb", "xrpb", "hbtc", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"} {
 		assert.Nil(t, Currencies[denom])
 	}
 }

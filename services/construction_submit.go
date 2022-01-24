@@ -40,7 +40,7 @@ func (s *ConstructionAPIService) ConstructionSubmit(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	res, err := s.client.PostTx(txBytes)
+	res, err := s.client.PostTx(ctx, txBytes)
 	if err != nil {
 		return nil, wrapErr(ErrKava, err)
 	}

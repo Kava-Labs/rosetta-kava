@@ -4,7 +4,7 @@ install:
 
 .PHONY: lint
 lint:
-	go run golang.org/x/lint/golint -set_exit_status ./...
+	golint -set_exit_status ./...
 
 .PHONY: golangci-lint
 golangci-lint:
@@ -20,11 +20,15 @@ build:
 
 .PHONY: run
 run:
-	MODE=online NETWORK=kava-8 PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
+	MODE=online NETWORK=kava-9 PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
+
+.PHONY: run
+run-offline:
+	MODE=offline NETWORK=kava-9 PORT=8001 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
 
 .PHONY: run-testnet
 run-testnet:
-	MODE=online NETWORK=kava-testnet-13000 PORT=8000 KAVA_RPC_URL=https://rpc.data-testnet.kava.io:443 go run . run
+	MODE=online NETWORK=kava-testnet-14000 PORT=8000 KAVA_RPC_URL=https://rpc.data-testnet.kava.io:443 go run . run
 
 .PHONY: run-local
 run-local:
@@ -54,11 +58,11 @@ watch-integration:
 
 .PHONY: rosetta-check-data
 rosetta-check-data:
-	rosetta-cli --configuration-file rosetta-cli-conf/kava-8/config.json check:data
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-9/config.json check:data
 
 .PHONY: rosetta-check-construction
 rosetta-check-construction:
-	rosetta-cli --configuration-file rosetta-cli-conf/kava-8/config.json check:construction
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-9/config.json check:construction
 
 .PHONY: rosetta-check-data-local
 rosetta-check-data-local:

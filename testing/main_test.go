@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +18,7 @@
 package testing
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,8 +30,8 @@ import (
 	rclient "github.com/coinbase/rosetta-sdk-go/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	router "github.com/kava-labs/rosetta-kava/server"
@@ -51,7 +54,7 @@ var client *rclient.APIClient
 //
 // Tendermint RPC
 //
-var cdc *codec.Codec
+var cdc *codec.LegacyAmino
 var rpc rpcclient.Client
 
 // Test Settings
@@ -95,7 +98,8 @@ func TestMain(m *testing.M) {
 		},
 	)
 
-	cdc = kava.MakeCodec()
+	encodingConfig := kava.MakeEncodingConfig()
+	cdc = encodingConfig.Amino
 
 	client = rclient.NewAPIClient(clientConfig)
 
@@ -114,13 +118,13 @@ func TestMain(m *testing.M) {
 }
 
 // GetAccount gets an account
-func GetAccount(address string, height int64) (authexported.Account, error) {
+func GetAccount(address string, height int64) (authtypes.AccountI, error) {
 	addr, err := sdktypes.AccAddressFromBech32(address)
 	if err != nil {
 		return nil, err
 	}
 
-	bz, err := cdc.MarshalJSON(authtypes.NewQueryAccountParams(addr))
+	bz, err := cdc.MarshalJSON(authtypes.QueryAccountRequest{Address: addr.String()})
 	if err != nil {
 		return nil, err
 	}
@@ -128,18 +132,42 @@ func GetAccount(address string, height int64) (authexported.Account, error) {
 	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
 	opts := rpcclient.ABCIQueryOptions{Height: height, Prove: false}
 
-	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(path, bz, opts))
+	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(context.Background(), path, bz, opts))
 	if err != nil {
 		return nil, err
 	}
 
-	var account authexported.Account
+	var account authtypes.AccountI
 	err = cdc.UnmarshalJSON(result, &account)
 	if err != nil {
 		return nil, err
 	}
 
 	return account, nil
+}
+
+// GetGalance returns the owned coins of an account at a specified height
+func GetBalance(address sdktypes.AccAddress, height int64) (sdktypes.Coins, error) {
+	bz, err := cdc.MarshalJSON(banktypes.NewQueryAllBalancesRequest(address, nil))
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("custom/%s/%s", banktypes.QuerierRoute, banktypes.QueryAllBalances)
+	opts := rpcclient.ABCIQueryOptions{Height: height, Prove: false}
+
+	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(context.Background(), path, bz, opts))
+	if err != nil {
+		return nil, err
+	}
+
+	var balance sdktypes.Coins
+	err = cdc.UnmarshalJSON(result, &balance)
+	if err != nil {
+		return nil, err
+	}
+
+	return balance, nil
 }
 
 func ParseABCIResult(result *ctypes.ResultABCIQuery, err error) ([]byte, error) {

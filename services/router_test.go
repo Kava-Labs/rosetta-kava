@@ -46,6 +46,7 @@ func TestRouter_Offline(t *testing.T) {
 		},
 		[]string{},
 		false,
+		"",
 	)
 	assert.NoError(t, err)
 

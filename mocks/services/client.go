@@ -7,11 +7,11 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	exported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-
 	mock "github.com/stretchr/testify/mock"
 
 	rosetta_sdk_gotypes "github.com/coinbase/rosetta-sdk-go/types"
+
+	signing "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
 	types "github.com/cosmos/cosmos-sdk/types"
 )
@@ -22,15 +22,15 @@ type Client struct {
 }
 
 // Account provides a mock function with given fields: _a0, _a1
-func (_m *Client) Account(_a0 context.Context, _a1 types.AccAddress) (exported.Account, error) {
+func (_m *Client) Account(_a0 context.Context, _a1 types.AccAddress) (authtypes.AccountI, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 exported.Account
-	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress) exported.Account); ok {
+	var r0 authtypes.AccountI
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress) authtypes.AccountI); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(exported.Account)
+			r0 = ret.Get(0).(authtypes.AccountI)
 		}
 	}
 
@@ -91,18 +91,18 @@ func (_m *Client) Block(_a0 context.Context, _a1 *rosetta_sdk_gotypes.PartialBlo
 }
 
 // EstimateGas provides a mock function with given fields: _a0, _a1, _a2
-func (_m *Client) EstimateGas(_a0 context.Context, _a1 *authtypes.StdTx, _a2 float64) (uint64, error) {
+func (_m *Client) EstimateGas(_a0 context.Context, _a1 signing.Tx, _a2 float64) (uint64, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 uint64
-	if rf, ok := ret.Get(0).(func(context.Context, *authtypes.StdTx, float64) uint64); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, signing.Tx, float64) uint64); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *authtypes.StdTx, float64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, signing.Tx, float64) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
@@ -111,13 +111,13 @@ func (_m *Client) EstimateGas(_a0 context.Context, _a1 *authtypes.StdTx, _a2 flo
 	return r0, r1
 }
 
-// PostTx provides a mock function with given fields: txBytes
-func (_m *Client) PostTx(txBytes []byte) (*rosetta_sdk_gotypes.TransactionIdentifier, error) {
-	ret := _m.Called(txBytes)
+// PostTx provides a mock function with given fields: ctx, txBytes
+func (_m *Client) PostTx(ctx context.Context, txBytes []byte) (*rosetta_sdk_gotypes.TransactionIdentifier, error) {
+	ret := _m.Called(ctx, txBytes)
 
 	var r0 *rosetta_sdk_gotypes.TransactionIdentifier
-	if rf, ok := ret.Get(0).(func([]byte) *rosetta_sdk_gotypes.TransactionIdentifier); ok {
-		r0 = rf(txBytes)
+	if rf, ok := ret.Get(0).(func(context.Context, []byte) *rosetta_sdk_gotypes.TransactionIdentifier); ok {
+		r0 = rf(ctx, txBytes)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*rosetta_sdk_gotypes.TransactionIdentifier)
@@ -125,8 +125,8 @@ func (_m *Client) PostTx(txBytes []byte) (*rosetta_sdk_gotypes.TransactionIdenti
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]byte) error); ok {
-		r1 = rf(txBytes)
+	if rf, ok := ret.Get(1).(func(context.Context, []byte) error); ok {
+		r1 = rf(ctx, txBytes)
 	} else {
 		r1 = ret.Error(1)
 	}

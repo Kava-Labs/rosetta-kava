@@ -126,13 +126,13 @@ func TestConstructionDerive_PublicKeyValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			PubKeyBytes, err := base64.StdEncoding.DecodeString(tc.key)
+			pubKeyBytes, err := base64.StdEncoding.DecodeString(tc.key)
 			require.NoError(t, err)
 
 			request := &types.ConstructionDeriveRequest{
 				PublicKey: &types.PublicKey{
 					CurveType: types.Secp256k1,
-					Bytes:     PubKeyBytes,
+					Bytes:     pubKeyBytes,
 				},
 			}
 

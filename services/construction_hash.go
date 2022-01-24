@@ -23,10 +23,7 @@ import (
 	"strings"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-
-	"github.com/kava-labs/kava/app"
 )
 
 // ConstructionHash implements the /construction/hash endpoint.
@@ -34,23 +31,22 @@ func (s *ConstructionAPIService) ConstructionHash(
 	ctx context.Context,
 	request *types.ConstructionHashRequest,
 ) (*types.TransactionIdentifierResponse, *types.Error) {
-
-	bz, err := hex.DecodeString(request.SignedTransaction)
+	signedTxBytes, err := hex.DecodeString(request.SignedTransaction)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	cdc := app.MakeCodec()
-	var stdtx authtypes.StdTx
-	cdc.MustUnmarshalBinaryLengthPrefixed(bz, &stdtx)
-
-	err = stdtx.ValidateBasic()
+	tx, err := s.encodingConfig.TxConfig.TxDecoder()(signedTxBytes)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
+	err = tx.ValidateBasic()
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	tx := tmtypes.Tx(bz)
-	txHash := hex.EncodeToString(tx.Hash())
+	tmTx := tmtypes.Tx(signedTxBytes)
+	txHash := hex.EncodeToString(tmTx.Hash())
 	txIdentifier := &types.TransactionIdentifier{Hash: strings.ToUpper(txHash)}
 	return &types.TransactionIdentifierResponse{TransactionIdentifier: txIdentifier}, nil
 }

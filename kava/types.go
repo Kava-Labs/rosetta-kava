@@ -17,18 +17,19 @@
 package kava
 
 import (
+	"context"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 const (
-	// NodeVersion is the version of kvd we are using
-	NodeVersion = "v0.15.0"
+	// NodeVersion is the version of kava we are using
+	NodeVersion = "v0.16.0"
 	// Blockchain is always Kava
 	Blockchain = "Kava"
 	// HistoricalBalanceSupported is whether historical balance is supported.
@@ -151,11 +152,11 @@ var Denoms = map[string]string{
 type RPCClient interface {
 	tmclient.Client
 
-	BlockByHash([]byte) (*ctypes.ResultBlock, error)
-	Account(addr sdk.AccAddress, height int64) (authexported.Account, error)
-	Delegations(addr sdk.AccAddress, height int64) (staking.DelegationResponses, error)
-	UnbondingDelegations(addr sdk.AccAddress, height int64) (staking.UnbondingDelegations, error)
-	SimulateTx(tx *authtypes.StdTx) (*sdk.SimulationResponse, error)
+	Account(ctx context.Context, addr sdk.AccAddress, height int64) (authtypes.AccountI, error)
+	Balance(ctx context.Context, addr sdk.AccAddress, height int64) (sdk.Coins, error)
+	Delegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error)
+	UnbondingDelegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error)
+	SimulateTx(ctx context.Context, tx authsigning.Tx) (*sdk.SimulationResponse, error)
 }
 
 func strToPtr(s string) *string {

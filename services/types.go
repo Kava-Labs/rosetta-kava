@@ -22,14 +22,14 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // Client is used services to get blockchain
 // data and submit transactions.
 type Client interface {
-	Account(context.Context, sdk.AccAddress) (authexported.Account, error)
+	Account(context.Context, sdk.AccAddress) (authtypes.AccountI, error)
 
 	Balance(
 		context.Context,
@@ -40,7 +40,7 @@ type Client interface {
 
 	Block(context.Context, *types.PartialBlockIdentifier) (*types.BlockResponse, error)
 
-	EstimateGas(context.Context, *authtypes.StdTx, float64) (uint64, error)
+	EstimateGas(context.Context, authsigning.Tx, float64) (uint64, error)
 
 	Status(context.Context) (
 		*types.BlockIdentifier,
@@ -51,5 +51,5 @@ type Client interface {
 		error,
 	)
 
-	PostTx(txBytes []byte) (*types.TransactionIdentifier, error)
+	PostTx(ctx context.Context, txBytes []byte) (*types.TransactionIdentifier, error)
 }

@@ -12,11 +12,11 @@ import (
 
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	exported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-
 	log "github.com/tendermint/tendermint/libs/log"
 
 	mock "github.com/stretchr/testify/mock"
+
+	signing "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -30,13 +30,13 @@ type RPCClient struct {
 	mock.Mock
 }
 
-// ABCIInfo provides a mock function with given fields:
-func (_m *RPCClient) ABCIInfo() (*coretypes.ResultABCIInfo, error) {
-	ret := _m.Called()
+// ABCIInfo provides a mock function with given fields: _a0
+func (_m *RPCClient) ABCIInfo(_a0 context.Context) (*coretypes.ResultABCIInfo, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultABCIInfo
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultABCIInfo); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultABCIInfo); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultABCIInfo)
@@ -44,122 +44,7 @@ func (_m *RPCClient) ABCIInfo() (*coretypes.ResultABCIInfo, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ABCIQuery provides a mock function with given fields: path, data
-func (_m *RPCClient) ABCIQuery(path string, data bytes.HexBytes) (*coretypes.ResultABCIQuery, error) {
-	ret := _m.Called(path, data)
-
-	var r0 *coretypes.ResultABCIQuery
-	if rf, ok := ret.Get(0).(func(string, bytes.HexBytes) *coretypes.ResultABCIQuery); ok {
-		r0 = rf(path, data)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*coretypes.ResultABCIQuery)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, bytes.HexBytes) error); ok {
-		r1 = rf(path, data)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ABCIQueryWithOptions provides a mock function with given fields: path, data, opts
-func (_m *RPCClient) ABCIQueryWithOptions(path string, data bytes.HexBytes, opts client.ABCIQueryOptions) (*coretypes.ResultABCIQuery, error) {
-	ret := _m.Called(path, data, opts)
-
-	var r0 *coretypes.ResultABCIQuery
-	if rf, ok := ret.Get(0).(func(string, bytes.HexBytes, client.ABCIQueryOptions) *coretypes.ResultABCIQuery); ok {
-		r0 = rf(path, data, opts)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*coretypes.ResultABCIQuery)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, bytes.HexBytes, client.ABCIQueryOptions) error); ok {
-		r1 = rf(path, data, opts)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Account provides a mock function with given fields: addr, height
-func (_m *RPCClient) Account(addr types.AccAddress, height int64) (exported.Account, error) {
-	ret := _m.Called(addr, height)
-
-	var r0 exported.Account
-	if rf, ok := ret.Get(0).(func(types.AccAddress, int64) exported.Account); ok {
-		r0 = rf(addr, height)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(exported.Account)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AccAddress, int64) error); ok {
-		r1 = rf(addr, height)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Block provides a mock function with given fields: height
-func (_m *RPCClient) Block(height *int64) (*coretypes.ResultBlock, error) {
-	ret := _m.Called(height)
-
-	var r0 *coretypes.ResultBlock
-	if rf, ok := ret.Get(0).(func(*int64) *coretypes.ResultBlock); ok {
-		r0 = rf(height)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*coretypes.ResultBlock)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*int64) error); ok {
-		r1 = rf(height)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// BlockByHash provides a mock function with given fields: _a0
-func (_m *RPCClient) BlockByHash(_a0 []byte) (*coretypes.ResultBlock, error) {
-	ret := _m.Called(_a0)
-
-	var r0 *coretypes.ResultBlock
-	if rf, ok := ret.Get(0).(func([]byte) *coretypes.ResultBlock); ok {
-		r0 = rf(_a0)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*coretypes.ResultBlock)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
@@ -168,13 +53,151 @@ func (_m *RPCClient) BlockByHash(_a0 []byte) (*coretypes.ResultBlock, error) {
 	return r0, r1
 }
 
-// BlockResults provides a mock function with given fields: height
-func (_m *RPCClient) BlockResults(height *int64) (*coretypes.ResultBlockResults, error) {
-	ret := _m.Called(height)
+// ABCIQuery provides a mock function with given fields: ctx, path, data
+func (_m *RPCClient) ABCIQuery(ctx context.Context, path string, data bytes.HexBytes) (*coretypes.ResultABCIQuery, error) {
+	ret := _m.Called(ctx, path, data)
+
+	var r0 *coretypes.ResultABCIQuery
+	if rf, ok := ret.Get(0).(func(context.Context, string, bytes.HexBytes) *coretypes.ResultABCIQuery); ok {
+		r0 = rf(ctx, path, data)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultABCIQuery)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, bytes.HexBytes) error); ok {
+		r1 = rf(ctx, path, data)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ABCIQueryWithOptions provides a mock function with given fields: ctx, path, data, opts
+func (_m *RPCClient) ABCIQueryWithOptions(ctx context.Context, path string, data bytes.HexBytes, opts client.ABCIQueryOptions) (*coretypes.ResultABCIQuery, error) {
+	ret := _m.Called(ctx, path, data, opts)
+
+	var r0 *coretypes.ResultABCIQuery
+	if rf, ok := ret.Get(0).(func(context.Context, string, bytes.HexBytes, client.ABCIQueryOptions) *coretypes.ResultABCIQuery); ok {
+		r0 = rf(ctx, path, data, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultABCIQuery)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, bytes.HexBytes, client.ABCIQueryOptions) error); ok {
+		r1 = rf(ctx, path, data, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Account provides a mock function with given fields: ctx, addr, height
+func (_m *RPCClient) Account(ctx context.Context, addr types.AccAddress, height int64) (authtypes.AccountI, error) {
+	ret := _m.Called(ctx, addr, height)
+
+	var r0 authtypes.AccountI
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, int64) authtypes.AccountI); ok {
+		r0 = rf(ctx, addr, height)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(authtypes.AccountI)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, types.AccAddress, int64) error); ok {
+		r1 = rf(ctx, addr, height)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Balance provides a mock function with given fields: ctx, addr, height
+func (_m *RPCClient) Balance(ctx context.Context, addr types.AccAddress, height int64) (types.Coins, error) {
+	ret := _m.Called(ctx, addr, height)
+
+	var r0 types.Coins
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, int64) types.Coins); ok {
+		r0 = rf(ctx, addr, height)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Coins)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, types.AccAddress, int64) error); ok {
+		r1 = rf(ctx, addr, height)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Block provides a mock function with given fields: ctx, height
+func (_m *RPCClient) Block(ctx context.Context, height *int64) (*coretypes.ResultBlock, error) {
+	ret := _m.Called(ctx, height)
+
+	var r0 *coretypes.ResultBlock
+	if rf, ok := ret.Get(0).(func(context.Context, *int64) *coretypes.ResultBlock); ok {
+		r0 = rf(ctx, height)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultBlock)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *int64) error); ok {
+		r1 = rf(ctx, height)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// BlockByHash provides a mock function with given fields: ctx, hash
+func (_m *RPCClient) BlockByHash(ctx context.Context, hash []byte) (*coretypes.ResultBlock, error) {
+	ret := _m.Called(ctx, hash)
+
+	var r0 *coretypes.ResultBlock
+	if rf, ok := ret.Get(0).(func(context.Context, []byte) *coretypes.ResultBlock); ok {
+		r0 = rf(ctx, hash)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultBlock)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, []byte) error); ok {
+		r1 = rf(ctx, hash)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// BlockResults provides a mock function with given fields: ctx, height
+func (_m *RPCClient) BlockResults(ctx context.Context, height *int64) (*coretypes.ResultBlockResults, error) {
+	ret := _m.Called(ctx, height)
 
 	var r0 *coretypes.ResultBlockResults
-	if rf, ok := ret.Get(0).(func(*int64) *coretypes.ResultBlockResults); ok {
-		r0 = rf(height)
+	if rf, ok := ret.Get(0).(func(context.Context, *int64) *coretypes.ResultBlockResults); ok {
+		r0 = rf(ctx, height)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultBlockResults)
@@ -182,8 +205,8 @@ func (_m *RPCClient) BlockResults(height *int64) (*coretypes.ResultBlockResults,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*int64) error); ok {
-		r1 = rf(height)
+	if rf, ok := ret.Get(1).(func(context.Context, *int64) error); ok {
+		r1 = rf(ctx, height)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -191,13 +214,36 @@ func (_m *RPCClient) BlockResults(height *int64) (*coretypes.ResultBlockResults,
 	return r0, r1
 }
 
-// BlockchainInfo provides a mock function with given fields: minHeight, maxHeight
-func (_m *RPCClient) BlockchainInfo(minHeight int64, maxHeight int64) (*coretypes.ResultBlockchainInfo, error) {
-	ret := _m.Called(minHeight, maxHeight)
+// BlockSearch provides a mock function with given fields: ctx, query, page, perPage, orderBy
+func (_m *RPCClient) BlockSearch(ctx context.Context, query string, page *int, perPage *int, orderBy string) (*coretypes.ResultBlockSearch, error) {
+	ret := _m.Called(ctx, query, page, perPage, orderBy)
+
+	var r0 *coretypes.ResultBlockSearch
+	if rf, ok := ret.Get(0).(func(context.Context, string, *int, *int, string) *coretypes.ResultBlockSearch); ok {
+		r0 = rf(ctx, query, page, perPage, orderBy)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultBlockSearch)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, *int, *int, string) error); ok {
+		r1 = rf(ctx, query, page, perPage, orderBy)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// BlockchainInfo provides a mock function with given fields: ctx, minHeight, maxHeight
+func (_m *RPCClient) BlockchainInfo(ctx context.Context, minHeight int64, maxHeight int64) (*coretypes.ResultBlockchainInfo, error) {
+	ret := _m.Called(ctx, minHeight, maxHeight)
 
 	var r0 *coretypes.ResultBlockchainInfo
-	if rf, ok := ret.Get(0).(func(int64, int64) *coretypes.ResultBlockchainInfo); ok {
-		r0 = rf(minHeight, maxHeight)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *coretypes.ResultBlockchainInfo); ok {
+		r0 = rf(ctx, minHeight, maxHeight)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultBlockchainInfo)
@@ -205,8 +251,8 @@ func (_m *RPCClient) BlockchainInfo(minHeight int64, maxHeight int64) (*coretype
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int64, int64) error); ok {
-		r1 = rf(minHeight, maxHeight)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = rf(ctx, minHeight, maxHeight)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -214,13 +260,13 @@ func (_m *RPCClient) BlockchainInfo(minHeight int64, maxHeight int64) (*coretype
 	return r0, r1
 }
 
-// BroadcastEvidence provides a mock function with given fields: ev
-func (_m *RPCClient) BroadcastEvidence(ev tenderminttypes.Evidence) (*coretypes.ResultBroadcastEvidence, error) {
-	ret := _m.Called(ev)
+// BroadcastEvidence provides a mock function with given fields: _a0, _a1
+func (_m *RPCClient) BroadcastEvidence(_a0 context.Context, _a1 tenderminttypes.Evidence) (*coretypes.ResultBroadcastEvidence, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *coretypes.ResultBroadcastEvidence
-	if rf, ok := ret.Get(0).(func(tenderminttypes.Evidence) *coretypes.ResultBroadcastEvidence); ok {
-		r0 = rf(ev)
+	if rf, ok := ret.Get(0).(func(context.Context, tenderminttypes.Evidence) *coretypes.ResultBroadcastEvidence); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultBroadcastEvidence)
@@ -228,8 +274,8 @@ func (_m *RPCClient) BroadcastEvidence(ev tenderminttypes.Evidence) (*coretypes.
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(tenderminttypes.Evidence) error); ok {
-		r1 = rf(ev)
+	if rf, ok := ret.Get(1).(func(context.Context, tenderminttypes.Evidence) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -237,13 +283,13 @@ func (_m *RPCClient) BroadcastEvidence(ev tenderminttypes.Evidence) (*coretypes.
 	return r0, r1
 }
 
-// BroadcastTxAsync provides a mock function with given fields: tx
-func (_m *RPCClient) BroadcastTxAsync(tx tenderminttypes.Tx) (*coretypes.ResultBroadcastTx, error) {
-	ret := _m.Called(tx)
+// BroadcastTxAsync provides a mock function with given fields: _a0, _a1
+func (_m *RPCClient) BroadcastTxAsync(_a0 context.Context, _a1 tenderminttypes.Tx) (*coretypes.ResultBroadcastTx, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *coretypes.ResultBroadcastTx
-	if rf, ok := ret.Get(0).(func(tenderminttypes.Tx) *coretypes.ResultBroadcastTx); ok {
-		r0 = rf(tx)
+	if rf, ok := ret.Get(0).(func(context.Context, tenderminttypes.Tx) *coretypes.ResultBroadcastTx); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultBroadcastTx)
@@ -251,8 +297,8 @@ func (_m *RPCClient) BroadcastTxAsync(tx tenderminttypes.Tx) (*coretypes.ResultB
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(tenderminttypes.Tx) error); ok {
-		r1 = rf(tx)
+	if rf, ok := ret.Get(1).(func(context.Context, tenderminttypes.Tx) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -260,13 +306,13 @@ func (_m *RPCClient) BroadcastTxAsync(tx tenderminttypes.Tx) (*coretypes.ResultB
 	return r0, r1
 }
 
-// BroadcastTxCommit provides a mock function with given fields: tx
-func (_m *RPCClient) BroadcastTxCommit(tx tenderminttypes.Tx) (*coretypes.ResultBroadcastTxCommit, error) {
-	ret := _m.Called(tx)
+// BroadcastTxCommit provides a mock function with given fields: _a0, _a1
+func (_m *RPCClient) BroadcastTxCommit(_a0 context.Context, _a1 tenderminttypes.Tx) (*coretypes.ResultBroadcastTxCommit, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *coretypes.ResultBroadcastTxCommit
-	if rf, ok := ret.Get(0).(func(tenderminttypes.Tx) *coretypes.ResultBroadcastTxCommit); ok {
-		r0 = rf(tx)
+	if rf, ok := ret.Get(0).(func(context.Context, tenderminttypes.Tx) *coretypes.ResultBroadcastTxCommit); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultBroadcastTxCommit)
@@ -274,8 +320,8 @@ func (_m *RPCClient) BroadcastTxCommit(tx tenderminttypes.Tx) (*coretypes.Result
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(tenderminttypes.Tx) error); ok {
-		r1 = rf(tx)
+	if rf, ok := ret.Get(1).(func(context.Context, tenderminttypes.Tx) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -283,13 +329,13 @@ func (_m *RPCClient) BroadcastTxCommit(tx tenderminttypes.Tx) (*coretypes.Result
 	return r0, r1
 }
 
-// BroadcastTxSync provides a mock function with given fields: tx
-func (_m *RPCClient) BroadcastTxSync(tx tenderminttypes.Tx) (*coretypes.ResultBroadcastTx, error) {
-	ret := _m.Called(tx)
+// BroadcastTxSync provides a mock function with given fields: _a0, _a1
+func (_m *RPCClient) BroadcastTxSync(_a0 context.Context, _a1 tenderminttypes.Tx) (*coretypes.ResultBroadcastTx, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 *coretypes.ResultBroadcastTx
-	if rf, ok := ret.Get(0).(func(tenderminttypes.Tx) *coretypes.ResultBroadcastTx); ok {
-		r0 = rf(tx)
+	if rf, ok := ret.Get(0).(func(context.Context, tenderminttypes.Tx) *coretypes.ResultBroadcastTx); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultBroadcastTx)
@@ -297,8 +343,8 @@ func (_m *RPCClient) BroadcastTxSync(tx tenderminttypes.Tx) (*coretypes.ResultBr
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(tenderminttypes.Tx) error); ok {
-		r1 = rf(tx)
+	if rf, ok := ret.Get(1).(func(context.Context, tenderminttypes.Tx) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -306,13 +352,36 @@ func (_m *RPCClient) BroadcastTxSync(tx tenderminttypes.Tx) (*coretypes.ResultBr
 	return r0, r1
 }
 
-// Commit provides a mock function with given fields: height
-func (_m *RPCClient) Commit(height *int64) (*coretypes.ResultCommit, error) {
-	ret := _m.Called(height)
+// CheckTx provides a mock function with given fields: _a0, _a1
+func (_m *RPCClient) CheckTx(_a0 context.Context, _a1 tenderminttypes.Tx) (*coretypes.ResultCheckTx, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *coretypes.ResultCheckTx
+	if rf, ok := ret.Get(0).(func(context.Context, tenderminttypes.Tx) *coretypes.ResultCheckTx); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultCheckTx)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, tenderminttypes.Tx) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Commit provides a mock function with given fields: ctx, height
+func (_m *RPCClient) Commit(ctx context.Context, height *int64) (*coretypes.ResultCommit, error) {
+	ret := _m.Called(ctx, height)
 
 	var r0 *coretypes.ResultCommit
-	if rf, ok := ret.Get(0).(func(*int64) *coretypes.ResultCommit); ok {
-		r0 = rf(height)
+	if rf, ok := ret.Get(0).(func(context.Context, *int64) *coretypes.ResultCommit); ok {
+		r0 = rf(ctx, height)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultCommit)
@@ -320,8 +389,8 @@ func (_m *RPCClient) Commit(height *int64) (*coretypes.ResultCommit, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*int64) error); ok {
-		r1 = rf(height)
+	if rf, ok := ret.Get(1).(func(context.Context, *int64) error); ok {
+		r1 = rf(ctx, height)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -329,13 +398,13 @@ func (_m *RPCClient) Commit(height *int64) (*coretypes.ResultCommit, error) {
 	return r0, r1
 }
 
-// ConsensusParams provides a mock function with given fields: height
-func (_m *RPCClient) ConsensusParams(height *int64) (*coretypes.ResultConsensusParams, error) {
-	ret := _m.Called(height)
+// ConsensusParams provides a mock function with given fields: ctx, height
+func (_m *RPCClient) ConsensusParams(ctx context.Context, height *int64) (*coretypes.ResultConsensusParams, error) {
+	ret := _m.Called(ctx, height)
 
 	var r0 *coretypes.ResultConsensusParams
-	if rf, ok := ret.Get(0).(func(*int64) *coretypes.ResultConsensusParams); ok {
-		r0 = rf(height)
+	if rf, ok := ret.Get(0).(func(context.Context, *int64) *coretypes.ResultConsensusParams); ok {
+		r0 = rf(ctx, height)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultConsensusParams)
@@ -343,8 +412,8 @@ func (_m *RPCClient) ConsensusParams(height *int64) (*coretypes.ResultConsensusP
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*int64) error); ok {
-		r1 = rf(height)
+	if rf, ok := ret.Get(1).(func(context.Context, *int64) error); ok {
+		r1 = rf(ctx, height)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -352,13 +421,13 @@ func (_m *RPCClient) ConsensusParams(height *int64) (*coretypes.ResultConsensusP
 	return r0, r1
 }
 
-// ConsensusState provides a mock function with given fields:
-func (_m *RPCClient) ConsensusState() (*coretypes.ResultConsensusState, error) {
-	ret := _m.Called()
+// ConsensusState provides a mock function with given fields: _a0
+func (_m *RPCClient) ConsensusState(_a0 context.Context) (*coretypes.ResultConsensusState, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultConsensusState
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultConsensusState); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultConsensusState); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultConsensusState)
@@ -366,8 +435,8 @@ func (_m *RPCClient) ConsensusState() (*coretypes.ResultConsensusState, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -375,13 +444,13 @@ func (_m *RPCClient) ConsensusState() (*coretypes.ResultConsensusState, error) {
 	return r0, r1
 }
 
-// Delegations provides a mock function with given fields: addr, height
-func (_m *RPCClient) Delegations(addr types.AccAddress, height int64) (stakingtypes.DelegationResponses, error) {
-	ret := _m.Called(addr, height)
+// Delegations provides a mock function with given fields: ctx, addr, height
+func (_m *RPCClient) Delegations(ctx context.Context, addr types.AccAddress, height int64) (stakingtypes.DelegationResponses, error) {
+	ret := _m.Called(ctx, addr, height)
 
 	var r0 stakingtypes.DelegationResponses
-	if rf, ok := ret.Get(0).(func(types.AccAddress, int64) stakingtypes.DelegationResponses); ok {
-		r0 = rf(addr, height)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, int64) stakingtypes.DelegationResponses); ok {
+		r0 = rf(ctx, addr, height)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(stakingtypes.DelegationResponses)
@@ -389,8 +458,8 @@ func (_m *RPCClient) Delegations(addr types.AccAddress, height int64) (stakingty
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AccAddress, int64) error); ok {
-		r1 = rf(addr, height)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AccAddress, int64) error); ok {
+		r1 = rf(ctx, addr, height)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -398,13 +467,13 @@ func (_m *RPCClient) Delegations(addr types.AccAddress, height int64) (stakingty
 	return r0, r1
 }
 
-// DumpConsensusState provides a mock function with given fields:
-func (_m *RPCClient) DumpConsensusState() (*coretypes.ResultDumpConsensusState, error) {
-	ret := _m.Called()
+// DumpConsensusState provides a mock function with given fields: _a0
+func (_m *RPCClient) DumpConsensusState(_a0 context.Context) (*coretypes.ResultDumpConsensusState, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultDumpConsensusState
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultDumpConsensusState); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultDumpConsensusState); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultDumpConsensusState)
@@ -412,8 +481,8 @@ func (_m *RPCClient) DumpConsensusState() (*coretypes.ResultDumpConsensusState, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -421,13 +490,13 @@ func (_m *RPCClient) DumpConsensusState() (*coretypes.ResultDumpConsensusState, 
 	return r0, r1
 }
 
-// Genesis provides a mock function with given fields:
-func (_m *RPCClient) Genesis() (*coretypes.ResultGenesis, error) {
-	ret := _m.Called()
+// Genesis provides a mock function with given fields: _a0
+func (_m *RPCClient) Genesis(_a0 context.Context) (*coretypes.ResultGenesis, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultGenesis
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultGenesis); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultGenesis); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultGenesis)
@@ -435,8 +504,8 @@ func (_m *RPCClient) Genesis() (*coretypes.ResultGenesis, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -444,13 +513,36 @@ func (_m *RPCClient) Genesis() (*coretypes.ResultGenesis, error) {
 	return r0, r1
 }
 
-// Health provides a mock function with given fields:
-func (_m *RPCClient) Health() (*coretypes.ResultHealth, error) {
-	ret := _m.Called()
+// GenesisChunked provides a mock function with given fields: _a0, _a1
+func (_m *RPCClient) GenesisChunked(_a0 context.Context, _a1 uint) (*coretypes.ResultGenesisChunk, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *coretypes.ResultGenesisChunk
+	if rf, ok := ret.Get(0).(func(context.Context, uint) *coretypes.ResultGenesisChunk); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.ResultGenesisChunk)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Health provides a mock function with given fields: _a0
+func (_m *RPCClient) Health(_a0 context.Context) (*coretypes.ResultHealth, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultHealth
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultHealth); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultHealth); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultHealth)
@@ -458,8 +550,8 @@ func (_m *RPCClient) Health() (*coretypes.ResultHealth, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -481,13 +573,13 @@ func (_m *RPCClient) IsRunning() bool {
 	return r0
 }
 
-// NetInfo provides a mock function with given fields:
-func (_m *RPCClient) NetInfo() (*coretypes.ResultNetInfo, error) {
-	ret := _m.Called()
+// NetInfo provides a mock function with given fields: _a0
+func (_m *RPCClient) NetInfo(_a0 context.Context) (*coretypes.ResultNetInfo, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultNetInfo
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultNetInfo); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultNetInfo); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultNetInfo)
@@ -495,8 +587,8 @@ func (_m *RPCClient) NetInfo() (*coretypes.ResultNetInfo, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -504,13 +596,13 @@ func (_m *RPCClient) NetInfo() (*coretypes.ResultNetInfo, error) {
 	return r0, r1
 }
 
-// NumUnconfirmedTxs provides a mock function with given fields:
-func (_m *RPCClient) NumUnconfirmedTxs() (*coretypes.ResultUnconfirmedTxs, error) {
-	ret := _m.Called()
+// NumUnconfirmedTxs provides a mock function with given fields: _a0
+func (_m *RPCClient) NumUnconfirmedTxs(_a0 context.Context) (*coretypes.ResultUnconfirmedTxs, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultUnconfirmedTxs
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultUnconfirmedTxs); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultUnconfirmedTxs); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultUnconfirmedTxs)
@@ -518,8 +610,8 @@ func (_m *RPCClient) NumUnconfirmedTxs() (*coretypes.ResultUnconfirmedTxs, error
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -595,13 +687,13 @@ func (_m *RPCClient) SetLogger(_a0 log.Logger) {
 	_m.Called(_a0)
 }
 
-// SimulateTx provides a mock function with given fields: tx
-func (_m *RPCClient) SimulateTx(tx *authtypes.StdTx) (*types.SimulationResponse, error) {
-	ret := _m.Called(tx)
+// SimulateTx provides a mock function with given fields: ctx, tx
+func (_m *RPCClient) SimulateTx(ctx context.Context, tx signing.Tx) (*types.SimulationResponse, error) {
+	ret := _m.Called(ctx, tx)
 
 	var r0 *types.SimulationResponse
-	if rf, ok := ret.Get(0).(func(*authtypes.StdTx) *types.SimulationResponse); ok {
-		r0 = rf(tx)
+	if rf, ok := ret.Get(0).(func(context.Context, signing.Tx) *types.SimulationResponse); ok {
+		r0 = rf(ctx, tx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.SimulationResponse)
@@ -609,8 +701,8 @@ func (_m *RPCClient) SimulateTx(tx *authtypes.StdTx) (*types.SimulationResponse,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*authtypes.StdTx) error); ok {
-		r1 = rf(tx)
+	if rf, ok := ret.Get(1).(func(context.Context, signing.Tx) error); ok {
+		r1 = rf(ctx, tx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -632,13 +724,13 @@ func (_m *RPCClient) Start() error {
 	return r0
 }
 
-// Status provides a mock function with given fields:
-func (_m *RPCClient) Status() (*coretypes.ResultStatus, error) {
-	ret := _m.Called()
+// Status provides a mock function with given fields: _a0
+func (_m *RPCClient) Status(_a0 context.Context) (*coretypes.ResultStatus, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *coretypes.ResultStatus
-	if rf, ok := ret.Get(0).(func() *coretypes.ResultStatus); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *coretypes.ResultStatus); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultStatus)
@@ -646,8 +738,8 @@ func (_m *RPCClient) Status() (*coretypes.ResultStatus, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -713,13 +805,13 @@ func (_m *RPCClient) Subscribe(ctx context.Context, subscriber string, query str
 	return r0, r1
 }
 
-// Tx provides a mock function with given fields: hash, prove
-func (_m *RPCClient) Tx(hash []byte, prove bool) (*coretypes.ResultTx, error) {
-	ret := _m.Called(hash, prove)
+// Tx provides a mock function with given fields: ctx, hash, prove
+func (_m *RPCClient) Tx(ctx context.Context, hash []byte, prove bool) (*coretypes.ResultTx, error) {
+	ret := _m.Called(ctx, hash, prove)
 
 	var r0 *coretypes.ResultTx
-	if rf, ok := ret.Get(0).(func([]byte, bool) *coretypes.ResultTx); ok {
-		r0 = rf(hash, prove)
+	if rf, ok := ret.Get(0).(func(context.Context, []byte, bool) *coretypes.ResultTx); ok {
+		r0 = rf(ctx, hash, prove)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultTx)
@@ -727,8 +819,8 @@ func (_m *RPCClient) Tx(hash []byte, prove bool) (*coretypes.ResultTx, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]byte, bool) error); ok {
-		r1 = rf(hash, prove)
+	if rf, ok := ret.Get(1).(func(context.Context, []byte, bool) error); ok {
+		r1 = rf(ctx, hash, prove)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -736,13 +828,13 @@ func (_m *RPCClient) Tx(hash []byte, prove bool) (*coretypes.ResultTx, error) {
 	return r0, r1
 }
 
-// TxSearch provides a mock function with given fields: query, prove, page, perPage, orderBy
-func (_m *RPCClient) TxSearch(query string, prove bool, page int, perPage int, orderBy string) (*coretypes.ResultTxSearch, error) {
-	ret := _m.Called(query, prove, page, perPage, orderBy)
+// TxSearch provides a mock function with given fields: ctx, query, prove, page, perPage, orderBy
+func (_m *RPCClient) TxSearch(ctx context.Context, query string, prove bool, page *int, perPage *int, orderBy string) (*coretypes.ResultTxSearch, error) {
+	ret := _m.Called(ctx, query, prove, page, perPage, orderBy)
 
 	var r0 *coretypes.ResultTxSearch
-	if rf, ok := ret.Get(0).(func(string, bool, int, int, string) *coretypes.ResultTxSearch); ok {
-		r0 = rf(query, prove, page, perPage, orderBy)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool, *int, *int, string) *coretypes.ResultTxSearch); ok {
+		r0 = rf(ctx, query, prove, page, perPage, orderBy)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultTxSearch)
@@ -750,8 +842,8 @@ func (_m *RPCClient) TxSearch(query string, prove bool, page int, perPage int, o
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, bool, int, int, string) error); ok {
-		r1 = rf(query, prove, page, perPage, orderBy)
+	if rf, ok := ret.Get(1).(func(context.Context, string, bool, *int, *int, string) error); ok {
+		r1 = rf(ctx, query, prove, page, perPage, orderBy)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -759,13 +851,13 @@ func (_m *RPCClient) TxSearch(query string, prove bool, page int, perPage int, o
 	return r0, r1
 }
 
-// UnbondingDelegations provides a mock function with given fields: addr, height
-func (_m *RPCClient) UnbondingDelegations(addr types.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error) {
-	ret := _m.Called(addr, height)
+// UnbondingDelegations provides a mock function with given fields: ctx, addr, height
+func (_m *RPCClient) UnbondingDelegations(ctx context.Context, addr types.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error) {
+	ret := _m.Called(ctx, addr, height)
 
 	var r0 stakingtypes.UnbondingDelegations
-	if rf, ok := ret.Get(0).(func(types.AccAddress, int64) stakingtypes.UnbondingDelegations); ok {
-		r0 = rf(addr, height)
+	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, int64) stakingtypes.UnbondingDelegations); ok {
+		r0 = rf(ctx, addr, height)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(stakingtypes.UnbondingDelegations)
@@ -773,8 +865,8 @@ func (_m *RPCClient) UnbondingDelegations(addr types.AccAddress, height int64) (
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(types.AccAddress, int64) error); ok {
-		r1 = rf(addr, height)
+	if rf, ok := ret.Get(1).(func(context.Context, types.AccAddress, int64) error); ok {
+		r1 = rf(ctx, addr, height)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -782,13 +874,13 @@ func (_m *RPCClient) UnbondingDelegations(addr types.AccAddress, height int64) (
 	return r0, r1
 }
 
-// UnconfirmedTxs provides a mock function with given fields: limit
-func (_m *RPCClient) UnconfirmedTxs(limit int) (*coretypes.ResultUnconfirmedTxs, error) {
-	ret := _m.Called(limit)
+// UnconfirmedTxs provides a mock function with given fields: ctx, limit
+func (_m *RPCClient) UnconfirmedTxs(ctx context.Context, limit *int) (*coretypes.ResultUnconfirmedTxs, error) {
+	ret := _m.Called(ctx, limit)
 
 	var r0 *coretypes.ResultUnconfirmedTxs
-	if rf, ok := ret.Get(0).(func(int) *coretypes.ResultUnconfirmedTxs); ok {
-		r0 = rf(limit)
+	if rf, ok := ret.Get(0).(func(context.Context, *int) *coretypes.ResultUnconfirmedTxs); ok {
+		r0 = rf(ctx, limit)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultUnconfirmedTxs)
@@ -796,8 +888,8 @@ func (_m *RPCClient) UnconfirmedTxs(limit int) (*coretypes.ResultUnconfirmedTxs,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(limit)
+	if rf, ok := ret.Get(1).(func(context.Context, *int) error); ok {
+		r1 = rf(ctx, limit)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -833,13 +925,13 @@ func (_m *RPCClient) UnsubscribeAll(ctx context.Context, subscriber string) erro
 	return r0
 }
 
-// Validators provides a mock function with given fields: height, page, perPage
-func (_m *RPCClient) Validators(height *int64, page int, perPage int) (*coretypes.ResultValidators, error) {
-	ret := _m.Called(height, page, perPage)
+// Validators provides a mock function with given fields: ctx, height, page, perPage
+func (_m *RPCClient) Validators(ctx context.Context, height *int64, page *int, perPage *int) (*coretypes.ResultValidators, error) {
+	ret := _m.Called(ctx, height, page, perPage)
 
 	var r0 *coretypes.ResultValidators
-	if rf, ok := ret.Get(0).(func(*int64, int, int) *coretypes.ResultValidators); ok {
-		r0 = rf(height, page, perPage)
+	if rf, ok := ret.Get(0).(func(context.Context, *int64, *int, *int) *coretypes.ResultValidators); ok {
+		r0 = rf(ctx, height, page, perPage)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*coretypes.ResultValidators)
@@ -847,8 +939,8 @@ func (_m *RPCClient) Validators(height *int64, page int, perPage int) (*coretype
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*int64, int, int) error); ok {
-		r1 = rf(height, page, perPage)
+	if rf, ok := ret.Get(1).(func(context.Context, *int64, *int, *int) error); ok {
+		r1 = rf(ctx, height, page, perPage)
 	} else {
 		r1 = ret.Error(1)
 	}

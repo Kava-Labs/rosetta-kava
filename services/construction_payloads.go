@@ -25,8 +25,10 @@ import (
 	"math"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/tendermint/tendermint/crypto"
 )
 
@@ -54,43 +56,69 @@ func (s *ConstructionAPIService) ConstructionPayloads(
 		return nil, wrapErr(ErrInvalidMetadata, err)
 	}
 
+	txBuilder := s.encodingConfig.TxConfig.NewTxBuilder()
+
 	msgs, rerr := parseOperationMsgs(request.Operations)
 	if rerr != nil {
 		return nil, rerr
 	}
-
-	feeAmount := sdk.NewInt(int64(math.Ceil(metadata.gasPrice * float64(metadata.gasWanted))))
-	tx := auth.NewStdTx(
-		msgs,
-		auth.NewStdFee(metadata.gasWanted, sdk.NewCoins(sdk.NewCoin("ukava", feeAmount))),
-		[]auth.StdSignature{},
-		metadata.memo,
-	)
-
-	txBytes, err := s.cdc.MarshalBinaryLengthPrefixed(tx)
+	err = txBuilder.SetMsgs(msgs...)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	payloads := []*types.SigningPayload{}
+	feeAmount := sdk.NewInt(int64(math.Ceil(metadata.gasPrice * float64(metadata.gasWanted))))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("ukava", feeAmount)))
+	txBuilder.SetGasLimit(metadata.gasWanted)
+	txBuilder.SetMemo(metadata.memo)
+
+	tx := txBuilder.GetTx()
+
+	var sigsV2 []signing.SignatureV2
 	for i, signer := range metadata.signers {
 		if i >= len(request.PublicKeys) {
 			return nil, ErrMissingPublicKey
 		}
+		// TODO: validate curve type
+		pubKey := secp256k1.PubKey{Key: request.PublicKeys[i].Bytes}
 
-		addr, rerr := getAddressFromPublicKey(request.PublicKeys[0])
+		signatureData := signing.SingleSignatureData{
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+			Signature: nil,
+		}
+		sigV2 := signing.SignatureV2{
+			PubKey:   &pubKey,
+			Data:     &signatureData,
+			Sequence: signer.AccountSequence,
+		}
+
+		sigsV2 = append(sigsV2, sigV2)
+	}
+	if err := txBuilder.SetSignatures(sigsV2...); err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
+
+	txBytes, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
+	payloads := []*types.SigningPayload{}
+	for i, signer := range metadata.signers {
+		addr, rerr := getAddressFromPublicKey(request.PublicKeys[i])
 		if rerr != nil {
 			return nil, rerr
 		}
 
-		signBytes := auth.StdSignBytes(
-			request.NetworkIdentifier.Network,
-			signer.AccountNumber,
-			signer.AccountSequence,
-			tx.Fee,
-			tx.Msgs,
-			tx.Memo,
-		)
+		signerData := authsigning.SignerData{
+			ChainID:       request.NetworkIdentifier.Network,
+			AccountNumber: signer.AccountNumber,
+			Sequence:      signer.AccountSequence,
+		}
+
+		signBytes, err := s.encodingConfig.TxConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, tx)
+		if err != nil {
+			return nil, wrapErr(ErrInvalidTx, err)
+		}
 
 		payloads = append(payloads, &types.SigningPayload{
 			AccountIdentifier: &types.AccountIdentifier{Address: addr.String()},

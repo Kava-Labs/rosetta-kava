@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,7 +79,7 @@ func TestNetworkStatus(t *testing.T) {
 		err = asserter.NetworkStatusResponse(networkStatus)
 		require.NoError(t, err)
 
-		resultStatus, err := rpc.Status()
+		resultStatus, err := rpc.Status(ctx)
 		require.NoError(t, err)
 
 		assert.Equal(t, &types.BlockIdentifier{
