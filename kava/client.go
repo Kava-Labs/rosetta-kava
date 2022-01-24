@@ -29,7 +29,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -127,7 +126,7 @@ func (c *Client) Account(ctx context.Context, address sdk.AccAddress) (authtypes
 }
 
 // EstimateGas returns a gas wanted estimate from a tx with a provided adjustment
-func (c *Client) EstimateGas(ctx context.Context, tx authsigning.Tx, adjustment float64) (uint64, error) {
+func (c *Client) EstimateGas(ctx context.Context, tx sdk.Tx, adjustment float64) (uint64, error) {
 	simResp, err := c.rpc.SimulateTx(ctx, tx)
 	if err != nil {
 		return 0, err

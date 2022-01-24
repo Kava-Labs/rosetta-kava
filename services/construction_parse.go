@@ -24,11 +24,10 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
+// TODO: improve endpoint validate transactions
 // ConstructionParse implements the /construction/parse endpoint.
 func (s *ConstructionAPIService) ConstructionParse(
 	ctx context.Context,
@@ -39,8 +38,7 @@ func (s *ConstructionAPIService) ConstructionParse(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	var tx auth.StdTx
-	err = s.cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
+	tx, err := s.encodingConfig.TxConfig.TxDecoder()(txBytes)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
@@ -48,8 +46,23 @@ func (s *ConstructionAPIService) ConstructionParse(
 	index := int64(0)
 	ops := []*types.Operation{}
 
-	for _, msg := range tx.Msgs {
-		msgSend, ok := msg.(bank.MsgSend)
+	signers := []*types.AccountIdentifier{}
+	seenSigners := make(map[string]bool)
+
+	for _, msg := range tx.GetMsgs() {
+		for _, signer := range msg.GetSigners() {
+			signerAddress := signer.String()
+
+			if !seenSigners[signerAddress] {
+				seenSigners[signerAddress] = true
+
+				signers = append(signers, &types.AccountIdentifier{
+					Address: signerAddress,
+				})
+			}
+		}
+
+		msgSend, ok := msg.(*banktypes.MsgSend)
 		if !ok {
 			continue
 		}
@@ -63,7 +76,7 @@ func (s *ConstructionAPIService) ConstructionParse(
 			ops = append(ops, &types.Operation{
 				OperationIdentifier: &types.OperationIdentifier{Index: index},
 				Type:                kava.TransferOpType,
-				Account:             &types.AccountIdentifier{Address: msgSend.FromAddress.String()},
+				Account:             &types.AccountIdentifier{Address: msgSend.FromAddress},
 				Amount:              &types.Amount{Value: "-" + coin.Amount.String(), Currency: currency},
 			})
 
@@ -71,20 +84,12 @@ func (s *ConstructionAPIService) ConstructionParse(
 				OperationIdentifier: &types.OperationIdentifier{Index: index + 1},
 				RelatedOperations:   []*types.OperationIdentifier{&types.OperationIdentifier{Index: index}},
 				Type:                kava.TransferOpType,
-				Account:             &types.AccountIdentifier{Address: msgSend.ToAddress.String()},
+				Account:             &types.AccountIdentifier{Address: msgSend.ToAddress},
 				Amount:              &types.Amount{Value: coin.Amount.String(), Currency: currency},
 			})
 
 			index += 2
 		}
-	}
-
-	signers := []*types.AccountIdentifier{}
-	for _, signature := range tx.Signatures {
-		addr := sdk.AccAddress(signature.PubKey.Address().Bytes())
-		signers = append(signers, &types.AccountIdentifier{
-			Address: addr.String(),
-		})
 	}
 
 	return &types.ConstructionParseResponse{

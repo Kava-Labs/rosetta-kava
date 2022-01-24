@@ -16,13 +16,15 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/types/tx"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -177,7 +179,6 @@ func TestConstructionPreprocess_Memo(t *testing.T) {
 }
 
 func TestConstructionPreprocess_MaxFee(t *testing.T) {
-	cdc := app.MakeEncodingConfig().Amino
 	servicer, _ := setupConstructionAPIServicer()
 
 	testCases := []struct {
@@ -247,7 +248,7 @@ func TestConstructionPreprocess_MaxFee(t *testing.T) {
 			require.True(t, ok)
 
 			var coins sdk.Coins
-			err := cdc.UnmarshalJSON([]byte(actualMaxFee), &coins)
+			err := json.Unmarshal([]byte(actualMaxFee), &coins)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedMaxFee, coins)
@@ -328,7 +329,7 @@ func TestConstructionPreprocess_UnclearOperations(t *testing.T) {
 }
 
 func TestConstructionPreprocess_TransferOperations(t *testing.T) {
-	cdc := app.MakeEncodingConfig().Amino
+	cdc := app.MakeEncodingConfig().Marshaler
 	servicer, _ := setupConstructionAPIServicer()
 
 	fromAddress := "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea"
@@ -358,11 +359,11 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	response, rerr := servicer.ConstructionPreprocess(ctx, request)
 	require.Nil(t, rerr)
 
-	encodedMsgs, ok := response.Options["msgs"].(string)
+	encodedTxBody, ok := response.Options["tx_body"].(string)
 	require.True(t, ok)
 
-	var msgs []sdk.Msg
-	err := cdc.UnmarshalJSON([]byte(encodedMsgs), &msgs)
+	var txBody tx.TxBody
+	err := cdc.UnmarshalJSON([]byte(encodedTxBody), &txBody)
 	require.NoError(t, err)
 
 	fromAddr, err := sdk.AccAddressFromBech32(fromAddress)
@@ -375,14 +376,19 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	require.True(t, ok)
 
 	expectedMsgs := []sdk.Msg{
-		bank.MsgSend{
-			FromAddress: fromAddr,
-			ToAddress:   toAddr,
+		&banktypes.MsgSend{
+			FromAddress: fromAddr.String(),
+			ToAddress:   toAddr.String(),
 			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", coinAmount)),
 		},
 	}
 
-	assert.Equal(t, expectedMsgs, msgs)
+	expectedTxBody := tx.TxBody{}
+	expectedAnys, err := convertMsgsToAnys(expectedMsgs)
+	require.NoError(t, err)
+	expectedTxBody.Messages = expectedAnys
+
+	assert.Equal(t, expectedTxBody, txBody)
 	require.Equal(t, 1, len(response.RequiredPublicKeys))
 	assert.Equal(t, "kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea", response.RequiredPublicKeys[0].Address)
 }

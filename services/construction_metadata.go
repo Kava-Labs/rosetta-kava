@@ -20,6 +20,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
@@ -29,19 +30,17 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/types/tx"
 )
 
 var requiredOptions = []string{
-	"msgs",
-	"memo",
+	"tx_body",
 	"gas_adjustment",
 	"suggested_fee_multiplier",
 }
 
 type options struct {
-	msgs                   []sdk.Msg
-	memo                   string
+	txBody                 *tx.TxBody
 	gasAdjustment          float64
 	suggestedFeeMultiplier float64
 	maxFee                 sdk.Coins
@@ -61,7 +60,7 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 		return nil, ErrUnavailableOffline
 	}
 
-	options, err := validateAndParseOptions(s.cdc, request.Options)
+	options, err := validateAndParseOptions(s.encodingConfig.Marshaler, request.Options)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidOptions, err)
 	}
@@ -89,14 +88,25 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 		return nil, wrapErr(ErrKava, err)
 	}
 
-	tx := authtypes.NewStdTx(
-		options.msgs,
-		authtypes.StdFee{},
-		[]authtypes.StdSignature{{}},
-		options.memo,
-	)
+	var msgs []sdk.Msg
+	for _, any := range options.txBody.Messages {
+		val := any.GetCachedValue()
+		if val == nil {
+			return nil, wrapErr(ErrKava, errors.New("error decoding messages"))
+		}
+		msg, ok := val.(sdk.Msg)
+		if !ok {
+			return nil, wrapErr(ErrKava, errors.New("error decoding messages"))
+		}
+		msgs = append(msgs, msg)
+	}
 
-	gasWanted, err := s.client.EstimateGas(ctx, &tx, options.gasAdjustment)
+	txBuilder := s.encodingConfig.TxConfig.NewTxBuilder()
+	txBuilder.SetMsgs(msgs...)
+	txBuilder.SetMemo(options.txBody.Memo)
+	tx := txBuilder.GetTx()
+
+	gasWanted, err := s.client.EstimateGas(ctx, tx, options.gasAdjustment)
 	if err != nil {
 		return nil, wrapErr(ErrKava, err)
 	}
@@ -115,7 +125,7 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 			"signers":    string(encodedSigners),
 			"gas_wanted": gasWanted,
 			"gas_price":  gasPrice,
-			"memo":       options.memo,
+			"memo":       options.txBody.Memo,
 		},
 		SuggestedFee: []*types.Amount{
 			{
@@ -126,27 +136,22 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 	}, nil
 }
 
-func validateAndParseOptions(cdc *codec.Codec, opts map[string]interface{}) (*options, error) {
+func validateAndParseOptions(cdc codec.Codec, opts map[string]interface{}) (*options, error) {
 	for _, option := range requiredOptions {
 		if _, ok := opts[option]; !ok {
 			return nil, fmt.Errorf("no %s provided", option)
 		}
 	}
 
-	rawMsgs, ok := opts["msgs"].(string)
+	rawTxBody, ok := opts["tx_body"].(string)
 	if !ok {
-		return nil, fmt.Errorf("invalid value for %s", "msgs")
+		return nil, fmt.Errorf("invalid value for %s", "tx_body")
 	}
 
-	var msgs []sdk.Msg
-	err := cdc.UnmarshalJSON([]byte(rawMsgs), &msgs)
+	var txBody tx.TxBody
+	err := cdc.UnmarshalJSON([]byte(rawTxBody), &txBody)
 	if err != nil {
-		return nil, fmt.Errorf("invalid value for %s", "msgs")
-	}
-
-	memo, ok := opts["memo"].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid value for %s", "memo")
+		return nil, fmt.Errorf("invalid value for %s", "tx_body")
 	}
 
 	gasAdjustment, ok := opts["gas_adjustment"].(float64)
@@ -166,15 +171,14 @@ func validateAndParseOptions(cdc *codec.Codec, opts map[string]interface{}) (*op
 			return nil, fmt.Errorf("invalid value for %s", "max_fee")
 		}
 
-		err = cdc.UnmarshalJSON([]byte(rawMaxFee), &maxFee)
+		err = json.Unmarshal([]byte(rawMaxFee), &maxFee)
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for %s", "max_fee")
 		}
 	}
 
 	return &options{
-		msgs:                   msgs,
-		memo:                   memo,
+		txBody:                 &txBody,
 		gasAdjustment:          gasAdjustment,
 		suggestedFeeMultiplier: suggestedFeeMultiplier,
 		maxFee:                 maxFee,

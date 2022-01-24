@@ -53,8 +53,7 @@ func NewBlockchainRouter(
 	)
 
 	encodingConfig := app.MakeEncodingConfig()
-	cdc := app.MakeEncodingConfig().Amino
-	constructionAPIService := NewConstructionAPIService(config, client, cdc, encodingConfig)
+	constructionAPIService := NewConstructionAPIService(config, client, encodingConfig)
 	constructionAPIController := server.NewConstructionAPIController(
 		constructionAPIService,
 		asserter,

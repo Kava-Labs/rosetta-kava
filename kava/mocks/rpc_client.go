@@ -16,8 +16,6 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	signing "github.com/cosmos/cosmos-sdk/x/auth/signing"
-
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	tenderminttypes "github.com/tendermint/tendermint/types"
@@ -688,11 +686,11 @@ func (_m *RPCClient) SetLogger(_a0 log.Logger) {
 }
 
 // SimulateTx provides a mock function with given fields: ctx, tx
-func (_m *RPCClient) SimulateTx(ctx context.Context, tx signing.Tx) (*types.SimulationResponse, error) {
+func (_m *RPCClient) SimulateTx(ctx context.Context, tx types.Tx) (*types.SimulationResponse, error) {
 	ret := _m.Called(ctx, tx)
 
 	var r0 *types.SimulationResponse
-	if rf, ok := ret.Get(0).(func(context.Context, signing.Tx) *types.SimulationResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.Tx) *types.SimulationResponse); ok {
 		r0 = rf(ctx, tx)
 	} else {
 		if ret.Get(0) != nil {
@@ -701,7 +699,7 @@ func (_m *RPCClient) SimulateTx(ctx context.Context, tx signing.Tx) (*types.Simu
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, signing.Tx) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, types.Tx) error); ok {
 		r1 = rf(ctx, tx)
 	} else {
 		r1 = ret.Error(1)

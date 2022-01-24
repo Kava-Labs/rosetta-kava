@@ -20,25 +20,25 @@ package services
 import (
 	"github.com/kava-labs/rosetta-kava/configuration"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/kava-labs/kava/app/params"
 )
 
 // ConstructionAPIService implements the server.ConstructionAPIServicer interface.
 type ConstructionAPIService struct {
-	config *configuration.Configuration
-	client Client
-	cdc    *codec.Codec
+	config         *configuration.Configuration
+	client         Client
+	encodingConfig params.EncodingConfig
 }
 
 // NewConstructionAPIService creates a new instance of a ConstructionAPIService.
 func NewConstructionAPIService(
 	cfg *configuration.Configuration,
 	client Client,
-	cdc *codec.Codec,
+	encodingConfig params.EncodingConfig,
 ) *ConstructionAPIService {
 	return &ConstructionAPIService{
-		config: cfg,
-		client: client,
-		cdc:    cdc,
+		config:         cfg,
+		client:         client,
+		encodingConfig: encodingConfig,
 	}
 }

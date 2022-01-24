@@ -19,15 +19,17 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/types/tx"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 const (
@@ -57,21 +59,29 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 		return nil, rerr
 	}
 
-	encodedMsgs, err := s.cdc.MarshalJSON(msgs)
+	txBody := tx.TxBody{}
+	anys, err := convertMsgsToAnys(msgs)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
+	}
+	txBody.Messages = anys
+	txBody.Memo = getMemoFromMetadata(request.Metadata)
+
+	encodedTxBody, err := s.encodingConfig.Marshaler.MarshalJSON(&txBody)
 	if err != nil {
 		return nil, wrapErr(ErrKava, err)
 	}
 
-	encodedMaxFee, rerr := getMaxFeeAndEncodeOption(request.MaxFee, s.cdc)
-	if rerr != nil {
-		return nil, rerr
-	}
-
 	options := map[string]interface{}{
-		"msgs":                     string(encodedMsgs),
+		"tx_body":                  string(encodedTxBody),
 		"gas_adjustment":           getGasAdjustmentFromMetadata(request.Metadata),
 		"suggested_fee_multiplier": suggestedMultiplerOrDefault(request.SuggestedFeeMultiplier),
-		"memo":                     getMemoFromMetadata(request.Metadata),
+	}
+
+	// TODO: can improve to include other fee options such as payer
+	encodedMaxFee, rerr := getMaxFeeAndEncodeOption(request.MaxFee)
+	if rerr != nil {
+		return nil, rerr
 	}
 	if encodedMaxFee != nil {
 		options["max_fee"] = *encodedMaxFee
@@ -106,7 +116,7 @@ func parseOperationMsgs(ops []*types.Operation) ([]sdk.Msg, *types.Error) {
 		return nil, wrapErr(ErrUnclearIntent, errors.New("invalid number of operations, expected 2"))
 	}
 
-	sendMsg := bank.MsgSend{}
+	sendMsg := banktypes.MsgSend{}
 
 	for _, op := range ops {
 		if op.Type != kava.TransferOpType {
@@ -128,7 +138,7 @@ func parseOperationMsgs(ops []*types.Operation) ([]sdk.Msg, *types.Error) {
 				return nil, err
 			}
 
-			sendMsg.ToAddress = to
+			sendMsg.ToAddress = to.String()
 
 			coin, err := amountToCoin(op.Amount)
 			if err != nil {
@@ -143,11 +153,11 @@ func parseOperationMsgs(ops []*types.Operation) ([]sdk.Msg, *types.Error) {
 				return nil, err
 			}
 
-			sendMsg.FromAddress = from
+			sendMsg.FromAddress = from.String()
 		}
 	}
 
-	return []sdk.Msg{sendMsg}, nil
+	return []sdk.Msg{&sendMsg}, nil
 }
 
 func suggestedMultiplerOrDefault(multiplier *float64) float64 {
@@ -178,7 +188,7 @@ func getGasAdjustmentFromMetadata(metadata map[string]interface{}) float64 {
 	return defaultGasAdjustment
 }
 
-func getMaxFeeAndEncodeOption(amounts []*types.Amount, cdc *codec.Codec) (*string, *types.Error) {
+func getMaxFeeAndEncodeOption(amounts []*types.Amount) (*string, *types.Error) {
 	if len(amounts) == 0 {
 		return nil, nil
 	}
@@ -192,7 +202,7 @@ func getMaxFeeAndEncodeOption(amounts []*types.Amount, cdc *codec.Codec) (*strin
 		maxFee = maxFee.Add(coin)
 	}
 
-	b, err := cdc.MarshalJSON(maxFee)
+	b, err := json.Marshal(maxFee)
 	if err != nil {
 		return nil, wrapErr(ErrKava, err)
 	}
@@ -236,4 +246,18 @@ func getAddressFromAccount(account *types.AccountIdentifier) (sdk.AccAddress, *t
 	}
 
 	return addr, nil
+}
+
+func convertMsgsToAnys(msgs []sdk.Msg) ([]*codectypes.Any, error) {
+	var anys []*codectypes.Any
+
+	for _, msg := range msgs {
+		any, err := codectypes.NewAnyWithValue(msg)
+		if err != nil {
+			return anys, nil
+		}
+		anys = append(anys, any)
+	}
+
+	return anys, nil
 }

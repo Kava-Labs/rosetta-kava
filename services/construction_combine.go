@@ -22,7 +22,7 @@ import (
 	"encoding/hex"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 )
 
 // ConstructionCombine implements the /construction/combine endpoint.
@@ -35,25 +35,40 @@ func (s *ConstructionAPIService) ConstructionCombine(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	var tx auth.StdTx
-	err = s.cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
+	tx, err := s.encodingConfig.TxConfig.TxDecoder()(txBytes)
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	for _, signature := range request.Signatures {
-		pubkey, err := parsePublicKey(signature.PublicKey)
-		if err != nil {
-			return nil, err
-		}
-
-		tx.Signatures = append(tx.Signatures, auth.StdSignature{
-			PubKey:    pubkey,
-			Signature: signature.Bytes,
-		})
+	txBuilder, err := s.encodingConfig.TxConfig.WrapTxBuilder(tx)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	signedTxBytes, err := s.cdc.MarshalBinaryLengthPrefixed(tx)
+	sigsV2, err := txBuilder.GetTx().GetSignaturesV2()
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
+
+	for i, signature := range request.Signatures {
+		if i >= len(sigsV2) {
+			return nil, ErrMissingSignature
+		}
+		// TODO: verify public key is equal to the set sig v2 public key
+		//tmpubkey, err := parsePublicKey(signature.PublicKey)
+		//if err != nil {
+		//return nil, err
+		//}
+		//pubkey := secp256k1.PubKey{Key: tmpubkey}
+
+		sigsV2[i].Data = &signing.SingleSignatureData{
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+			Signature: signature.Bytes,
+		}
+	}
+	txBuilder.SetSignatures(sigsV2...)
+
+	signedTxBytes, err := s.encodingConfig.TxConfig.TxEncoder()(txBuilder.GetTx())
 	if err != nil {
 		return nil, wrapErr(ErrInvalidTx, err)
 	}

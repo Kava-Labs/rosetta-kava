@@ -21,11 +21,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	kava "github.com/kava-labs/kava/app"
+	"github.com/kava-labs/kava/app/params"
 	"github.com/tendermint/tendermint/libs/bytes"
 	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
 	tmhttp "github.com/tendermint/tendermint/rpc/client/http"
@@ -36,8 +36,9 @@ import (
 // HTTPClient extends the tendermint http client to enable finding blocks by hash
 type HTTPClient struct {
 	*tmhttp.HTTP
-	caller *tmclient.Client
-	cdc    *codec.LegacyAmino
+	caller         *tmclient.Client
+	cdc            *codec.LegacyAmino
+	encodingConfig params.EncodingConfig
 }
 
 // NewHTTPClient returns a new HTTPClient with additional capabilities
@@ -57,13 +58,13 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 		return nil, err
 	}
 
-	// codec for cosmos-sdk/app level (Account, etc)
-	kavaCdc := kava.MakeEncodingConfig().Amino
+	encodingConfig := kava.MakeEncodingConfig()
 
 	return &HTTPClient{
-		HTTP:   http,
-		caller: rpc,
-		cdc:    kavaCdc,
+		HTTP:           http,
+		caller:         rpc,
+		cdc:            encodingConfig.Amino,
+		encodingConfig: encodingConfig,
 	}, nil
 }
 
@@ -161,8 +162,8 @@ func (c *HTTPClient) UnbondingDelegations(ctx context.Context, addr sdk.AccAddre
 }
 
 // SimulateTx simulates a transaction and returns the response containing the gas used and result
-func (c *HTTPClient) SimulateTx(ctx context.Context, tx *legacytx.StdTx) (*sdk.SimulationResponse, error) {
-	bz, err := c.cdc.MarshalLengthPrefixed(*tx)
+func (c *HTTPClient) SimulateTx(ctx context.Context, tx sdk.Tx) (*sdk.SimulationResponse, error) {
+	bz, err := c.encodingConfig.TxConfig.TxEncoder()(tx)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +174,7 @@ func (c *HTTPClient) SimulateTx(ctx context.Context, tx *legacytx.StdTx) (*sdk.S
 	}
 
 	var simRes sdk.SimulationResponse
-	if err := c.cdc.Unmarshal(data, &simRes); err != nil {
+	if err := c.encodingConfig.Marshaler.Unmarshal(data, &simRes); err != nil {
 		return nil, err
 	}
 	return &simRes, nil

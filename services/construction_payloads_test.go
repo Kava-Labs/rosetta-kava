@@ -25,12 +25,11 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
 )
 
 func TestConstructionPayloads(t *testing.T) {
@@ -94,28 +93,30 @@ func TestConstructionPayloads(t *testing.T) {
 	response, rerr := servicer.ConstructionPayloads(ctx, request)
 	require.Nil(t, rerr)
 
-	cdc := app.MakeEncodingConfig().Amino
+	encodingConfig := app.MakeEncodingConfig()
+
 	txBytes, err := hex.DecodeString(response.UnsignedTransaction)
 	require.NoError(t, err)
-	var tx auth.StdTx
-	err = cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
+
+	sdkTx, err := encodingConfig.TxConfig.TxDecoder()(txBytes)
 	require.NoError(t, err)
+
+	tx, ok := sdkTx.(authsigning.Tx)
+	require.True(t, ok)
 
 	msgs := tx.GetMsgs()
 	require.Equal(t, 1, len(msgs))
-	msgSend, ok := msgs[0].(bank.MsgSend)
+	msgSend, ok := msgs[0].(*banktypes.MsgSend)
+	assert.Equal(t, signerAddr, msgSend.FromAddress)
 	require.True(t, ok)
-	assert.Equal(t, signerAddr, msgSend.FromAddress.String())
-	assert.Equal(t, auth.NewStdFee(250001, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501)))), tx.Fee)
-	assert.Equal(t, 0, len(tx.Signatures))
-	assert.Equal(t, "some memo", tx.Memo)
+	assert.Equal(t, 250001, tx.GetGas())
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501))), tx.GetFee())
+	require.True(t, ok)
+	assert.Equal(t, "some memo", tx.GetMemo())
 
 	require.Equal(t, 1, len(response.Payloads))
 	payload := response.Payloads[0]
 	assert.Equal(t, signerAddr, payload.AccountIdentifier.Address)
 
-	signBytes := auth.StdSignBytes(
-		networkIdentifier.Network, 10, 11, tx.Fee, tx.Msgs, tx.Memo,
-	)
-	assert.Equal(t, crypto.Sha256(signBytes), payload.Bytes)
+	// TODO: improve testing -- check unsigned transaction signature settings & sign bytes
 }
