@@ -27,19 +27,17 @@ RUN apt-get update \
       && rm -rf /var/lib/apt/lists/*
 
 ARG kava_node_version=v0.16.0
-ARG kava_rosetta_version=v0.0.1
 ENV KAVA_NODE_VERSION=$kava_node_version
-ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
 
-RUN git clone https://github.com/Kava-Labs/kava.git \
+RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
       && git checkout $KAVA_NODE_VERSION \
       && make install
 
-RUN git clone https://github.com/Kava-Labs/rosetta-kava.git \
-      && cd rosetta-kava \
-      && git checkout $KAVA_ROSETTA_VERSION \
-      && make install
+COPY . rosetta-kava
+
+RUN cd rosetta-kava \
+  && make install
 
 FROM ubuntu:20.04
 
