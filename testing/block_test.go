@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,10 +80,11 @@ func TestBlockOnline(t *testing.T) {
 		config.NetworkIdentifier,
 		networkStatus,
 		networkOptions,
+		"",
 	)
 	require.NoError(t, err)
 
-	resultBlock, err := rpc.Block(&networkStatus.CurrentBlockIdentifier.Index)
+	resultBlock, err := rpc.Block(ctx, &networkStatus.CurrentBlockIdentifier.Index)
 	require.NoError(t, err)
 
 	currentBlock := networkStatus.CurrentBlockIdentifier
@@ -124,7 +127,7 @@ func TestBlockOnline(t *testing.T) {
 	assert.Equal(t, blockResponseByHash, blockResponseByIndex)
 
 	genesisBlockHeight := int64(1)
-	genesisResultBlock, err := rpc.Block(&genesisBlockHeight)
+	genesisResultBlock, err := rpc.Block(ctx, &genesisBlockHeight)
 	require.NoError(t, err)
 
 	genesisRequest := &types.BlockRequest{

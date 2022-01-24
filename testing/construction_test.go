@@ -19,11 +19,11 @@ package testing
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,13 +34,13 @@ func createTransferOperations(from string, to string, amount string) []*types.Op
 			OperationIdentifier: &types.OperationIdentifier{Index: 0},
 			Type:                "transfer",
 			Account:             &types.AccountIdentifier{Address: from},
-			Amount:              &types.Amount{Value: amount, Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
+			Amount:              &types.Amount{Value: "-" + amount, Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
 		},
 		{
 			OperationIdentifier: &types.OperationIdentifier{Index: 1},
 			RelatedOperations:   []*types.OperationIdentifier{{Index: 0}},
 			Type:                "transfer",
-			Account:             &types.AccountIdentifier{Address: from},
+			Account:             &types.AccountIdentifier{Address: to},
 			Amount:              &types.Amount{Value: amount, Currency: &types.Currency{Symbol: "KAVA", Decimals: 6}},
 		},
 	}
@@ -48,7 +48,6 @@ func createTransferOperations(from string, to string, amount string) []*types.Op
 
 func TestTransfer(t *testing.T) {
 	ctx := context.Background()
-	cdc := app.MakeEncodingConfig().Amino
 
 	// TODO: use /construction/dervice to generate bech32 addresses
 	operations := createTransferOperations(
@@ -80,15 +79,14 @@ func TestTransfer(t *testing.T) {
 	assert.True(t, ok)
 	assert.InDelta(t, suggestedFeeMultipler, actualSuggestedFeeMultiplier, 0.0000001)
 
-	actualMemo, ok := preprocessResponse.Options["memo"].(string)
+	_, ok = preprocessResponse.Options["tx_body"].(string)
 	assert.True(t, ok)
-	assert.Equal(t, "test transfer integration", actualMemo)
 
 	maxFeeEncoded, ok := preprocessResponse.Options["max_fee"].(string)
 	assert.True(t, ok)
 
 	var maxFee sdk.Coins
-	err = cdc.UnmarshalJSON([]byte(maxFeeEncoded), &maxFee)
+	err = json.Unmarshal([]byte(maxFeeEncoded), &maxFee)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(500001))), maxFee)
 
