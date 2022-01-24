@@ -91,16 +91,18 @@ func (s *ConstructionAPIService) ConstructionPreprocess(
 
 	for _, msg := range msgs {
 		signers := msg.GetSigners()
-
 		seenSigners := make(map[string]bool)
 
+		// TODO: add test cases for multiple signers
 		for _, signer := range signers {
-			_, seen := seenSigners[signer.String()]
+			addr := signer.String()
 
-			if !seen {
+			if !seenSigners[addr] {
 				requiredPublicKeys = append(requiredPublicKeys, &types.AccountIdentifier{
-					Address: signer.String(),
+					Address: addr,
 				})
+
+				seenSigners[addr] = true
 			}
 		}
 	}
