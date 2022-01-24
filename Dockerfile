@@ -63,6 +63,6 @@ COPY --from=kava-rosetta-build /app/rosetta-kava/conf/start-services.sh /app/bin
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/kill-supervisord.sh /app/bin/kill-supervisord.sh
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/supervisord.conf /etc/supervisor/conf.d/rosetta-kava.conf
 
-ENV KAVA_GRPC_URL=http://localhost:9090
+ENV KAVA_RPC_URL=http://localhost:26657
 
 CMD ["/app/bin/start-services.sh"]
