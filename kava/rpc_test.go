@@ -29,7 +29,6 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
@@ -386,8 +385,8 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 }
 
 func TestHTTPClient_SimulateTx(t *testing.T) {
-	cdc := app.MakeEncodingConfig().Amino
-	testTx := &legacytx.StdTx{}
+	encodingConfig := app.MakeEncodingConfig()
+	testTx := encodingConfig.TxConfig.NewTxBuilder().GetTx()
 
 	mockResponse := sdk.SimulationResponse{
 		GasInfo: sdk.GasInfo{
@@ -419,11 +418,10 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 
 		assert.Equal(t, "0", params.Height)
 
-		var tx legacytx.StdTx
-		err = cdc.UnmarshalLengthPrefixed(params.Data, &tx)
+		_, err = encodingConfig.TxConfig.TxDecoder()(params.Data)
 		require.NoError(t, err)
 
-		respValue, err := cdc.Marshal(mockResponse)
+		respValue, err := encodingConfig.Marshaler.Marshal(&mockResponse)
 		require.NoError(t, err)
 
 		abciResult := ctypes.ResultABCIQuery{
@@ -432,7 +430,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			},
 		}
 
-		data, err := cdc.MarshalJSON(&abciResult)
+		data, err := json.Marshal(&abciResult)
 		require.NoError(t, err)
 
 		return jsonrpctypes.RPCResponse{
@@ -466,7 +464,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 			},
 		}
 
-		data, err := cdc.MarshalJSON(&abciResult)
+		data, err := json.Marshal(&abciResult)
 		require.NoError(t, err)
 
 		return jsonrpctypes.RPCResponse{
