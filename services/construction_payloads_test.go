@@ -109,7 +109,7 @@ func TestConstructionPayloads(t *testing.T) {
 	msgSend, ok := msgs[0].(*banktypes.MsgSend)
 	assert.Equal(t, signerAddr, msgSend.FromAddress)
 	require.True(t, ok)
-	assert.Equal(t, 250001, tx.GetGas())
+	assert.Equal(t, uint64(250001), tx.GetGas())
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501))), tx.GetFee())
 	require.True(t, ok)
 	assert.Equal(t, "some memo", tx.GetMemo())
