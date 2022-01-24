@@ -21,6 +21,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -162,7 +163,7 @@ func (c *HTTPClient) UnbondingDelegations(ctx context.Context, addr sdk.AccAddre
 }
 
 // SimulateTx simulates a transaction and returns the response containing the gas used and result
-func (c *HTTPClient) SimulateTx(ctx context.Context, tx sdk.Tx) (*sdk.SimulationResponse, error) {
+func (c *HTTPClient) SimulateTx(ctx context.Context, tx authsigning.Tx) (*sdk.SimulationResponse, error) {
 	bz, err := c.encodingConfig.TxConfig.TxEncoder()(tx)
 	if err != nil {
 		return nil, err
@@ -174,7 +175,7 @@ func (c *HTTPClient) SimulateTx(ctx context.Context, tx sdk.Tx) (*sdk.Simulation
 	}
 
 	var simRes sdk.SimulationResponse
-	if err := c.encodingConfig.Marshaler.Unmarshal(data, &simRes); err != nil {
+	if err := c.encodingConfig.Marshaler.UnmarshalJSON(data, &simRes); err != nil {
 		return nil, err
 	}
 	return &simRes, nil

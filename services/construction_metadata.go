@@ -29,8 +29,10 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 )
 
 var requiredOptions = []string{
@@ -66,6 +68,7 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 	}
 
 	var signers []signerInfo
+	var sigsV2 []signing.SignatureV2
 	for _, pubkey := range request.PublicKeys {
 		addr, rerr := getAddressFromPublicKey(pubkey)
 		if err != nil {
@@ -81,6 +84,24 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 			AccountNumber:   acc.GetAccountNumber(),
 			AccountSequence: acc.GetSequence(),
 		})
+
+		tmpubkey, rerr := parsePublicKey(pubkey)
+		if rerr != nil {
+			return nil, rerr
+		}
+		sdkpubkey := secp256k1.PubKey{Key: tmpubkey}
+
+		signatureData := signing.SingleSignatureData{
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+			Signature: nil,
+		}
+		sigV2 := signing.SignatureV2{
+			PubKey:   &sdkpubkey,
+			Data:     &signatureData,
+			Sequence: acc.GetSequence(),
+		}
+
+		sigsV2 = append(sigsV2, sigV2)
 	}
 
 	encodedSigners, err := json.Marshal(signers)
@@ -104,6 +125,8 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 	txBuilder := s.encodingConfig.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(msgs...)
 	txBuilder.SetMemo(options.txBody.Memo)
+	txBuilder.SetSignatures(sigsV2...)
+
 	tx := txBuilder.GetTx()
 
 	gasWanted, err := s.client.EstimateGas(ctx, tx, options.gasAdjustment)

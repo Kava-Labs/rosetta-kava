@@ -24,6 +24,8 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
@@ -46,22 +48,7 @@ func (s *ConstructionAPIService) ConstructionParse(
 	index := int64(0)
 	ops := []*types.Operation{}
 
-	signers := []*types.AccountIdentifier{}
-	seenSigners := make(map[string]bool)
-
 	for _, msg := range tx.GetMsgs() {
-		for _, signer := range msg.GetSigners() {
-			signerAddress := signer.String()
-
-			if !seenSigners[signerAddress] {
-				seenSigners[signerAddress] = true
-
-				signers = append(signers, &types.AccountIdentifier{
-					Address: signerAddress,
-				})
-			}
-		}
-
 		msgSend, ok := msg.(*banktypes.MsgSend)
 		if !ok {
 			continue
@@ -89,6 +76,24 @@ func (s *ConstructionAPIService) ConstructionParse(
 			})
 
 			index += 2
+		}
+	}
+
+	signers := []*types.AccountIdentifier{}
+	if request.Signed {
+		signedTx, ok := tx.(authsigning.Tx)
+		if !ok {
+			return nil, ErrInvalidTx
+		}
+		signatures, err := signedTx.GetSignaturesV2()
+		if err != nil {
+			return nil, wrapErr(ErrInvalidTx, err)
+		}
+		for _, signature := range signatures {
+			addr := sdk.AccAddress(signature.PubKey.Address().Bytes())
+			signers = append(signers, &types.AccountIdentifier{
+				Address: addr.String(),
+			})
 		}
 	}
 

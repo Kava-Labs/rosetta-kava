@@ -421,7 +421,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 		_, err = encodingConfig.TxConfig.TxDecoder()(params.Data)
 		require.NoError(t, err)
 
-		respValue, err := encodingConfig.Marshaler.Marshal(&mockResponse)
+		respValue, err := encodingConfig.Marshaler.MarshalJSON(&mockResponse)
 		require.NoError(t, err)
 
 		abciResult := ctypes.ResultABCIQuery{
