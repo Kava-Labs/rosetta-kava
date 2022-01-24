@@ -868,7 +868,7 @@ func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					coins = coins.Add(sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value)))
+					//coins = coins.Add(sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value)))
 				}
 			}
 		}
@@ -1001,7 +1001,7 @@ func calcDelegationSendersReceivers(senders, receivers []accountBalance, log sdk
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					//amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
 				}
 			}
 		} else if ev.Type == "message" {
@@ -1025,7 +1025,7 @@ func calcCreateValdiatorSendersReceivers(senders, receivers []accountBalance, lo
 		if ev.Type == "create_validator" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					//amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
 				}
 			}
 		} else if ev.Type == "message" {

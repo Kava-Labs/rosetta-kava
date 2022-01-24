@@ -697,25 +697,20 @@ func TestBlock_Info_NoTransactions(t *testing.T) {
 func TestBlock_Transactions(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
+	encodingConfig := app.MakeEncodingConfig()
 
-	cdc := app.MakeEncodingConfig().Amino
+	txBuilder1 := encodingConfig.TxConfig.NewTxBuilder()
+	txBuilder1.SetMsgs(&banktypes.MsgSend{
+		FromAddress: sdk.AccAddress("test from address").String(),
+		ToAddress:   sdk.AccAddress("test to address").String(),
+		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(100))},
+	})
+	txBuilder1.SetGasLimit(100000)
+	txBuilder1.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}})
+	txBuilder1.SetMemo("mock transaction 1")
 
-	mockTx1 := &legacytx.StdTx{
-		Msgs: []sdk.Msg{
-			&banktypes.MsgSend{
-				FromAddress: sdk.AccAddress("test from address").String(),
-				ToAddress:   sdk.AccAddress("test to address").String(),
-				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(100))},
-			},
-		},
-		Fee: legacytx.StdFee{
-			Amount: sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}},
-			Gas:    100000,
-		},
-		Memo: "mock transaction 1",
-	}
 	var rawMockTx1 tmtypes.Tx
-	rawMockTx1, err := cdc.MarshalLengthPrefixed(&mockTx1)
+	rawMockTx1, err := encodingConfig.TxConfig.TxEncoder()(txBuilder1.GetTx())
 	require.NoError(t, err)
 	mockDeliverTx1 := &abci.ResponseDeliverTx{
 		Code: 0,
@@ -724,27 +719,18 @@ func TestBlock_Transactions(t *testing.T) {
 		}.String(),
 	}
 
-	mockTx2 := &legacytx.StdTx{
-		Msgs: []sdk.Msg{
-			&banktypes.MsgSend{
-				FromAddress: sdk.AccAddress("test from address").String(),
-				ToAddress:   sdk.AccAddress("test to address").String(),
-				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
-			},
-			&banktypes.MsgSend{
-				FromAddress: sdk.AccAddress("test from address").String(),
-				ToAddress:   sdk.AccAddress("test to address").String(),
-				Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
-			},
-		},
-		Fee: legacytx.StdFee{
-			Amount: sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(10000)}},
-			Gas:    200000,
-		},
-		Memo: "mock transaction 2",
-	}
+	txBuilder2 := encodingConfig.TxConfig.NewTxBuilder()
+	txBuilder2.SetMsgs(&banktypes.MsgSend{
+		FromAddress: sdk.AccAddress("test from address").String(),
+		ToAddress:   sdk.AccAddress("test to address").String(),
+		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
+	})
+	txBuilder2.SetGasLimit(200000)
+	txBuilder2.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}})
+	txBuilder2.SetMemo("mock transaction 2")
+
 	var rawMockTx2 tmtypes.Tx
-	rawMockTx2, err = cdc.MarshalLengthPrefixed(&mockTx2)
+	rawMockTx2, err = encodingConfig.TxConfig.TxEncoder()(txBuilder2.GetTx())
 	require.NoError(t, err)
 	mockDeliverTx2 := &abci.ResponseDeliverTx{
 		Code: 1,

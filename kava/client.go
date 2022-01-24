@@ -25,12 +25,12 @@ import (
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	kava "github.com/kava-labs/kava/app"
+	"github.com/kava-labs/kava/app/params"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
@@ -43,7 +43,7 @@ var noBlockResultsForHeight = regexp.MustCompile("could not find results for hei
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
 	rpc            RPCClient
-	cdc            *codec.LegacyAmino
+	encodingConfig params.EncodingConfig
 	balanceFactory BalanceServiceFactory
 }
 
@@ -53,7 +53,7 @@ func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Cli
 
 	return &Client{
 		rpc:            rpc,
-		cdc:            encodingConfig.Amino,
+		encodingConfig: encodingConfig,
 		balanceFactory: balanceServiceFactory,
 	}, nil
 }
@@ -323,8 +323,7 @@ func (c *Client) getTransactionsForBlock(
 	for i, rawTx := range resultBlock.Block.Data.Txs {
 		hash := strings.ToUpper(hex.EncodeToString(rawTx.Hash()))
 
-		var tx legacytx.StdTx
-		err := c.cdc.UnmarshalLengthPrefixed(rawTx, &tx)
+		tx, err := c.encodingConfig.TxConfig.TxDecoder()(rawTx)
 		if err != nil {
 			panic(fmt.Sprintf(
 				"unable to unmarshal transaction at index %d of block %d: %s",
@@ -332,7 +331,15 @@ func (c *Client) getTransactionsForBlock(
 			))
 		}
 
-		operations := c.getOperationsForTransaction(&tx, resultBlockResults.TxsResults[i])
+		sigTx, ok := tx.(authsigning.Tx)
+		if !ok {
+			panic(fmt.Sprintf(
+				"unable to cast transaction at index %d of block %d: %s",
+				i, resultBlock.Block.Header.Height, err,
+			))
+		}
+
+		operations := c.getOperationsForTransaction(sigTx, resultBlockResults.TxsResults[i])
 		metadata := c.getMetadataForTransaction(resultBlockResults.TxsResults[i])
 
 		transactions = append(transactions, &types.Transaction{
@@ -363,7 +370,7 @@ func (c *Client) getTransactionsForBlock(
 }
 
 func (c *Client) getOperationsForTransaction(
-	tx *legacytx.StdTx,
+	tx authsigning.Tx,
 	result *abci.ResponseDeliverTx,
 ) []*types.Operation {
 	opStatus := SuccessStatus

@@ -19,7 +19,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -153,12 +153,12 @@ func cdpDrawEventToOperations(attributes map[string]string, status *string, inde
 }
 
 // TxToOperations returns rosetta operations from a transaction
-func TxToOperations(tx *legacytx.StdTx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+func TxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
 	operationIndex := int64(0)
 	operations := []*types.Operation{}
 
-	if !tx.Fee.Amount.Empty() {
-		feeOps := FeeToOperations(tx.FeePayer(), tx.Fee.Amount, feeStatus, operationIndex)
+	if !tx.GetFee().Empty() {
+		feeOps := FeeToOperations(tx.FeePayer(), tx.GetFee(), feeStatus, operationIndex)
 		operations = appendOperationsAndUpdateIndex(operations, feeOps, &operationIndex)
 	}
 
@@ -393,13 +393,13 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 	}
 
 	recipient := stakingModuleAddress
-	var amount sdk.Coin
+	var amount sdk.Coins
 	var sender sdk.AccAddress
 	for _, ev := range log.Events {
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					amount = mustParseCoinsNormalized(attr.Value)
 				}
 			}
 		} else if ev.Type == "message" {
@@ -410,7 +410,7 @@ func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, sta
 			}
 		}
 	}
-	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), sdk.NewCoins(amount), newAccountID(recipient.String()), status, index)
+	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), amount, newAccountID(recipient.String()), status, index)
 	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
 }
 
@@ -424,13 +424,13 @@ func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageL
 	}
 
 	recipient := stakingModuleAddress
-	var amount sdk.Coin
+	var amount sdk.Coins
 	var sender sdk.AccAddress
 	for _, ev := range log.Events {
 		if ev.Type == "create_validator" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					amount = mustParseCoinsNormalized(attr.Value)
 				}
 			}
 		} else if ev.Type == "message" {
@@ -441,7 +441,7 @@ func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageL
 			}
 		}
 	}
-	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), sdk.NewCoins(amount), newAccountID(recipient.String()), status, index)
+	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender.String()), amount, newAccountID(recipient.String()), status, index)
 	return appendOperationsAndUpdateIndex(ops, createValidatorOps, &index)
 }
 
@@ -459,12 +459,4 @@ func mustParseCoinsNormalized(coinsStr string) sdk.Coins {
 		panic(err)
 	}
 	return coins
-}
-
-func mustNewIntFromStr(s string) sdk.Int {
-	i, ok := sdk.NewIntFromString(s)
-	if !ok {
-		panic(fmt.Sprintf("error when converting %s to sdk.Int", s))
-	}
-	return i
 }
