@@ -362,9 +362,11 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			require.NoError(t, err)
 
 			txBuilder := encodingConfig.TxConfig.NewTxBuilder()
-			txBuilder.SetMsgs(msgs...)
+			err = txBuilder.SetMsgs(msgs...)
+			require.NoError(t, err)
 			txBuilder.SetMemo(txBody.Memo)
-			txBuilder.SetSignatures([]signing.SignatureV2{}...)
+			err = txBuilder.SetSignatures([]signing.SignatureV2{}...)
+			require.NoError(t, err)
 			expectedTx := txBuilder.GetTx()
 
 			encodedMaxFee, err := json.Marshal(tc.maxFee)
@@ -453,7 +455,8 @@ func TestConstructionMetadata_SignerData(t *testing.T) {
 	require.NoError(t, err)
 
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
-	txBuilder.SetMsgs(msgs...)
+	err = txBuilder.SetMsgs(msgs...)
+	require.NoError(t, err)
 	txBuilder.SetMemo(txBody.Memo)
 	expectedTx := txBuilder.GetTx()
 

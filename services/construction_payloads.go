@@ -62,7 +62,10 @@ func (s *ConstructionAPIService) ConstructionPayloads(
 	if rerr != nil {
 		return nil, rerr
 	}
-	txBuilder.SetMsgs(msgs...)
+	err = txBuilder.SetMsgs(msgs...)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
 
 	feeAmount := sdk.NewInt(int64(math.Ceil(metadata.gasPrice * float64(metadata.gasWanted))))
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("ukava", feeAmount)))

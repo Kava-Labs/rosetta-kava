@@ -867,8 +867,10 @@ func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 		}
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
+				var amount sdk.Coins
 				if attr.Key == "amount" {
-					//coins = coins.Add(sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value)))
+					amount = mustParseCoinsNormalized(attr.Value)
+					coins = coins.Add(amount...)
 				}
 			}
 		}
@@ -876,6 +878,7 @@ func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 	return coins
 }
 
+//nolint:golint,unused
 func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 	txResponse := sdk.TxResponse{}
 	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
@@ -891,6 +894,7 @@ func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 }
 
 // TODO: fix to return real message
+//nolint:golint,unused
 func readMsgFromFile(t *testing.T, file string) sdk.Msg {
 	txResponse := sdk.TxResponse{}
 	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
@@ -1001,7 +1005,7 @@ func calcDelegationSendersReceivers(senders, receivers []accountBalance, log sdk
 		if ev.Type == "delegate" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					//amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					amount = mustParseCoinsNormalized(attr.Value)[0]
 				}
 			}
 		} else if ev.Type == "message" {
@@ -1025,7 +1029,7 @@ func calcCreateValdiatorSendersReceivers(senders, receivers []accountBalance, lo
 		if ev.Type == "create_validator" {
 			for _, attr := range ev.Attributes {
 				if attr.Key == "amount" {
-					//amount = sdk.NewCoin("ukava", mustNewIntFromStr(attr.Value))
+					amount = mustParseCoinsNormalized(attr.Value)[0]
 				}
 			}
 		} else if ev.Type == "message" {

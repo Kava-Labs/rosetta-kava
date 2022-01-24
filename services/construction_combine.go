@@ -66,7 +66,10 @@ func (s *ConstructionAPIService) ConstructionCombine(
 			Signature: signature.Bytes,
 		}
 	}
-	txBuilder.SetSignatures(sigsV2...)
+	err = txBuilder.SetSignatures(sigsV2...)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
 
 	signedTxBytes, err := s.encodingConfig.TxConfig.TxEncoder()(txBuilder.GetTx())
 	if err != nil {

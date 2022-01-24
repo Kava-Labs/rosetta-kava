@@ -35,9 +35,9 @@ func float64ToPtr(value float64) *float64 {
 	return &value
 }
 
-func strToPtr(value string) *string {
-	return &value
-}
+//func strToPtr(value string) *string {
+//	return &value
+//}
 
 func validConstructionPreprocessRequest() *types.ConstructionPreprocessRequest {
 	defaultOps := []*types.Operation{

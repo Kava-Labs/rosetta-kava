@@ -123,9 +123,15 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 	}
 
 	txBuilder := s.encodingConfig.TxConfig.NewTxBuilder()
-	txBuilder.SetMsgs(msgs...)
+	err = txBuilder.SetMsgs(msgs...)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
 	txBuilder.SetMemo(options.txBody.Memo)
-	txBuilder.SetSignatures(sigsV2...)
+	err = txBuilder.SetSignatures(sigsV2...)
+	if err != nil {
+		return nil, wrapErr(ErrInvalidTx, err)
+	}
 
 	tx := txBuilder.GetTx()
 

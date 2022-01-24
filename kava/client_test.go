@@ -700,17 +700,18 @@ func TestBlock_Transactions(t *testing.T) {
 	encodingConfig := app.MakeEncodingConfig()
 
 	txBuilder1 := encodingConfig.TxConfig.NewTxBuilder()
-	txBuilder1.SetMsgs(&banktypes.MsgSend{
+	err := txBuilder1.SetMsgs(&banktypes.MsgSend{
 		FromAddress: sdk.AccAddress("test from address").String(),
 		ToAddress:   sdk.AccAddress("test to address").String(),
 		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(100))},
 	})
+	require.NoError(t, err)
 	txBuilder1.SetGasLimit(100000)
 	txBuilder1.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}})
 	txBuilder1.SetMemo("mock transaction 1")
 
 	var rawMockTx1 tmtypes.Tx
-	rawMockTx1, err := encodingConfig.TxConfig.TxEncoder()(txBuilder1.GetTx())
+	rawMockTx1, err = encodingConfig.TxConfig.TxEncoder()(txBuilder1.GetTx())
 	require.NoError(t, err)
 	mockDeliverTx1 := &abci.ResponseDeliverTx{
 		Code: 0,
@@ -720,11 +721,12 @@ func TestBlock_Transactions(t *testing.T) {
 	}
 
 	txBuilder2 := encodingConfig.TxConfig.NewTxBuilder()
-	txBuilder2.SetMsgs(&banktypes.MsgSend{
+	err = txBuilder2.SetMsgs(&banktypes.MsgSend{
 		FromAddress: sdk.AccAddress("test from address").String(),
 		ToAddress:   sdk.AccAddress("test to address").String(),
 		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
 	})
+	require.NoError(t, err)
 	txBuilder2.SetGasLimit(200000)
 	txBuilder2.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}})
 	txBuilder2.SetMemo("mock transaction 2")
@@ -964,7 +966,7 @@ func TestEstimateGas(t *testing.T) {
 	tx := legacytx.NewStdTx(
 		msgs,
 		legacytx.StdFee{},
-		[]legacytx.StdSignature{{}},
+		nil,
 		"a memo",
 	)
 	gasAdjusment := float64(0.1)

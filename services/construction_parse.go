@@ -29,8 +29,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
-// TODO: improve endpoint validate transactions
 // ConstructionParse implements the /construction/parse endpoint.
+// TODO: improve endpoint validate transactions
 func (s *ConstructionAPIService) ConstructionParse(
 	ctx context.Context,
 	request *types.ConstructionParseRequest,
