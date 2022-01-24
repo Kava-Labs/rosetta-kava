@@ -382,7 +382,7 @@ func (c *Client) getOperationsForTransaction(
 
 	if result.Codespace == sdkerrors.RootCodespace {
 		switch result.Code {
-		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode():
+		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
 		case sdkerrors.ErrInsufficientFunds.ABCICode():
 			if insufficientFee.MatchString(result.Log) {
