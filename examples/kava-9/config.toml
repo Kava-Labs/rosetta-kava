@@ -1,0 +1,401 @@
+# This is a TOML config file.
+# For more information, see https://github.com/toml-lang/toml
+
+# NOTE: Any path below can be absolute (e.g. "/var/myawesomeapp/data") or
+# relative to the home directory (e.g. "data"). The home directory is
+# "$HOME/.tendermint" by default, but could be changed via $TMHOME env variable
+# or --home cmd flag.
+
+#######################################################################
+###                   Main Base Config Options                      ###
+#######################################################################
+
+# TCP or UNIX socket address of the ABCI application,
+# or the name of an ABCI application compiled in with the Tendermint binary
+proxy_app = "tcp://127.0.0.1:26658"
+
+# A custom human readable name for this node
+moniker = "kava-rosetta-node"
+
+# If this node is many blocks behind the tip of the chain, FastSync
+# allows them to catchup quickly by downloading blocks in parallel
+# and verifying their commits
+fast_sync = true
+
+# Database backend: goleveldb | cleveldb | boltdb | rocksdb | badgerdb
+# * goleveldb (github.com/syndtr/goleveldb - most popular implementation)
+#   - pure go
+#   - stable
+# * cleveldb (uses levigo wrapper)
+#   - fast
+#   - requires gcc
+#   - use cleveldb build tag (go build -tags cleveldb)
+# * boltdb (uses etcd's fork of bolt - github.com/etcd-io/bbolt)
+#   - EXPERIMENTAL
+#   - may be faster is some use-cases (random reads - indexer)
+#   - use boltdb build tag (go build -tags boltdb)
+# * rocksdb (uses github.com/tecbot/gorocksdb)
+#   - EXPERIMENTAL
+#   - requires gcc
+#   - use rocksdb build tag (go build -tags rocksdb)
+# * badgerdb (uses github.com/dgraph-io/badger)
+#   - EXPERIMENTAL
+#   - use badgerdb build tag (go build -tags badgerdb)
+db_backend = "goleveldb"
+
+# Database directory
+db_dir = "data"
+
+# Output level for logging, including package level options
+log_level = "info"
+
+# Output format: 'plain' (colored text) or 'json'
+log_format = "plain"
+
+##### additional base config options #####
+
+# Path to the JSON file containing the initial validator set and other meta data
+genesis_file = "config/genesis.json"
+
+# Path to the JSON file containing the private key to use as a validator in the consensus protocol
+priv_validator_key_file = "config/priv_validator_key.json"
+
+# Path to the JSON file containing the last sign state of a validator
+priv_validator_state_file = "data/priv_validator_state.json"
+
+# TCP or UNIX socket address for Tendermint to listen on for
+# connections from an external PrivValidator process
+priv_validator_laddr = ""
+
+# Path to the JSON file containing the private key to use for node authentication in the p2p protocol
+node_key_file = "config/node_key.json"
+
+# Mechanism to connect to the ABCI application: socket | grpc
+abci = "socket"
+
+# If true, query the ABCI app on connecting to a new peer
+# so the app can decide if we should keep the connection or not
+filter_peers = false
+
+
+#######################################################################
+###                 Advanced Configuration Options                  ###
+#######################################################################
+
+#######################################################
+###       RPC Server Configuration Options          ###
+#######################################################
+[rpc]
+
+# TCP or UNIX socket address for the RPC server to listen on
+laddr = "tcp://127.0.0.1:26657"
+
+# A list of origins a cross-domain request can be executed from
+# Default value '[]' disables cors support
+# Use '["*"]' to allow any origin
+cors_allowed_origins = []
+
+# A list of methods the client is allowed to use with cross-domain requests
+cors_allowed_methods = ["HEAD", "GET", "POST", ]
+
+# A list of non simple headers the client is allowed to use with cross-domain requests
+cors_allowed_headers = ["Origin", "Accept", "Content-Type", "X-Requested-With", "X-Server-Time", ]
+
+# TCP or UNIX socket address for the gRPC server to listen on
+# NOTE: This server only supports /broadcast_tx_commit
+grpc_laddr = ""
+
+# Maximum number of simultaneous connections.
+# Does not include RPC (HTTP&WebSocket) connections. See max_open_connections
+# If you want to accept a larger number than the default, make sure
+# you increase your OS limits.
+# 0 - unlimited.
+# Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
+# 1024 - 40 - 10 - 50 = 924 = ~900
+grpc_max_open_connections = 900
+
+# Activate unsafe RPC commands like /dial_seeds and /unsafe_flush_mempool
+unsafe = false
+
+# Maximum number of simultaneous connections (including WebSocket).
+# Does not include gRPC connections. See grpc_max_open_connections
+# If you want to accept a larger number than the default, make sure
+# you increase your OS limits.
+# 0 - unlimited.
+# Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
+# 1024 - 40 - 10 - 50 = 924 = ~900
+max_open_connections = 900
+
+# Maximum number of unique clientIDs that can /subscribe
+# If you're using /broadcast_tx_commit, set to the estimated maximum number
+# of broadcast_tx_commit calls per block.
+max_subscription_clients = 100
+
+# Maximum number of unique queries a given client can /subscribe to
+# If you're using GRPC (or Local RPC client) and /broadcast_tx_commit, set to
+# the estimated # maximum number of broadcast_tx_commit calls per block.
+max_subscriptions_per_client = 5
+
+# How long to wait for a tx to be committed during /broadcast_tx_commit.
+# WARNING: Using a value larger than 10s will result in increasing the
+# global HTTP write timeout, which applies to all connections and endpoints.
+# See https://github.com/tendermint/tendermint/issues/3435
+timeout_broadcast_tx_commit = "120s"
+
+# Maximum size of request body, in bytes
+max_body_bytes = 1000000
+
+# Maximum size of request header, in bytes
+max_header_bytes = 1048576
+
+# The path to a file containing certificate that is used to create the HTTPS server.
+# Might be either absolute path or path related to Tendermint's config directory.
+# If the certificate is signed by a certificate authority,
+# the certFile should be the concatenation of the server's certificate, any intermediates,
+# and the CA's certificate.
+# NOTE: both tls_cert_file and tls_key_file must be present for Tendermint to create HTTPS server.
+# Otherwise, HTTP server is run.
+tls_cert_file = ""
+
+# The path to a file containing matching private key that is used to create the HTTPS server.
+# Might be either absolute path or path related to Tendermint's config directory.
+# NOTE: both tls-cert-file and tls-key-file must be present for Tendermint to create HTTPS server.
+# Otherwise, HTTP server is run.
+tls_key_file = ""
+
+# pprof listen address (https://golang.org/pkg/net/http/pprof)
+pprof_laddr = "localhost:6060"
+
+#######################################################
+###           P2P Configuration Options             ###
+#######################################################
+[p2p]
+
+# Address to listen for incoming connections
+laddr = "tcp://0.0.0.0:26656"
+
+# Address to advertise to peers for them to dial
+# If empty, will use the same port as the laddr,
+# and will introspect on the listener or use UPnP
+# to figure out the address. ip and port are required
+# example: 159.89.10.97:26656
+external_address = "tcp://3.232.57.129:26656"
+
+# Comma separated list of seed nodes to connect to
+seeds = "3e142cb029fa327750001d8e6cc45b992a527632@23.20.105.65:26656"
+
+# Comma separated list of nodes to keep persistent connections to
+persistent_peers = "881edc411e2af6606908f2f0a082d59c5db4ab92@52.2.60.226:26656,3ebd25eb40a0439211d1d5400c2b0e68d366a56d@3.232.57.129:26656,c030f0da6ec31da2ecdeb2196599452e83190002@35.175.26.208:26656,00b776c22bdee28266fa53c9e1dcd50a87a0e5a2@54.85.46.17:26656,cf93303f122c477f6a20d7058285053fb881f337@3.34.163.178:26656,0afa832a9cf25837b590815dd7933423b814c410@52.52.252.68:26656,a5d0441b07c9a1e9d1399064e7d66b6a5c67a34f@35.178.127.120:50056,8b5c4a890c8ae7efbbe3360af71be1c3c3a9e12e@121.78.241.68:46656,50e4cad7d5e28f7b6495168f92e12bf810e293fd@142.132.152.187:10856,f7c894901f450b92614fd051d10854d168ec30b5@65.21.94.20:10856,145edb65935b528534049b80f6ce1d155fcc93e3@141.94.132.35:36656,11f965df6fb3091e0fa3a1e4c129ff697939b827@54.185.38.14:26656,d3658cb9c63cf43b0c707401649809a6007a7c12@94.130.67.43:26656,21ec4a9c54d0445ec671e2d07230f29e3a6984aa@173.249.29.13:26656,1074a6f31d2c7df6e21ce0e574a5cb75f1763be1@13.56.31.21:26656,1291ef230910953545fb3d83c4e989578da978a1@35.157.56.248:26656,d5db8898d40054c07442f3364b32f7fac2752f5e@188.34.178.92:26656,a2284de0eb3c127c891a352c58c703c4092c7067@65.21.240.10:26656,c6d5a2c7f321bb8abf52a342d52195089c0b4e61@3.141.176.120:26656,edee419731ed920b54a380cb404cb6be8fe894af@54.177.194.124:26656,46e166ec70ca091c3e64771de9d70cbbb9e4bb9f@13.209.122.197:26656,761442bbc74502169a8284e8a56d63f853624354@52.9.68.222:26656,7ac881dda2eb3d5f94e9df102cb29a85a17a5b14@185.234.69.27:26656,8ba9721048eb1e464196b75a77c7be3f6d654e13@95.216.16.245:21656,5f2f2fb27c80fd374abd0313070f3131bee940fa@54.69.100.187:26202,9f5c9ef6071496c6063c747f1bbdb4c3151d6b0f@18.157.145.60:26202,8463c6ac92187ac1549e6524d6ba16af75394ac9@54.254.87.231:26202,df4ef34a61ec3aa6dc19fecbb49b2cf929b6aac1@35.232.163.218:26656,bfb0e78f91a5448c36205d32623d5ced4de78553@168.119.120.189:26656,63dfe97a5192b996feec23a4a1305cdcef1c6cf8@65.108.152.37:26656,3443628a434abff5578cc7737576fc08ac423dce@141.94.101.216:26656,4f4b567edcc417ff5ff21d26fb56237e60da81b3@132.145.126.161:26656,781c039c0504eaa013f3519777730fb77d8fb70b@kava.chain.artemisone.org:26656,7b1416ef83646d6741b40548a8dbbed891bfd142@185.40.93.156:26656"
+
+# UPNP port forwarding
+upnp = false
+
+# Path to address book
+addr_book_file = "config/addrbook.json"
+
+# Set true for strict address routability rules
+# Set false for private or local networks
+addr_book_strict = true
+
+# Maximum number of inbound peers
+max_num_inbound_peers = 300
+
+# Maximum number of outbound peers to connect to, excluding persistent peers
+max_num_outbound_peers = 150
+
+# List of node IDs, to which a connection will be (re)established ignoring any existing limits
+unconditional_peer_ids = ""
+
+# Maximum pause when redialing a persistent peer (if zero, exponential backoff is used)
+persistent_peers_max_dial_period = "0s"
+
+# Time to wait before flushing messages out on the connection
+flush_throttle_timeout = "100ms"
+
+# Maximum size of a message packet payload, in bytes
+max_packet_msg_payload_size = 1024
+
+# Rate at which packets can be sent, in bytes/second
+send_rate = 5120000
+
+# Rate at which packets can be received, in bytes/second
+recv_rate = 5120000
+
+# Set true to enable the peer-exchange reactor
+pex = true
+
+# Seed mode, in which node constantly crawls the network and looks for
+# peers. If another node asks it for addresses, it responds and disconnects.
+#
+# Does not work if the peer-exchange reactor is disabled.
+seed_mode = false
+
+# Comma separated list of peer IDs to keep private (will not be gossiped to other peers)
+private_peer_ids = ""
+
+# Toggle to disable guard against peers connecting from the same ip.
+allow_duplicate_ip = false
+
+# Peer connection configuration.
+handshake_timeout = "20s"
+dial_timeout = "3s"
+
+#######################################################
+###          Mempool Configuration Option          ###
+#######################################################
+[mempool]
+
+recheck = true
+broadcast = true
+wal_dir = ""
+
+# Maximum number of transactions in the mempool
+size = 5000
+
+# Limit the total size of all txs in the mempool.
+# This only accounts for raw transactions (e.g. given 1MB transactions and
+# max_txs_bytes=5MB, mempool will only accept 5 transactions).
+max_txs_bytes = 1073741824
+
+# Size of the cache (used to filter transactions we saw earlier) in transactions
+cache_size = 10000
+
+# Do not remove invalid transactions from the cache (default: false)
+# Set to true if it's not possible for any invalid transaction to become valid
+# again in the future.
+keep-invalid-txs-in-cache = false
+
+# Maximum size of a single transaction.
+# NOTE: the max size of a tx transmitted over the network is {max_tx_bytes}.
+max_tx_bytes = 1048576
+
+# Maximum size of a batch of transactions to send to a peer
+# Including space needed by encoding (one varint per transaction).
+# XXX: Unused due to https://github.com/tendermint/tendermint/issues/5796
+max_batch_bytes = 0
+
+#######################################################
+###         State Sync Configuration Options        ###
+#######################################################
+[statesync]
+# State sync rapidly bootstraps a new node by discovering, fetching, and restoring a state machine
+# snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
+# the network to take and serve state machine snapshots. State sync is not attempted if the node
+# has any local state (LastBlockHeight > 0). The node will have a truncated block history,
+# starting from the height of the snapshot.
+enable = false
+
+# RPC servers (comma-separated) for light client verification of the synced state machine and
+# retrieval of state data for node bootstrapping. Also needs a trusted height and corresponding
+# header hash obtained from a trusted source, and a period during which validators can be trusted.
+#
+# For Cosmos SDK-based chains, trust_period should usually be about 2/3 of the unbonding time (~2
+# weeks) during which they can be financially punished (slashed) for misbehavior.
+rpc_servers = ""
+trust_height = 0
+trust_hash = ""
+trust_period = "168h0m0s"
+
+# Time to spend discovering snapshots before initiating a restore.
+discovery_time = "15s"
+
+# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
+# Will create a new, randomly named directory within, and remove it when done.
+temp_dir = ""
+
+# The timeout duration before re-requesting a chunk, possibly from a different
+# peer (default: 1 minute).
+chunk_request_timeout = "10s"
+
+# The number of concurrent chunk fetchers to run (default: 1).
+chunk_fetchers = "4"
+
+#######################################################
+###       Fast Sync Configuration Connections       ###
+#######################################################
+[fastsync]
+
+# Fast Sync version to use:
+#   1) "v0" (default) - the legacy fast sync implementation
+#   2) "v1" - refactor of v0 version for better testability
+#   2) "v2" - complete redesign of v0, optimized for testability & readability
+version = "v0"
+
+#######################################################
+###         Consensus Configuration Options         ###
+#######################################################
+[consensus]
+
+wal_file = "data/cs.wal/wal"
+
+# How long we wait for a proposal block before prevoting nil
+timeout_propose = "3s"
+# How much timeout_propose increases with each round
+timeout_propose_delta = "500ms"
+# How long we wait after receiving +2/3 prevotes for “anything” (ie. not a single block or nil)
+timeout_prevote = "1s"
+# How much the timeout_prevote increases with each round
+timeout_prevote_delta = "500ms"
+# How long we wait after receiving +2/3 precommits for “anything” (ie. not a single block or nil)
+timeout_precommit = "1s"
+# How much the timeout_precommit increases with each round
+timeout_precommit_delta = "500ms"
+# How long we wait after committing a block, before starting on the new
+# height (this gives us a chance to receive some more precommits, even
+# though we already have +2/3).
+timeout_commit = "5s"
+
+# How many blocks to look back to check existence of the node's consensus votes before joining consensus
+# When non-zero, the node will panic upon restart
+# if the same consensus key was used to sign {double_sign_check_height} last blocks.
+# So, validators should stop the state machine, wait for some blocks, and then restart the state machine to avoid panic.
+double_sign_check_height = 0
+
+# Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
+skip_timeout_commit = false
+
+# EmptyBlocks mode and possible interval between empty blocks
+create_empty_blocks = true
+create_empty_blocks_interval = "0s"
+
+# Reactor sleep duration parameters
+peer_gossip_sleep_duration = "100ms"
+peer_query_maj23_sleep_duration = "2s"
+
+#######################################################
+###   Transaction Indexer Configuration Options     ###
+#######################################################
+[tx_index]
+
+# What indexer to use for transactions
+#
+# The application will set which txs to index. In some cases a node operator will be able
+# to decide which txs to index based on configuration set in the application.
+#
+# Options:
+#   1) "null"
+#   2) "kv" (default) - the simplest possible indexer, backed by key-value storage (defaults to levelDB; see DBBackend).
+# 		- When "kv" is chosen "tx.height" and "tx.hash" will always be indexed.
+indexer = "kv"
+
+#######################################################
+###       Instrumentation Configuration Options     ###
+#######################################################
+[instrumentation]
+
+# When true, Prometheus metrics are served under /metrics on
+# PrometheusListenAddr.
+# Check out the documentation for the list of available metrics.
+prometheus = false
+
+# Address to listen for Prometheus collector(s) connections
+prometheus_listen_addr = ":26660"
+
+# Maximum number of simultaneous connections.
+# If you want to accept a larger number than the default, make sure
+# you increase your OS limits.
+# 0 - unlimited.
+max_open_connections = 3
+
+# Instrumentation namespace
+namespace = "tendermint"
