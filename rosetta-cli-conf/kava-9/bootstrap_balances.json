@@ -1,1 +1,132 @@
-[]
+[
+  {
+    "account_identifier": {
+      "address":"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+    },
+    "currency":{
+      "symbol":"HARD",
+      "decimals":6
+    },
+    "value": "19385081"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1j4yzhgjm00ch3h0p9kel7g8sp6g045qf8kzmmd"
+    },
+    "currency":{
+      "symbol":"USDX",
+      "decimals":6
+    },
+    "value": "18141380"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1vhx9xqrnur686gqxy73xhr7a0fw03s0w5h4ph0"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "35503409"
+  },
+  {
+    "account_identifier": {
+      "address":"kava18226tky5hkvecgzvyedqkzfkpv3f8qq9zsuf5c"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "213335278"
+  },
+  {
+    "account_identifier": {
+      "address":"kava18226tky5hkvecgzvyedqkzfkpv3f8qq9zsuf5c"
+    },
+    "currency":{
+      "symbol":"HARD",
+      "decimals":6
+    },
+    "value": "533606044"
+  },
+  {
+    "account_identifier": {
+      "address":"kava18226tky5hkvecgzvyedqkzfkpv3f8qq9zsuf5c"
+    },
+    "currency":{
+      "symbol":"USDX",
+      "decimals":6
+    },
+    "value": "138537567"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1lpd2e5u2d4q3hd3yaawpyq80y82j0y2l6djhsn"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "147426"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "7874694921098"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"HARD",
+      "decimals":6
+    },
+    "value": "85446731757392"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"SWP",
+      "decimals":6
+    },
+    "value": "127651424984248"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1s3pem3p4vtgszlas2qv9hkxa43xms9fhdk23x3"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "10985281"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1s3pem3p4vtgszlas2qv9hkxa43xms9fhdk23x3"
+    },
+    "currency":{
+      "symbol":"HARD",
+      "decimals":6
+    },
+    "value": "3979299591"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1s3pem3p4vtgszlas2qv9hkxa43xms9fhdk23x3"
+    },
+    "currency":{
+      "symbol":"SWP",
+      "decimals":6
+    },
+    "value": "846214719"
+  }
+]
