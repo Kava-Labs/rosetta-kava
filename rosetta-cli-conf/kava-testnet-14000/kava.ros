@@ -8,15 +8,6 @@ request_funds(1){
       },
       "create_limit":1
     });
-  },
-  request{
-    loaded_account = find_balance({
-      "account_identifier": {{random_account.account_identifier}},
-      "minimum_balance":{
-        "value": "1000000",
-        "currency": {{currency}}
-      }
-    });
   }
 }
 

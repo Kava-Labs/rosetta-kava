@@ -23,7 +23,6 @@
    "broadcast_limit": 5,
    "ignore_broadcast_failures": false,
    "clear_broadcasts": false,
-   "prefunded_accounts": [],
    "constructor_dsl_file": "kava.ros",
    "end_conditions": {
      "create_account": 10,
