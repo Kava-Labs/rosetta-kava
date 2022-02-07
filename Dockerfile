@@ -1,5 +1,5 @@
-ARG base_go_image=golang:1.17.6-bullseye
-FROM $base_go_image as kava-rosetta-build
+ARG build_image=golang:1.17.6-bullseye
+FROM $build_image as kava-rosetta-build
 
 RUN apt-get update \
       && apt-get install -y git make gcc \
