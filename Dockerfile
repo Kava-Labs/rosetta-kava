@@ -5,7 +5,7 @@ RUN apt-get update \
       && apt-get install -y git make gcc \
       && rm -rf /var/lib/apt/lists/*
 
-ARG kava_node_version=v0.16.0
+ARG kava_node_version=v0.16.1
 ARG kava_rosetta_version=v0.0.1
 ENV KAVA_NODE_VERSION=$kava_node_version
 ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
