@@ -107,7 +107,7 @@ paths:
               example:
                 version:
                   rosetta_version: 1.4.10
-                  node_version: v0.16.0
+                  node_version: v0.16.1
                   middleware_version: 0.0.1
                 allow:
                   operation_statuses:
