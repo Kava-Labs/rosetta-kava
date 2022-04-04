@@ -29,6 +29,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -382,11 +383,37 @@ func (c *Client) getOperationsForTransaction(
 
 	if result.Codespace == sdkerrors.RootCodespace {
 		switch result.Code {
-		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
+		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
 		case sdkerrors.ErrInsufficientFunds.ABCICode():
 			if insufficientFee.MatchString(result.Log) {
 				feeStatus = FailureStatus
+			}
+		// The fee may be paid if the unauthorized error happens outside of the ante chain,
+		// therefore we must check the events to see if the fee collector received the coins.
+		case sdkerrors.ErrUnauthorized.ABCICode():
+			feeStatus = FailureStatus
+
+			// Check transaction events for fee collector
+			for _, event := range stringifyEvents(result.Events) {
+				if event.Type == banktypes.EventTypeCoinReceived {
+					attributes := make(map[string]string)
+
+					for _, attribute := range event.Attributes {
+						attributes[attribute.Key] = attribute.Value
+					}
+
+					amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
+					if err != nil {
+						panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
+					}
+
+					// Fee was paid
+					if attributes[banktypes.AttributeKeyReceiver] == feeCollectorAddress.String() && amount.IsEqual(tx.GetFee()) {
+						feeStatus = SuccessStatus
+						break
+					}
+				}
 			}
 		}
 	}
