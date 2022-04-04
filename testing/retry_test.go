@@ -19,7 +19,6 @@ package testing
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"regexp"
 	"testing"
