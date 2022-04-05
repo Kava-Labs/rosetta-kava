@@ -1,4 +1,6 @@
+//go:build integration
 // +build integration
+
 // Copyright 2021 Kava Labs, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +19,12 @@ package testing
 
 import (
 	"context"
-	"errors"
 	"math/rand"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
 )
 
 var lessOrEqualCurrentHeight = regexp.MustCompile(`height \d+ must be less than or equal to the current blockchain height`)
@@ -74,12 +74,8 @@ func TestBlockRetry(t *testing.T) {
 				_, rosettaErr, err = client.BlockAPI.Block(ctx, request)
 
 				if err != nil {
-					var rpcError *tmrpctypes.RPCError
-
-					if errors.As(err, &rpcError) {
-						if lessOrEqualCurrentHeight.MatchString(rpcError.Data) {
-							continue
-						}
+					if lessOrEqualCurrentHeight.MatchString(err.Error()) {
+						continue
 					}
 				}
 
@@ -94,6 +90,7 @@ func TestBlockRetry(t *testing.T) {
 	select {
 	case blockErr := <-errChan:
 		if blockErr.err != nil {
+
 			t.Fatalf("received error fetching block %s", blockErr.err)
 		}
 
