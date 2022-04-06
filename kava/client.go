@@ -221,6 +221,9 @@ func (c *Client) Block(
 	}
 
 	height := block.Block.Header.Height
+	if blockIdentifier != nil && blockIdentifier.Index != nil && *blockIdentifier.Index != height {
+		return nil, fmt.Errorf("requested index %d does not match returned index %d", *blockIdentifier.Index, height)
+	}
 	identifier := &types.BlockIdentifier{
 		Index: height,
 		Hash:  block.BlockID.Hash.String(),
@@ -278,14 +281,14 @@ func (c *Client) getBlockResult(ctx context.Context, blockIdentifier *types.Part
 	case blockIdentifier == nil:
 		// fetch the latest block by passing (*int64)(nil) to tendermint rpc
 		block, err = c.rpc.Block(ctx, nil)
-	case blockIdentifier.Index != nil:
-		block, err = c.rpc.Block(ctx, blockIdentifier.Index)
 	case blockIdentifier.Hash != nil:
 		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
 		block, err = c.rpc.BlockByHash(ctx, hashBytes)
+	case blockIdentifier.Index != nil:
+		block, err = c.rpc.Block(ctx, blockIdentifier.Index)
 	}
 
 	return
