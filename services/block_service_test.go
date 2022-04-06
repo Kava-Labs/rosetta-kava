@@ -151,7 +151,24 @@ func TestBlockService_Online(t *testing.T) {
 	})
 	assert.Nil(t, block)
 	// if block results fail to fetch this is retriable
-	assert.Equal(t, ErrKava.Retriable, true, "expected could not find results error to be retriable")
+	assert.Equal(t, err.Retriable, true, "expected could not find results error to be retriable")
+
+	kavaErr = errors.New("some non-retriable client error")
+	mockClient.On(
+		"Block",
+		ctx,
+		blockIdentifier,
+	).Return(
+		nil,
+		kavaErr,
+	).Once()
+
+	block, err = servicer.Block(ctx, &types.BlockRequest{
+		NetworkIdentifier: networkIdentifier,
+		BlockIdentifier:   blockIdentifier,
+	})
+	// errors are not retriable
+	assert.Equal(t, err.Retriable, false, "expected error to not be retriable")
 
 	mockClient.AssertExpectations(t)
 }

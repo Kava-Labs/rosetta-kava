@@ -54,13 +54,13 @@ func (s *BlockAPIService) Block(
 
 	blockReponse, err := s.client.Block(ctx, request.BlockIdentifier)
 	if err != nil {
-		rErr := ErrKava
+		rErr := wrapErr(ErrKava, err)
 
 		if kava.IsRetriableError(err) {
 			rErr.Retriable = true
 		}
 
-		return nil, wrapErr(rErr, err)
+		return nil, rErr
 	}
 
 	return blockReponse, nil
