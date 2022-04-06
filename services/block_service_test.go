@@ -26,6 +26,8 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
+	tmstate "github.com/tendermint/tendermint/state"
 )
 
 func TestBlockService_Offline(t *testing.T) {
@@ -123,12 +125,33 @@ func TestBlockService_Online(t *testing.T) {
 	assert.Nil(t, block)
 	assert.Equal(t, ErrKava.Code, err.Code)
 	assert.Equal(t, ErrKava.Message, err.Message)
+	// errors are not retriable
+	assert.Equal(t, ErrKava.Retriable, false)
 	assert.Equal(t, kavaErr.Error(), err.Details["context"])
 
 	blockTransaction, err := servicer.BlockTransaction(ctx, &types.BlockTransactionRequest{})
 	assert.Nil(t, blockTransaction)
 	assert.Equal(t, ErrUnimplemented.Code, err.Code)
 	assert.Equal(t, ErrUnimplemented.Message, err.Message)
+
+	abciErr := tmstate.ErrNoABCIResponsesForHeight{Height: 10001}
+	kavaErr = tmrpctypes.RPCInternalError(tmrpctypes.JSONRPCIntID(1), abciErr).Error
+	mockClient.On(
+		"Block",
+		ctx,
+		blockIdentifier,
+	).Return(
+		nil,
+		kavaErr,
+	).Once()
+
+	block, err = servicer.Block(ctx, &types.BlockRequest{
+		NetworkIdentifier: networkIdentifier,
+		BlockIdentifier:   blockIdentifier,
+	})
+	assert.Nil(t, block)
+	// if block results fail to fetch this is retriable
+	assert.Equal(t, ErrKava.Retriable, true, "expected could not find results error to be retriable")
 
 	mockClient.AssertExpectations(t)
 }

@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/kava-labs/rosetta-kava/configuration"
+	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
@@ -53,7 +54,13 @@ func (s *BlockAPIService) Block(
 
 	blockReponse, err := s.client.Block(ctx, request.BlockIdentifier)
 	if err != nil {
-		return nil, wrapErr(ErrKava, err)
+		rErr := ErrKava
+
+		if kava.IsRetriableError(err) {
+			rErr.Retriable = true
+		}
+
+		return nil, wrapErr(rErr, err)
 	}
 
 	return blockReponse, nil
