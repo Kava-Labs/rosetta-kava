@@ -254,21 +254,15 @@ func (c *Client) Block(
 }
 
 func (c *Client) getBlockDeliverResults(ctx context.Context, height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
-	// backoff over 6,350 ms
+	// backoff over 12,750 ms
 	backoff := 50 * time.Millisecond
-	for attempts := 0; attempts < 6; attempts++ {
+	for attempts := 0; attempts < 7; attempts++ {
 		blockResults, err = c.rpc.BlockResults(ctx, height)
 
-		if err != nil {
-			var rpcError *tmrpctypes.RPCError
-
-			if errors.As(err, &rpcError) {
-				if noBlockResultsForHeight.MatchString(rpcError.Data) {
-					time.Sleep(backoff)
-					backoff = 2 * backoff
-					continue
-				}
-			}
+		if err != nil && IsRetriableError(err) {
+			time.Sleep(backoff)
+			backoff = 2 * backoff
+			continue
 		}
 
 		return
@@ -460,4 +454,17 @@ func (c *Client) PostTx(ctx context.Context, txBytes []byte) (*types.Transaction
 	}
 
 	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, nil
+}
+
+// IsRetriableError returns true if the error is retriable or temporary and may succeed on new attempt
+func IsRetriableError(err error) bool {
+	var rpcError *tmrpctypes.RPCError
+
+	if errors.As(err, &rpcError) {
+		if noBlockResultsForHeight.MatchString(rpcError.Data) {
+			return true
+		}
+	}
+
+	return false
 }

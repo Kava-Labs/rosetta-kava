@@ -1,30 +1,12 @@
-# Use multi-stage build
-FROM ubuntu:20.04 as ubuntu-go-base
-
-RUN mkdir /app
-WORKDIR /app
-
-RUN apt-get update \
-      && apt-get install -y curl \
-      && rm -rf /var/lib/apt/lists/*
-
-ENV GOLANG_VERSION=1.17.6
-ENV GOLANG_DOWNLOAD_SHA256=231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2
-ENV GOLANG_ARCHIVE_FILENAME=go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_URL=https://golang.org/dl/$GOLANG_ARCHIVE_FILENAME
-
-RUN curl -sSLO $GOLANG_DOWNLOAD_URL \
-      && echo "$GOLANG_DOWNLOAD_SHA256  $GOLANG_ARCHIVE_FILENAME" | sha256sum -c - \
-      && tar -C /usr/local -xzf $GOLANG_ARCHIVE_FILENAME \
-      && rm $GOLANG_ARCHIVE_FILENAME
-
-ENV PATH=$PATH:/usr/local/go/bin
-
-FROM ubuntu-go-base as kava-rosetta-build
+ARG build_image=golang:1.17.6-bullseye
+FROM $build_image as kava-rosetta-build
 
 RUN apt-get update \
       && apt-get install -y git make gcc \
       && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /app
+WORKDIR /app
 
 ARG kava_node_version=v0.16.1
 ENV KAVA_NODE_VERSION=$kava_node_version
@@ -52,8 +34,8 @@ WORKDIR /app
 ENV PATH=$PATH:/app/bin
 
 # copy build binaries from build environemtn
-COPY --from=kava-rosetta-build /root/go/bin/kava /app/bin/kava
-COPY --from=kava-rosetta-build /root/go/bin/rosetta-kava /app/bin/rosetta-kava
+COPY --from=kava-rosetta-build /go/bin/kava /app/bin/kava
+COPY --from=kava-rosetta-build /go/bin/rosetta-kava /app/bin/rosetta-kava
 
 # copy config templates to automate setup
 COPY --from=kava-rosetta-build /app/rosetta-kava/examples /app/templates
