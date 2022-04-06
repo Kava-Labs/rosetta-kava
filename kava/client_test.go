@@ -941,6 +941,76 @@ func TestAccount(t *testing.T) {
 	assert.Equal(t, expectedAccount, account)
 }
 
+// TestBlock_HashPriority asserts that a block is looked up by hash if both
+// the index and hash are provided.  In addition, we assert that an error
+// is thrown if the returned index does not match the queried index.
+func TestBlock_HashPriority(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient, _, client := setupClient(t)
+
+	parentBlockIdentifier := &types.BlockIdentifier{
+		Index: 99,
+		Hash:  "8EA67B6F7927DB941F86501D1757AC6804C1D21B7A75B9DA3F16A3C81C397E50",
+	}
+	parentHashBytes, err := hex.DecodeString(parentBlockIdentifier.Hash)
+	require.NoError(t, err)
+
+	blockIdentifier := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(blockIdentifier.Hash)
+	require.NoError(t, err)
+
+	mockResultBlock := &ctypes.ResultBlock{
+		BlockID: tmtypes.BlockID{
+			Hash: hashBytes,
+		},
+		Block: &tmtypes.Block{
+			Header: tmtypes.Header{
+				Height: blockIdentifier.Index,
+				Time:   blockTime,
+				LastBlockID: tmtypes.BlockID{
+					Hash: parentHashBytes,
+				},
+			},
+		},
+	}
+
+	// block is only ever looked up by hash and not the index
+	mockRPCClient.On("BlockByHash", ctx, hashBytes).Return(
+		mockResultBlock,
+		nil,
+	)
+	mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(
+		&ctypes.ResultBlockResults{},
+		nil,
+	)
+
+	blockResponse, err := client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Index: &blockIdentifier.Index,
+			Hash:  &blockIdentifier.Hash,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, blockIdentifier, blockResponse.Block.BlockIdentifier)
+
+	invalidIndex := blockIdentifier.Index + 1
+	_, err = client.Block(
+		ctx,
+		&types.PartialBlockIdentifier{
+			Index: &invalidIndex,
+			Hash:  &blockIdentifier.Hash,
+		},
+	)
+	assert.EqualError(t, err, fmt.Sprintf("requested index %d does not match returned index %d", invalidIndex, blockIdentifier.Index))
+
+	mockRPCClient.AssertExpectations(t)
+}
+
 func TestEstimateGas(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
