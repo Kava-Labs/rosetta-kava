@@ -163,7 +163,7 @@ func TestBlockService_Online(t *testing.T) {
 		kavaErr,
 	).Once()
 
-	block, err = servicer.Block(ctx, &types.BlockRequest{
+	_, err = servicer.Block(ctx, &types.BlockRequest{
 		NetworkIdentifier: networkIdentifier,
 		BlockIdentifier:   blockIdentifier,
 	})

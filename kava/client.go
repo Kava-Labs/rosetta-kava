@@ -456,6 +456,7 @@ func (c *Client) PostTx(ctx context.Context, txBytes []byte) (*types.Transaction
 	return &types.TransactionIdentifier{Hash: txRes.Hash.String()}, nil
 }
 
+// IsRetriableError returns true if the error is retriable or temporary and may succeed on new attempt
 func IsRetriableError(err error) bool {
 	var rpcError *tmrpctypes.RPCError
 
