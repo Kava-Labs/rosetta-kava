@@ -20,6 +20,7 @@ package testing
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -78,9 +79,14 @@ func TestAccountBalanceOnlineRetry(t *testing.T) {
 					},
 				})
 
-				if rosettaErr != nil || err != nil {
-					errChan <- errors.New("request failed")
-					return
+				if rosettaErr != nil {
+					fmt.Println(rosettaErr)
+					continue
+				}
+
+				if err != nil {
+					fmt.Println(err)
+					continue
 				}
 
 				allZero := true
