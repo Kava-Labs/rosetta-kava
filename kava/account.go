@@ -52,6 +52,7 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 					}
 
 					// increase backoff and try again
+					time.Sleep(backoff)
 					backoff = 2 * backoff
 					continue
 				}
@@ -74,6 +75,7 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 			// load balances nodes still may run the race condition
 			// on the second request
 			if bal == nil {
+				time.Sleep(backoff)
 				backoff = 2 * backoff
 				continue
 			}
