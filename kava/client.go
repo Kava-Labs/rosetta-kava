@@ -38,7 +38,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-var insufficientFee = regexp.MustCompile("insufficient funds to pay for fees")
 var noBlockResultsForHeight = regexp.MustCompile("could not find results for height")
 
 // Client implements services.Client interface for communicating with the kava chain
@@ -470,7 +469,6 @@ func containsFee(
 			// Fee was paid
 			if attributes[banktypes.AttributeKeyReceiver] == feeCollectorAddress.String() && amount.IsEqual(tx.GetFee()) {
 				return true
-				break
 			}
 		}
 	}
