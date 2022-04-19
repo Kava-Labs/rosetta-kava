@@ -3,6 +3,7 @@ package kava
 import (
 	"context"
 	"regexp"
+	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,18 +31,56 @@ type BalanceServiceFactory func(ctx context.Context, addr sdk.AccAddress, blockH
 // NewRPCBalanceFactory returns a balance service factory that uses an RPCClient to get an accounts balance
 func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 	return func(ctx context.Context, addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
-		acc, err := rpc.Account(ctx, addr, blockHeader.Height)
-		if err != nil {
-			if unknownAddress.MatchString(err.Error()) {
-				return &nullBalance{}, nil
+		var (
+			acc authtypes.AccountI
+			err error
+		)
+		maxAttempts := 8
+
+		// retry in case of race condition
+		backoff := 50 * time.Millisecond
+		for attempts := 0; attempts < maxAttempts; attempts++ {
+			acc, err = rpc.Account(ctx, addr, blockHeader.Height)
+
+			if err != nil {
+				// an unkown account error may be returned if state is not yet stored,
+				// but latest height is returned from commit
+				if unknownAddress.MatchString(err.Error()) {
+					if attempts == maxAttempts-1 {
+						// return null balance if account is not found on the last attempt
+						return &nullBalance{}, nil
+					} else {
+						// increase backoff and try again
+						backoff = 2 * backoff
+						continue
+					}
+
+				}
+				return nil, err
 			}
 
-			return nil, err
+			// no error, break from loop
+			break
 		}
 
-		bal, err := rpc.Balance(ctx, addr, blockHeader.Height)
-		if err != nil {
-			return nil, err
+		var bal sdk.Coins
+		backoff = 50 * time.Millisecond
+		for attempts := 0; attempts < maxAttempts; attempts++ {
+			bal, err = rpc.Balance(ctx, addr, blockHeader.Height)
+			if err != nil {
+				return nil, err
+			}
+
+			// retry if balance is nil and we have an account
+			// load balances nodes still may run the race condition
+			// on the second request
+			if bal == nil {
+				backoff = 2 * backoff
+				continue
+			}
+
+			// have a balance, break out of retry loop
+			break
 		}
 
 		switch acc := acc.(type) {
