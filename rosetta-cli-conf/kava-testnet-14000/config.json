@@ -5,7 +5,7 @@
  },
  "online_url": "http://localhost:8000",
  "data_directory": "./rosetta-cli-conf/cache",
- "http_timeout": 10,
+ "http_timeout": 30,
  "max_retries": 25,
  "retry_elapsed_time": 0,
  "max_online_connections": 120,
