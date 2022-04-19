@@ -38,7 +38,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-var insufficientFee = regexp.MustCompile("insufficient funds to pay for fees")
 var noBlockResultsForHeight = regexp.MustCompile("could not find results for height")
 
 // Client implements services.Client interface for communicating with the kava chain
@@ -382,35 +381,12 @@ func (c *Client) getOperationsForTransaction(
 		switch result.Code {
 		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
-		case sdkerrors.ErrInsufficientFunds.ABCICode():
-			if insufficientFee.MatchString(result.Log) {
-				feeStatus = FailureStatus
-			}
-		// The fee may be paid if the unauthorized error happens outside of the ante chain,
-		// therefore we must check the events to see if the fee collector received the coins.
-		case sdkerrors.ErrUnauthorized.ABCICode():
+		// For unauthorized and insufficient funds, we must check events in order to know if fee was paid or or not paid
+		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFunds.ABCICode():
 			feeStatus = FailureStatus
 
-			// Check transaction events for fee collector
-			for _, event := range stringifyEvents(result.Events) {
-				if event.Type == banktypes.EventTypeCoinReceived {
-					attributes := make(map[string]string)
-
-					for _, attribute := range event.Attributes {
-						attributes[attribute.Key] = attribute.Value
-					}
-
-					amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
-					if err != nil {
-						panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
-					}
-
-					// Fee was paid
-					if attributes[banktypes.AttributeKeyReceiver] == feeCollectorAddress.String() && amount.IsEqual(tx.GetFee()) {
-						feeStatus = SuccessStatus
-						break
-					}
-				}
+			if containsFee(tx, result) {
+				feeStatus = SuccessStatus
 			}
 		}
 	}
@@ -466,6 +442,34 @@ func IsRetriableError(err error) bool {
 	if errors.As(err, &rpcError) {
 		if noBlockResultsForHeight.MatchString(rpcError.Data) {
 			return true
+		}
+	}
+
+	return false
+}
+
+func containsFee(
+	tx authsigning.Tx,
+	result *abci.ResponseDeliverTx,
+) bool {
+	// Check transaction events for fee collector, returning true if found
+	for _, event := range stringifyEvents(result.Events) {
+		if event.Type == banktypes.EventTypeCoinReceived {
+			attributes := make(map[string]string)
+
+			for _, attribute := range event.Attributes {
+				attributes[attribute.Key] = attribute.Value
+			}
+
+			amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
+			if err != nil {
+				panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
+			}
+
+			// Fee was paid
+			if attributes[banktypes.AttributeKeyReceiver] == feeCollectorAddress.String() && amount.IsEqual(tx.GetFee()) {
+				return true
+			}
 		}
 	}
 
