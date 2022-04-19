@@ -35,9 +35,9 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 			acc authtypes.AccountI
 			err error
 		)
-		maxAttempts := 8
 
 		// retry in case of race condition
+		maxAttempts := 8
 		backoff := 50 * time.Millisecond
 		for attempts := 0; attempts < maxAttempts; attempts++ {
 			acc, err = rpc.Account(ctx, addr, blockHeader.Height)
@@ -63,25 +63,9 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 			break
 		}
 
-		var bal sdk.Coins
-		backoff = 50 * time.Millisecond
-		for attempts := 0; attempts < maxAttempts; attempts++ {
-			bal, err = rpc.Balance(ctx, addr, blockHeader.Height)
-			if err != nil {
-				return nil, err
-			}
-
-			// retry if balance is nil and we have an account
-			// load balances nodes still may run the race condition
-			// on the second request
-			if bal == nil {
-				time.Sleep(backoff)
-				backoff = 2 * backoff
-				continue
-			}
-
-			// have a balance, break out of retry loop
-			break
+		bal, err := rpc.Balance(ctx, addr, blockHeader.Height)
+		if err != nil {
+			return nil, err
 		}
 
 		switch acc := acc.(type) {
