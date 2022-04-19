@@ -19,9 +19,12 @@ package testing
 
 import (
 	"context"
+	"errors"
+	"math/rand"
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -52,9 +55,58 @@ func TestAccountBalanceOffline(t *testing.T) {
 	assert.Equal(t, "Endpoint unavailable offline", rosettaErr.Message)
 }
 
-func TestAccountBalanceOnline(t *testing.T) {
-	t.Skip("skipping flaky test")
+func TestAccountBalanceOnlineRetry(t *testing.T) {
+	if config.Mode.String() == "offline" {
+		t.Skip("skipping account online test")
+	}
 
+	numJobs := 10
+	jobCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	errChan := make(chan error, numJobs)
+
+	for i := 0; i < numJobs; i++ {
+		go func() {
+			time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+
+			for jobCtx.Err() == nil {
+				accountBalance, rosettaErr, err := client.AccountAPI.AccountBalance(context.Background(), &types.AccountBalanceRequest{
+					NetworkIdentifier: config.NetworkIdentifier,
+					AccountIdentifier: &types.AccountIdentifier{
+						Address: testAccountAddress,
+					},
+				})
+
+				if rosettaErr != nil || err != nil {
+					errChan <- errors.New("request failed")
+					return
+				}
+
+				allZero := true
+				for _, bal := range accountBalance.Balances {
+					if bal.Value != "0" {
+						allZero = false
+					}
+				}
+
+				if allZero {
+					errChan <- errors.New("account returned a zero balance")
+					return
+				}
+			}
+		}()
+	}
+
+	select {
+	case err := <-errChan:
+		require.NoError(t, err)
+	case <-jobCtx.Done():
+	}
+
+}
+
+func TestAccountBalanceOnline(t *testing.T) {
 	if config.Mode.String() == "offline" {
 		t.Skip("skipping account online test")
 	}
