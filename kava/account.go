@@ -49,12 +49,11 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 					if attempts == maxAttempts-1 {
 						// return null balance if account is not found on the last attempt
 						return &nullBalance{}, nil
-					} else {
-						// increase backoff and try again
-						backoff = 2 * backoff
-						continue
 					}
 
+					// increase backoff and try again
+					backoff = 2 * backoff
+					continue
 				}
 				return nil, err
 			}
