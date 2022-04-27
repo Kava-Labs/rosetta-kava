@@ -3,7 +3,6 @@ package kava
 import (
 	"context"
 	"regexp"
-	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,36 +30,13 @@ type BalanceServiceFactory func(ctx context.Context, addr sdk.AccAddress, blockH
 // NewRPCBalanceFactory returns a balance service factory that uses an RPCClient to get an accounts balance
 func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 	return func(ctx context.Context, addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
-		var (
-			acc authtypes.AccountI
-			err error
-		)
-
-		// retry in case of race condition
-		maxAttempts := 8
-		backoff := 50 * time.Millisecond
-		for attempts := 0; attempts < maxAttempts; attempts++ {
-			acc, err = rpc.Account(ctx, addr, blockHeader.Height)
-
-			if err != nil {
-				// an unkown account error may be returned if state is not yet stored,
-				// but latest height is returned from commit
-				if unknownAddress.MatchString(err.Error()) {
-					if attempts == maxAttempts-1 {
-						// return null balance if account is not found on the last attempt
-						return &nullBalance{}, nil
-					}
-
-					// increase backoff and try again
-					time.Sleep(backoff)
-					backoff = 2 * backoff
-					continue
-				}
-				return nil, err
+		acc, err := rpc.Account(ctx, addr, blockHeader.Height)
+		if err != nil {
+			if unknownAddress.MatchString(err.Error()) {
+				return &nullBalance{}, nil
 			}
 
-			// no error, break from loop
-			break
+			return nil, err
 		}
 
 		bal, err := rpc.Balance(ctx, addr, blockHeader.Height)
