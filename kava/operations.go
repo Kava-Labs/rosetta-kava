@@ -22,21 +22,14 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	cdptypes "github.com/kava-labs/kava/x/cdp/types"
-	kavadisttypes "github.com/kava-labs/kava/x/kavadist/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var (
 	feeCollectorAddress    = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
-	mintModuleAddress      = sdk.AccAddress(crypto.AddressHash([]byte(minttypes.ModuleName)))
-	kavaDistModuleAddress  = sdk.AccAddress(crypto.AddressHash([]byte(kavadisttypes.ModuleName)))
-	stakingModuleAddress   = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.BondedPoolName)))
 	unbondingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.NotBondedPoolName)))
-	cdpModuleAddress       = sdk.AccAddress(crypto.AddressHash([]byte(cdptypes.ModuleName)))
 )
 
 // EventsToOperations returns rosetta operations from abci block events

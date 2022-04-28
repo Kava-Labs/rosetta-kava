@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,12 +35,9 @@ import (
 	"github.com/kava-labs/kava/app"
 )
 
-const (
-	mintAddress = "kava1m3h30wlvsf8llruxtpukdvsy0km2kum85yn938"
-)
-
 var (
-	testAddresses = []string{
+	stakingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.BondedPoolName)))
+	testAddresses        = []string{
 		"kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea",
 		"kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w",
 		"kava16g8lzm86f5wwf3x3t67qrpd46sjdpxpfazskwg",
