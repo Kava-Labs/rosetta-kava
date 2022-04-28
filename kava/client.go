@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,7 +39,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-var noBlockResultsForHeight = regexp.MustCompile("could not find results for height")
+var noBlockResultsForHeight = regexp.MustCompile(`could not find results for height #(\d+)`)
 
 // Client implements services.Client interface for communicating with the kava chain
 type Client struct {
@@ -75,15 +76,19 @@ func (c *Client) Status(ctx context.Context) (
 	if err != nil {
 		return nil, int64(-1), nil, nil, nil, err
 	}
+	block, _, err := c.getBlockResult(ctx, nil)
+	if err != nil {
+		return nil, int64(-1), nil, nil, nil, err
+	}
 
 	syncInfo := resultStatus.SyncInfo
 	tmPeers := resultNetInfo.Peers
 
 	currentBlock := &types.BlockIdentifier{
-		Index: syncInfo.LatestBlockHeight,
-		Hash:  syncInfo.LatestBlockHash.String(),
+		Index: block.Block.Header.Height,
+		Hash:  block.BlockID.Hash.String(),
 	}
-	currentTime := syncInfo.LatestBlockTime.UnixNano() / int64(time.Millisecond)
+	currentTime := block.Block.Header.Time.UnixNano() / int64(time.Millisecond)
 
 	genesisBlock := &types.BlockIdentifier{
 		Index: syncInfo.EarliestBlockHeight,
@@ -92,8 +97,8 @@ func (c *Client) Status(ctx context.Context) (
 
 	synced := !syncInfo.CatchingUp
 	syncStatus := &types.SyncStatus{
-		CurrentIndex: &syncInfo.LatestBlockHeight,
-		TargetIndex:  &syncInfo.LatestBlockHeight,
+		CurrentIndex: &currentBlock.Index,
+		TargetIndex:  &currentBlock.Index,
 		Synced:       &synced,
 	}
 
@@ -149,7 +154,7 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	block, err := c.getBlockResult(ctx, blockIdentifier)
+	block, _, err := c.getBlockResult(ctx, blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +219,7 @@ func (c *Client) Block(
 	ctx context.Context,
 	blockIdentifier *types.PartialBlockIdentifier,
 ) (*types.BlockResponse, error) {
-	block, err := c.getBlockResult(ctx, blockIdentifier)
+	block, deliverResults, err := c.getBlockResult(ctx, blockIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -238,11 +243,6 @@ func (c *Client) Block(
 		}
 	}
 
-	deliverResults, err := c.getBlockDeliverResults(ctx, &height)
-	if err != nil {
-		return nil, err
-	}
-
 	transactions := c.getTransactionsForBlock(block, deliverResults)
 
 	return &types.BlockResponse{
@@ -255,39 +255,51 @@ func (c *Client) Block(
 	}, nil
 }
 
-func (c *Client) getBlockDeliverResults(ctx context.Context, height *int64) (blockResults *ctypes.ResultBlockResults, err error) {
-	// backoff over 12,750 ms
-	backoff := 50 * time.Millisecond
-	for attempts := 0; attempts < 7; attempts++ {
-		blockResults, err = c.rpc.BlockResults(ctx, height)
-
-		if err != nil && IsRetriableError(err) {
-			time.Sleep(backoff)
-			backoff = 2 * backoff
-			continue
-		}
-
-		return
-	}
-
-	return
-}
-
 // getBlockResult returns the specified block by Index or Hash. If the
 // block identifier is not provided, then the latest block is returned
-func (c *Client) getBlockResult(ctx context.Context, blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, err error) {
+func (c *Client) getBlockResult(ctx context.Context, blockIdentifier *types.PartialBlockIdentifier) (block *ctypes.ResultBlock, results *ctypes.ResultBlockResults, err error) {
 	switch {
 	case blockIdentifier == nil:
 		// fetch the latest block by passing (*int64)(nil) to tendermint rpc
-		block, err = c.rpc.Block(ctx, nil)
+		results, err = c.rpc.BlockResults(ctx, nil)
+
+		if err != nil {
+			// if tendermint returns a no results error, then we must request the previous block
+			// since the block has not been fully committed
+			if matches := noBlockResultsForHeight.FindStringSubmatch(err.Error()); matches != nil {
+				var height int64
+
+				if height, err = strconv.ParseInt(matches[1], 10, 64); err != nil {
+					return
+				}
+				height = height - 1
+
+				results, err = c.rpc.BlockResults(ctx, &height)
+				if err != nil {
+					return
+				}
+			} else {
+				return
+			}
+		}
+
+		block, err = c.rpc.Block(ctx, &results.Height)
 	case blockIdentifier.Hash != nil:
 		hashBytes, decodeErr := hex.DecodeString(*blockIdentifier.Hash)
 		if decodeErr != nil {
-			return nil, decodeErr
+			return nil, nil, decodeErr
 		}
 		block, err = c.rpc.BlockByHash(ctx, hashBytes)
 	case blockIdentifier.Index != nil:
 		block, err = c.rpc.Block(ctx, blockIdentifier.Index)
+	}
+
+	if err != nil {
+		return
+	}
+
+	if results == nil {
+		results, err = c.rpc.BlockResults(ctx, &block.Block.Header.Height)
 	}
 
 	return

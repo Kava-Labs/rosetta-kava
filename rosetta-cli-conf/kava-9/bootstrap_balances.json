@@ -128,5 +128,25 @@
       "decimals":6
     },
     "value": "846214719"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1tygms3xhhs3yv487phx3dw4a95jn7t7lawprey"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "1316596926491"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1eu2ta269haf6j6z3lsj79a8rq3hsmnhu689g7z"
+    },
+    "currency":{
+      "symbol":"USDX",
+      "decimals":6
+    },
+    "value": "2514614612725"
   }
 ]
