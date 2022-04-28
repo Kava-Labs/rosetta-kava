@@ -293,14 +293,14 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 
 		if ev.Type == banktypes.EventTypeCoinMint {
 			events := unflattenEvents(ev, banktypes.EventTypeCoinMint, 2)
-			transferOps := EventsToOperations(events, status, index)
-			ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
+			mintOps := EventsToOperations(events, status, index)
+			ops = appendOperationsAndUpdateIndex(ops, mintOps, &index)
 		}
 
 		if ev.Type == banktypes.EventTypeCoinBurn {
 			events := unflattenEvents(ev, banktypes.EventTypeCoinBurn, 2)
-			transferOps := EventsToOperations(events, status, index)
-			ops = appendOperationsAndUpdateIndex(ops, transferOps, &index)
+			burnOps := EventsToOperations(events, status, index)
+			ops = appendOperationsAndUpdateIndex(ops, burnOps, &index)
 		}
 	}
 
