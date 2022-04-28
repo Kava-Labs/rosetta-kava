@@ -332,6 +332,7 @@ func msgSendToTransferOperations(msg *banktypes.MsgSend, status *string, index i
 	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
 }
 
+// we do not properly parse transfer and spent/receive events for multisends yet; parse message contents instead
 func msgMultiSendToTransferOperations(msg *banktypes.MsgMultiSend, status *string, index int64) []*types.Operation {
 	ops := []*types.Operation{}
 
