@@ -398,33 +398,6 @@ func TestEventToOperations(t *testing.T) {
 		recipient *types.AccountIdentifier
 	}{
 		{
-			name: "mint (transfer from mint module acct)",
-			createFn: func(coins sdk.Coins) sdk.StringEvent {
-				return sdk.StringEvent{
-					Type: banktypes.EventTypeTransfer,
-					Attributes: []sdk.Attribute{
-						{
-							Key:   banktypes.AttributeKeyRecipient,
-							Value: testAddresses[0],
-						},
-						{
-							Key:   banktypes.AttributeKeySender,
-							Value: mintAddress,
-						},
-						{
-							Key:   sdk.AttributeKeyAmount,
-							Value: coins.String(),
-						},
-					},
-				}
-			},
-			opType: MintOpType,
-			sender: nil, // no sender for mint operations
-			recipient: &types.AccountIdentifier{
-				Address: testAddresses[0],
-			},
-		},
-		{
 			name: "trackable transfer (not mint or burn)",
 			createFn: func(coins sdk.Coins) sdk.StringEvent {
 				return sdk.StringEvent{
