@@ -187,7 +187,6 @@ func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 }
 
 func TestConstructionMetadata_GasAndFee(t *testing.T) {
-	t.Skip()
 	encodingConfig := app.MakeEncodingConfig()
 	cdc := encodingConfig.Marshaler
 
@@ -225,8 +224,8 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			suggestedFeeMultiplier: 0,
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      85000,
-			expectedGasPrice:       float64(0),
-			expectedFeeAmount:      sdk.NewInt(0),
+			expectedGasPrice:       float64(0.001),
+			expectedFeeAmount:      sdk.NewInt(85),
 		},
 		{
 			name:                   "small multiplier",
@@ -234,8 +233,8 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			suggestedFeeMultiplier: 0.00001,
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      100001,
-			expectedGasPrice:       float64(0.00000001),
-			expectedFeeAmount:      sdk.NewInt(1),
+			expectedGasPrice:       float64(0.00100004),
+			expectedFeeAmount:      sdk.NewInt(101),
 		},
 		{
 			name:                   "multiplier under 1",
@@ -243,8 +242,8 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			suggestedFeeMultiplier: 0.5,
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200000,
-			expectedGasPrice:       float64(0.0005),
-			expectedFeeAmount:      sdk.NewInt(100),
+			expectedGasPrice:       float64(0.003),
+			expectedFeeAmount:      sdk.NewInt(600),
 		},
 		{
 			name:                   "multiplier equal to 1",
@@ -252,8 +251,8 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			suggestedFeeMultiplier: 1,
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200000,
-			expectedGasPrice:       float64(0.001),
-			expectedFeeAmount:      sdk.NewInt(200),
+			expectedGasPrice:       float64(0.005),
+			expectedFeeAmount:      sdk.NewInt(1000),
 		},
 		{
 			name:                   "suggested fee is rounded up",
@@ -261,8 +260,8 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			suggestedFeeMultiplier: 1,
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200001,
-			expectedGasPrice:       float64(0.001),
-			expectedFeeAmount:      sdk.NewInt(201),
+			expectedGasPrice:       float64(0.005),
+			expectedFeeAmount:      sdk.NewInt(1001),
 		},
 		{
 			name:                   "multiplier below 2",
@@ -270,8 +269,8 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			suggestedFeeMultiplier: 1.6,
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200001,
-			expectedGasPrice:       float64(0.0304),
-			expectedFeeAmount:      sdk.NewInt(6081),
+			expectedGasPrice:       float64(0.032),
+			expectedFeeAmount:      sdk.NewInt(6401),
 		},
 		{
 			name:                   "multiplier equal to 2",

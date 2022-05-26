@@ -215,12 +215,16 @@ func validateAndParseOptions(cdc codec.Codec, opts map[string]interface{}) (*opt
 }
 
 func gasPriceFromMultiplier(multiplier float64) float64 {
+	if multiplier <= 0 {
+		return 0.001
+	}
+
 	if multiplier < 1 {
-		return multiplier * 0.001
+		return multiplier*0.004 + 0.001
 	}
 
 	if multiplier < 2 {
-		return (multiplier-1)*0.049 + 0.001
+		return (multiplier-1)*0.045 + 0.005
 	}
 
 	if multiplier < 3 {

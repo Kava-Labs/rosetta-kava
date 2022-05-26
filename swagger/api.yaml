@@ -1664,11 +1664,11 @@ paths:
 
         These options allow the metadata endpoint to perform gas estimation and set the fee based on the multiplier.
 
-        The multipler should be a real number in [0, 4], where 0 is the a zero-fee tx, and 4 is the highest gas price that should be nessescary.
+        The multipler should be a real number in [0, 4], where 0 is the lowest fee tx, and 4 is the highest gas price that should be nessescary.
         A multiplier over 4 can be provided, but this will not result in an increased fee for kava-mainnet / kava-testnet.
 
-        The multiplier is set to provide a a free, low, mid, and high fee setting for the integers 0, 1, 2, 4.  Reals between these integers
-        use linear interpopation between the free, low, mid, and high fee gas prices.
+        The multiplier is set to provide the lowest, low, mid, and high fee setting for the integers 0, 1, 2, 4.  Reals between these integers
+        use linear interpopation between the lowest, low, mid, and high fee gas prices.
 
         The metadata supports to options `memo`, and `gas_adjustment` to customize the options provided to the metaendpoint.
 
