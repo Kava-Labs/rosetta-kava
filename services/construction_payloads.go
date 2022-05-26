@@ -109,8 +109,16 @@ func (s *ConstructionAPIService) ConstructionPayloads(
 			return nil, rerr
 		}
 
+		chainID := request.NetworkIdentifier.Network
+		switch chainID {
+		case "kava-mainnet":
+			chainID = "kava_2222-10"
+		case "kava-testnet":
+			chainID = "kava_2221-16000"
+		}
+
 		signerData := authsigning.SignerData{
-			ChainID:       request.NetworkIdentifier.Network,
+			ChainID:       chainID,
 			AccountNumber: signer.AccountNumber,
 			Sequence:      signer.AccountSequence,
 		}

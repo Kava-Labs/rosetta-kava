@@ -35,7 +35,7 @@ import (
 func TestConstructionPayloads(t *testing.T) {
 	networkIdentifier := &types.NetworkIdentifier{
 		Blockchain: "Kava",
-		Network:    "kava-test-9000",
+		Network:    "kava-testnet",
 	}
 
 	signerAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
