@@ -88,3 +88,7 @@ validate-swagger:
 .PHONY: run-swagger
 run-swagger:
 	docker run -p 8081:8080 -e SWAGGER_JSON=/spec/api.yaml -v $(PWD)/swagger:/spec swaggerapi/swagger-ui
+
+.PHONY: clean
+clean:
+	rm -r rosetta-cli-conf/cache
