@@ -91,4 +91,4 @@ run-swagger:
 
 .PHONY: clean
 clean:
-	rm -r rosetta-cli-conf/cache
+	rm -rf rosetta-cli-conf/cache
