@@ -19,6 +19,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -129,7 +130,20 @@ func completeUnbondingEventToOperations(attributes map[string]string, status *st
 }
 
 // TxToOperations returns rosetta operations from a transaction
-func TxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+func TxToOperations(tx authsigning.Tx, events sdk.StringEvents, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+
+	if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
+		if opts := txWithExtensions.GetExtensionOptions(); len(opts) > 0 {
+			if opts[0].GetTypeUrl() == "/ethermint.evm.v1.ExtensionOptionsEthereumTx" {
+				return ethereumTxToOperations(events)
+			}
+		}
+	}
+
+	return cosmosTxToOperations(tx, logs, feeStatus, opStatus)
+}
+
+func cosmosTxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
 	operationIndex := int64(0)
 	operations := []*types.Operation{}
 
@@ -154,6 +168,11 @@ func TxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *stri
 	}
 
 	return operations
+}
+
+func ethereumTxToOperations(events sdk.StringEvents) []*types.Operation {
+	eventOpStatus := SuccessStatus
+	return EventsToOperations(events, &eventOpStatus, 0)
 }
 
 // FeeToOperations returns rosetta operations from a transaction fee

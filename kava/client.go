@@ -403,12 +403,12 @@ func (c *Client) getOperationsForTransaction(
 		}
 	}
 
+	events := stringifyEvents(result.Events)
 	logs, err := sdk.ParseABCILogs(result.Log)
 	if err != nil {
 		logs = sdk.ABCIMessageLogs{}
 	}
-
-	return TxToOperations(tx, logs, &feeStatus, &opStatus)
+	return TxToOperations(tx, events, logs, &feeStatus, &opStatus)
 }
 
 func (c *Client) getMetadataForTransaction(
