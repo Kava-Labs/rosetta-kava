@@ -453,6 +453,7 @@ func TestTxToOperations(t *testing.T) {
 		Amount:      generateDefaultCoins(),
 	}
 
+	events := sdk.StringEvents{}
 	// one less than message length
 	logs := sdk.ABCIMessageLogs{
 		sdk.ABCIMessageLog{},
@@ -468,21 +469,21 @@ func TestTxToOperations(t *testing.T) {
 		}
 
 		// all ops succesful and indexed correctly
-		ops := TxToOperations(&tx, logs, &success, &success)
+		ops := TxToOperations(&tx, events, logs, &success, &success)
 		for index, op := range ops {
 			assert.Equal(t, int64(index), op.OperationIdentifier.Index)
 			assert.Equal(t, success, *op.Status)
 		}
 
 		// all ops failed and indexed correctly
-		ops = TxToOperations(&tx, logs, &failure, &failure)
+		ops = TxToOperations(&tx, events, logs, &failure, &failure)
 		for index, op := range ops {
 			assert.Equal(t, int64(index), op.OperationIdentifier.Index)
 			assert.Equal(t, failure, *op.Status)
 		}
 
 		// there are no fee operations
-		ops = TxToOperations(&tx, logs, &success, &success)
+		ops = TxToOperations(&tx, events, logs, &success, &success)
 		for _, op := range ops {
 			assert.NotEqual(t, FeeOpType, op.Type)
 		}
@@ -495,14 +496,14 @@ func TestTxToOperations(t *testing.T) {
 		}
 
 		// all ops succesful and indexed correctly
-		ops := TxToOperations(&tx, logs, &success, &success)
+		ops := TxToOperations(&tx, events, logs, &success, &success)
 		for index, op := range ops {
 			assert.Equal(t, int64(index), op.OperationIdentifier.Index)
 			assert.Equal(t, success, *op.Status)
 		}
 
 		// all ops failed and indexed correctly
-		ops = TxToOperations(&tx, logs, &failure, &failure)
+		ops = TxToOperations(&tx, events, logs, &failure, &failure)
 		for index, op := range ops {
 			assert.Equal(t, int64(index), op.OperationIdentifier.Index)
 			assert.Equal(t, failure, *op.Status)
@@ -510,7 +511,7 @@ func TestTxToOperations(t *testing.T) {
 
 		// there are fee operations
 		feeOpTypeFound := false
-		ops = TxToOperations(&tx, logs, &success, &success)
+		ops = TxToOperations(&tx, events, logs, &success, &success)
 		for _, op := range ops {
 			if op.Type == FeeOpType {
 				feeOpTypeFound = true

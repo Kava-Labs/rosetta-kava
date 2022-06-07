@@ -56,12 +56,12 @@ paths:
                   value:
                     network_identifiers:
                      - blockchain: "Kava"
-                       network: "Kava-9"
+                       network: "kava-mainnet"
                 Testnet:
                   value:
                     network_identifiers:
                      - blockchain: "Kava"
-                       network: "Kava-testnet-14000"
+                       network: "kava-testnet"
         '500':
           description: An unexpected error.
           content:
@@ -90,12 +90,12 @@ paths:
                 value:
                   network_identifier:
                     blockchain: "Kava"
-                    network: "kava-9"
+                    network: "kava-mainnet"
               Testnet:
                 value:
                   network_identifier:
                     blockchain: "Kava"
-                    network: "kava-testnet-14000"
+                    network: "kava-testnet"
 
       responses:
         '200':
@@ -209,13 +209,13 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   metadata: {}
               Testnet:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   metadata: {}
       responses:
         '200':
@@ -244,7 +244,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://35.175.26.208:26656
                         Moniker: kava-peer-2
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 35.175.26.208
                         Version: v0.34.15
                     - peer_id: 3ebd25eb40a0439211d1d5400c2b0e68d366a56d
@@ -252,7 +252,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://3.232.57.129:26656
                         Moniker: kava-peer-1
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 3.232.57.129
                         Version: v0.34.15
                     - peer_id: 00b776c22bdee28266fa53c9e1dcd50a87a0e5a2
@@ -260,7 +260,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://54.85.46.17:26656
                         Moniker: kava-peer-3
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 54.85.46.17
                         Version: v0.34.15
                     - peer_id: 881edc411e2af6606908f2f0a082d59c5db4ab92
@@ -268,7 +268,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://52.2.60.226:26656
                         Moniker: kava-peer-0
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 52.2.60.226
                         Version: v0.34.15
                     - peer_id: a5d0441b07c9a1e9d1399064e7d66b6a5c67a34f
@@ -276,7 +276,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: greedy-boss
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 35.178.127.120
                         Version: v0.34.15
                     - peer_id: d5db8898d40054c07442f3364b32f7fac2752f5e
@@ -284,7 +284,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://188.34.178.92:26656
                         Moniker: KysenPool
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 188.34.178.92
                         Version: v0.34.15
                     - peer_id: 46e166ec70ca091c3e64771de9d70cbbb9e4bb9f
@@ -292,7 +292,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: Cosmostation
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 13.209.122.197
                         Version: v0.34.15
                     - peer_id: edee419731ed920b54a380cb404cb6be8fe894af
@@ -300,7 +300,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: Cosmostation
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 54.177.194.124
                         Version: v0.34.15
                     - peer_id: aea62ea4001111602c713637c70b1c0304046879
@@ -308,7 +308,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:56656
                         Moniker: node-2
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 65.21.198.160
                         Version: v0.34.15
                     - peer_id: 0be20620d27270e4a146b1e8ed32bbc1b4031152
@@ -316,7 +316,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: stake2earn
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 95.111.234.120
                         Version: v0.34.15
                     - peer_id: a6018e774320408142ab83afd62586a81e6adef3
@@ -324,7 +324,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 85.237.192.240:3120
                         Moniker: Consensus One Relay-A
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 85.237.192.240
                         Version: v0.34.15
                     - peer_id: e059567e2a482b7c8ab69b871c1b08229541bbf3
@@ -332,7 +332,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 142.132.146.165:15604
                         Moniker: 05bafa625487
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 142.132.146.165
                         Version: v0.34.15
                     - peer_id: 8857bcdacae10ec28b122384a57a079f0b1b8cf8
@@ -340,7 +340,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 0.0.0.0:2200
                         Moniker: notional-relayer
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 162.55.132.230
                         Version: v0.34.15
                     - peer_id: 65ab0a11e43995e9c9f19637f332d910b0002e7c
@@ -348,7 +348,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: sf-sentry-01
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 52.47.78.156
                         Version: v0.34.15
                     - peer_id: 663c9ba5afca4d04e66db76278f44b6d01465a15
@@ -356,7 +356,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 35.157.56.248:26656
                         Moniker: ip-10-113-1-101
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 35.157.56.248
                         Version: v0.34.15
                     - peer_id: 8ec0f4e89b5ded62f95b77a4ae540d7cd65f250e
@@ -364,7 +364,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 34.222.119.86:30216
                         Moniker: 915bf7a863aaae35
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 34.222.119.86
                         Version: v0.34.15
                     - peer_id: 72865d60d4bc3ae456883163fd435784db14dd62
@@ -372,7 +372,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 71.171.114.20:46656
                         Moniker: node4
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 71.171.114.20
                         Version: v0.34.15
                     - peer_id: 761442bbc74502169a8284e8a56d63f853624354
@@ -380,7 +380,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: Cosmostation
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 52.9.68.222
                         Version: v0.34.15
                     - peer_id: 3be940d035ff09f899d2f6a26e71497a12c00571
@@ -388,7 +388,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 193.110.174.35:11656
                         Moniker: 62ae35e2826b
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 193.110.174.35
                         Version: v0.34.15
                     - peer_id: 4634f488c2b6f5cff538dded7fa4f5bd28d56645
@@ -396,7 +396,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://51.79.176.203:36656
                         Moniker: ns5003913
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 51.79.176.203
                         Version: v0.34.15
                     - peer_id: 6efd0394fa8897ffdae043e5f05ad45c9f3d6319
@@ -404,7 +404,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: ChorusOne_Sentry09
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 51.91.67.48
                         Version: v0.34.15
                     - peer_id: 63ec88e98fc267fb82fa62a51ca5c0a2c115d749
@@ -412,7 +412,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: kava
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 51.38.53.4
                         Version: v0.34.15
                     - peer_id: 2a15d9c39eea97b4cf00480b45d4ea32a2e173d0
@@ -420,7 +420,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://94.130.78.22:26656
                         Moniker: KysenPool
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 94.130.78.22
                         Version: v0.34.15
                     - peer_id: 41d88639239c55fd37279d24df507238e1c417ea
@@ -428,7 +428,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 85.237.192.104:26656
                         Moniker: Consensus One
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 85.237.192.104
                         Version: v0.34.15
                     - peer_id: 640ee1a595df062d0b47d5c911e272740b9c297d
@@ -436,7 +436,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://91.109.29.72:26646
                         Moniker: BlockNgine-IBC
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 91.109.29.72
                         Version: v0.34.15
                     - peer_id: 708a43153614853230e2744341799a81eebdd17c
@@ -444,7 +444,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: sf-sentry-00
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 3.15.69.244
                         Version: v0.34.15
                     - peer_id: bfb0e78f91a5448c36205d32623d5ced4de78553
@@ -452,7 +452,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: kavamainnet1
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 168.119.120.189
                         Version: v0.34.15
                     - peer_id: ab3064c37d406245fa2d6e6109395518e8ac8a4c
@@ -460,7 +460,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: cros-nest
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 95.111.255.148
                         Version: v0.34.15
                     - peer_id: 93dc8234526cd684a314a5bfef20520f06aab05b
@@ -468,7 +468,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 0.0.0.0:2200
                         Moniker: notional-validator
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 88.198.62.198
                         Version: 0.34.15
                     - peer_id: b41d51f8e3f60f6dfc95e41d859e62ff56890a64
@@ -476,7 +476,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 167.71.79.135:26656
                         Moniker: DeCrypto
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 167.71.79.135
                         Version: v0.34.15
                     - peer_id: a2284de0eb3c127c891a352c58c703c4092c7067
@@ -484,7 +484,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://65.21.240.10:26656
                         Moniker: KysenPool
-                        Network: kava-9
+                        Network: kava-mainnet
                         RemoteIP: 65.21.240.10
                         Version: v0.34.15
                 Testnet:
@@ -506,7 +506,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: 65.21.230.184:26656
                         Moniker: BitNordic.com
-                        Network: kava-testnet-14000
+                        Network: kava-testnet
                         RemoteIP: 65.21.230.184
                         Version: v0.34.14
                     - peer_id: c393dae6f1fb31824a8be066c03cb33434943505
@@ -514,7 +514,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://0.0.0.0:26656
                         Moniker: kava-node
-                        Network: kava-testnet-14000
+                        Network: kava-testnet
                         RemoteIP: 107.21.78.161
                         Version: v0.34.14
                     - peer_id: 4c0391cacc4787c299b69eb4d09d146e4607bb4a
@@ -522,7 +522,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://54.165.248.82:26656
                         Moniker: kava-peer-0
-                        Network: kava-testnet-14000
+                        Network: kava-testnet
                         RemoteIP: 54.165.248.82
                         Version: v0.34.14
                     - peer_id: c591c6a65893c0206de72ae4e610810196324cde
@@ -530,7 +530,7 @@ paths:
                         IsOutbound: true
                         ListenAddr: tcp://23.88.59.175:36656
                         Moniker: BlockNgine
-                        Network: kava-testnet-14000
+                        Network: kava-testnet
                         RemoteIP: 23.88.59.175
                         Version: v0.34.15
         '500':
@@ -568,7 +568,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   account_identifier:
                     address: kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq
                     metadata: {}
@@ -576,7 +576,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   account_identifier:
                     address: kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq
                     sub_account:
@@ -587,7 +587,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   account_identifier:
                     address: kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq
                     sub_account:
@@ -598,7 +598,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   account_identifier:
                     address: kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq
                     metadata: {}
@@ -606,7 +606,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   account_identifier:
                     address: kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq
                     sub_account:
@@ -617,7 +617,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   account_identifier:
                     address: kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq
                     sub_account:
@@ -680,28 +680,28 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   block_identifier:
                     index: 115340
               MainnetByHash:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   block_identifier:
                     hash: 7B628D67DB8ABDA0B451A2F2F7BB7E39C65FB2C9F441AC389366F4B46268D164
               TestnetByIndex:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   block_identifier:
                     index: 303823
               TestnetByHash:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   block_identifier:
                     hash: 53AEFED2CBC4BCB986A0C641A8B0C63303FA00D1A746DA6FC406C2E8EBA80257
       responses:
@@ -1623,7 +1623,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   public_key:
                     hex_bytes: 022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b
                     curve_type: secp256k1
@@ -1631,7 +1631,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   public_key:
                     hex_bytes: 022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b
                     curve_type: secp256k1
@@ -1664,11 +1664,11 @@ paths:
 
         These options allow the metadata endpoint to perform gas estimation and set the fee based on the multiplier.
 
-        The multipler should be a real number in [0, 4], where 0 is the a zero-fee tx, and 4 is the highest gas price that should be nessescary.
-        A multiplier over 4 can be provided, but this will not result in an increased fee for kava-9 / kava-testnet-14000.
+        The multipler should be a real number in [0, 4], where 0 is the lowest fee tx, and 4 is the highest gas price that should be nessescary.
+        A multiplier over 4 can be provided, but this will not result in an increased fee for kava-mainnet / kava-testnet.
 
-        The multiplier is set to provide a a free, low, mid, and high fee setting for the integers 0, 1, 2, 4.  Reals between these integers
-        use linear interpopation between the free, low, mid, and high fee gas prices.
+        The multiplier is set to provide the lowest, low, mid, and high fee setting for the integers 0, 1, 2, 4.  Reals between these integers
+        use linear interpopation between the lowest, low, mid, and high fee gas prices.
 
         The metadata supports to options `memo`, and `gas_adjustment` to customize the options provided to the metaendpoint.
 
@@ -1690,7 +1690,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -1718,7 +1718,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -1755,7 +1755,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -1783,7 +1783,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -1888,7 +1888,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   options:
                     gas_adjustment: 0.5
                     suggested_fee_multiplier: 1
@@ -1900,7 +1900,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   options:
                     gas_adjustment: 0.2
                     max_fee: '[{"denom":"ukava","amount":"25000"}]'
@@ -1914,7 +1914,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   options:
                     gas_adjustment: 0.5
                     suggested_fee_multiplier: 1
@@ -1926,7 +1926,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   options:
                     gas_adjustment: 0.2
                     max_fee: '[{"denom":"ukava","amount":"25000"}]'
@@ -2023,7 +2023,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -2059,7 +2059,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -2095,7 +2095,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -2131,7 +2131,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   operations:
                     - operation_identifier:
                         index: 0
@@ -2237,7 +2237,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   unsigned_transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012630a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080112110a0b0a05756b617661120239321086c7051a00
                   signatures:
                     - signing_payload:
@@ -2254,7 +2254,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   unsigned_transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a020801180112130a0d0a05756b61766112043332383910e881041a00
                   signatures:
                     - signing_payload:
@@ -2271,7 +2271,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   unsigned_transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012660a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cc0412110a0b0a05756b6176611202373910b3e7041a00
                   signatures:
                     - signing_payload:
@@ -2288,7 +2288,7 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   unsigned_transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12680a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cd0412130a0d0a05756b61766112043331363010d1ed031a00
                   signatures:
                     - signing_payload:
@@ -2352,28 +2352,28 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012630a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080112110a0b0a05756b617661120239321086c7051a40c39af3b0f1f159f8b0441d61a46c497b60312a21de55ae09d7723a6a9c59e8093bd990d0ada3693e3147458fcd8a051ac801c768995702949d05ad0e73216d67
                   signed: true
               MainnetAllOptionsSigned:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a020801180112130a0d0a05756b61766112043332383910e881041a40af11ca0412c89ae3dfb91ceb16d806be92cdb9e830982086d0b89fe9ec9a98a4161b6bd71e6d67d35a03f0622454790c6a390a5ea18f232339ed0919f3c0e6b5
                   signed: true
               TestnetDefaultSigned:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012660a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cc0412110a0b0a05756b6176611202373910b3e7041a408ec5dd384c9f4eaa6e3c50ac3fb2ef4eed88683862e7df9168bc24b2565578987b3108ec6a417288e4360dcfbd6eccc4a4b46847f7eda31487b8f1a7470eb66f
                   signed: true
               TestnetAllOptionsSigned:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12680a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cd0412130a0d0a05756b61766112043331363010d1ed031a408f5c5c6e51c2fff00f46435aa20d430e3fbff00bf08f6e6fbd5d268d4e83603108cf01725a646c1903472b9e9e3b9afdc1c0ad0b1df12aeb4852b61382b7ed59
                   signed: true
       responses:
@@ -2527,25 +2527,25 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   signed_transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012630a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080112110a0b0a05756b617661120239321086c7051a40c39af3b0f1f159f8b0441d61a46c497b60312a21de55ae09d7723a6a9c59e8093bd990d0ada3693e3147458fcd8a051ac801c768995702949d05ad0e73216d67
               MainnetAllOptions:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   signed_transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a020801180112130a0d0a05756b61766112043332383910e881041a40af11ca0412c89ae3dfb91ceb16d806be92cdb9e830982086d0b89fe9ec9a98a4161b6bd71e6d67d35a03f0622454790c6a390a5ea18f232339ed0919f3c0e6b5
               TestnetDefault:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   signed_transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012660a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cc0412110a0b0a05756b6176611202373910b3e7041a408ec5dd384c9f4eaa6e3c50ac3fb2ef4eed88683862e7df9168bc24b2565578987b3108ec6a417288e4360dcfbd6eccc4a4b46847f7eda31487b8f1a7470eb66f
               TestnetAllOptions:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   signed_transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12680a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cd0412130a0d0a05756b61766112043331363010d1ed031a408f5c5c6e51c2fff00f46435aa20d430e3fbff00bf08f6e6fbd5d268d4e83603108cf01725a646c1903472b9e9e3b9afdc1c0ad0b1df12aeb4852b61382b7ed59
       responses:
         '200':
@@ -2604,25 +2604,25 @@ paths:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   signed_transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012630a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080112110a0b0a05756b617661120239321086c7051a40c39af3b0f1f159f8b0441d61a46c497b60312a21de55ae09d7723a6a9c59e8093bd990d0ada3693e3147458fcd8a051ac801c768995702949d05ad0e73216d67
               MainnetAllOptoins:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-9
+                    network: kava-mainnet
                   signed_transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a020801180112130a0d0a05756b61766112043332383910e881041a40af11ca0412c89ae3dfb91ceb16d806be92cdb9e830982086d0b89fe9ec9a98a4161b6bd71e6d67d35a03f0622454790c6a390a5ea18f232339ed0919f3c0e6b5
               TestnetDefault:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   signed_transaction: 0a8f010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b61766112073130303030303012660a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cc0412110a0b0a05756b6176611202373910b3e7041a408ec5dd384c9f4eaa6e3c50ac3fb2ef4eed88683862e7df9168bc24b2565578987b3108ec6a417288e4360dcfbd6eccc4a4b46847f7eda31487b8f1a7470eb66f
               TestnetAllOptions:
                 value:
                   network_identifier:
                     blockchain: Kava
-                    network: kava-testnet-14000
+                    network: kava-testnet
                   signed_transaction: 0a9d010a8c010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e64126c0a2b6b6176613137336b617961726c396338746c306d363733707063776b67763876376b773439367071667064122b6b61766131766c7073726d6479757977766171727637727836786761323234737166777a336679666877711a100a05756b617661120731303030303030120c736f6d65207478206d656d6f12680a510a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21022caa2a70f55a081ab83a2b21dbbd5a5ba4ace44cbeff3ab0a3b3e77146def89b12040a02080118cd0412130a0d0a05756b61766112043331363010d1ed031a408f5c5c6e51c2fff00f46435aa20d430e3fbff00bf08f6e6fbd5d268d4e83603108cf01725a646c1903472b9e9e3b9afdc1c0ad0b1df12aeb4852b61382b7ed59
       responses:
         '200':

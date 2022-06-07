@@ -27,7 +27,7 @@ import (
 var (
 	networkIdentifier = &types.NetworkIdentifier{
 		Blockchain: kava.Blockchain,
-		Network:    "kava-testnet-1",
+		Network:    "kava-testnet",
 	}
 )
 

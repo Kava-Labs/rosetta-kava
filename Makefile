@@ -20,11 +20,11 @@ build:
 
 .PHONY: run
 run:
-	MODE=online NETWORK=kava-9 PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
+	MODE=online NETWORK=kava-mainnet PORT=8000 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
 
 .PHONY: run
 run-offline:
-	MODE=offline NETWORK=kava-9 PORT=8001 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
+	MODE=offline NETWORK=kava-mainnet PORT=8001 KAVA_RPC_URL=https://rpc.data.kava.io:443 go run . run
 
 .PHONY: run-testnet
 run-testnet:
@@ -58,11 +58,11 @@ watch-integration:
 
 .PHONY: rosetta-check-data
 rosetta-check-data:
-	rosetta-cli --configuration-file rosetta-cli-conf/kava-9/config.json check:data
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-mainnet/config.json check:data
 
 .PHONY: rosetta-check-construction
 rosetta-check-construction:
-	rosetta-cli --configuration-file rosetta-cli-conf/kava-9/config.json check:construction
+	rosetta-cli --configuration-file rosetta-cli-conf/kava-mainnet/config.json check:construction
 
 .PHONY: rosetta-check-data-local
 rosetta-check-data-local:
@@ -88,3 +88,7 @@ validate-swagger:
 .PHONY: run-swagger
 run-swagger:
 	docker run -p 8081:8080 -e SWAGGER_JSON=/spec/api.yaml -v $(PWD)/swagger:/spec swaggerapi/swagger-ui
+
+.PHONY: clean
+clean:
+	rm -rf rosetta-cli-conf/cache

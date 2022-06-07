@@ -35,37 +35,17 @@ As specified in the Rosetta API, the `rosetta-kava` implementation is deployable
 
 ### Mainnet
 
-The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-9` mainnet.
+The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-mainnet` mainnet.
 
 ```
 docker build . -t rosetta-kava
-docker run -it -e "MODE=online" -e "NETWORK=kava-9" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
+docker run -it -e "MODE=online" -e "NETWORK=kava-mainnet" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
 ```
 
 To run in offline mode:
 
 ```
-docker run -it -e "MODE=offline" -e "NETWORK=kava-9" -e "PORT=8000" -p 8000:8000 rosetta-kava
-```
-
-#### Snapshots
-
-Weekly archive node snapshots and instructions for quicker syncing are available at [https://kava.quicksync.io/](https://kava.quicksync.io/).
-
-### Testnet
-
-The following commands will build a docker container named `rosetta-kava` and configure the container for running on the `kava-testnet-14000` testnet.
-
-```
-docker build . -t rosetta-kava
-docker run -it -e "MODE=online" -e "NETWORK=kava-testnet-14000" -e "PORT=8000" -v "$PWD/kava-data:/data" -p 8000:8000 -p 26656:26656 rosetta-kava
-
-```
-
-To run in offline mode:
-
-```
-docker run -it -e "MODE=offline" -e "NETWORK=kava-testnet-14000" -e "PORT=8000" -p 8000:8000 rosetta-kava
+docker run -it -e "MODE=offline" -e "NETWORK=kava-mainnet" -e "PORT=8000" -p 8000:8000 rosetta-kava
 ```
 
 # Swagger

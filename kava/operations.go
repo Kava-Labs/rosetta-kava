@@ -19,17 +19,16 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var (
-	feeCollectorAddress    = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
-	unbondingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.NotBondedPoolName)))
+	feeCollectorAddress = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
 )
 
 // EventsToOperations returns rosetta operations from abci block events
@@ -59,9 +58,6 @@ func EventToOperations(event sdk.StringEvent, status *string, index int64) []*ty
 		return bankMintEventToOperations(attributeMap, status, index)
 	case banktypes.EventTypeCoinBurn:
 		return bankBurnEventToOperations(attributeMap, status, index)
-	// This is a block event only; we dot not yet track coin spent/received events implemented in v44
-	case stakingtypes.EventTypeCompleteUnbonding:
-		return completeUnbondingEventToOperations(attributeMap, status, index)
 	}
 
 	return []*types.Operation{}
@@ -110,26 +106,21 @@ func bankBurnEventToOperations(attributes map[string]string, status *string, ind
 	return accountBalanceOps(BurnOpType, amount, true, burner, status, index)
 }
 
-// an unbonding event does not emit a transfer event -- it only emits a coin spent and coin received event
-func completeUnbondingEventToOperations(attributes map[string]string, status *string, index int64) []*types.Operation {
-	recipient := &types.AccountIdentifier{
-		Address: attributes[stakingtypes.AttributeKeyDelegator],
+// TxToOperations returns rosetta operations from a transaction
+func TxToOperations(tx authsigning.Tx, events sdk.StringEvents, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+
+	if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
+		if opts := txWithExtensions.GetExtensionOptions(); len(opts) > 0 {
+			if opts[0].GetTypeUrl() == "/ethermint.evm.v1.ExtensionOptionsEthereumTx" {
+				return ethereumTxToOperations(events)
+			}
+		}
 	}
 
-	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
-	if err != nil {
-		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
-	}
-
-	sender := &types.AccountIdentifier{
-		Address: unbondingModuleAddress.String(),
-	}
-
-	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
+	return cosmosTxToOperations(tx, logs, feeStatus, opStatus)
 }
 
-// TxToOperations returns rosetta operations from a transaction
-func TxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
+func cosmosTxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *string, opStatus *string) []*types.Operation {
 	operationIndex := int64(0)
 	operations := []*types.Operation{}
 
@@ -154,6 +145,11 @@ func TxToOperations(tx authsigning.Tx, logs sdk.ABCIMessageLogs, feeStatus *stri
 	}
 
 	return operations
+}
+
+func ethereumTxToOperations(events sdk.StringEvents) []*types.Operation {
+	eventOpStatus := SuccessStatus
+	return EventsToOperations(events, &eventOpStatus, 0)
 }
 
 // FeeToOperations returns rosetta operations from a transaction fee
@@ -304,15 +300,6 @@ func getOpsFromMsg(msg sdk.Msg, log sdk.ABCIMessageLog, status *string, index in
 		}
 	}
 
-	// messages that do not give great events
-	// TODO: re-check this in v45
-	switch msg.(type) {
-	case *stakingtypes.MsgDelegate:
-		return msgDelegateToOperations(ops, log, status, index)
-	case *stakingtypes.MsgCreateValidator:
-		return msgCreateValidatorToOperations(ops, log, status, index)
-	}
-
 	// Gives contstruction support for msg send -- required for proper construction?
 	if *status != SuccessStatus {
 		switch m := msg.(type) {
@@ -362,84 +349,6 @@ func unflattenEvents(ev sdk.StringEvent, eventType string, numAttributes int) (e
 		events = append(events, sdk.StringifyEvent(abci.Event(event)))
 	}
 	return events
-}
-
-// Because there's no transfer event, and worse the `delegate` event doesn't contain the delegators' address, just the validator.
-// A delegate message moves coins from an account to the staking module account - ideally there would be a transfer event in there, but there's not. Instead, I had to resort to parsing the delegate  and the message events to recreate the transfer
-func msgDelegateToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
-	var delegationOps []*types.Operation
-
-	if len(log.Events) == 0 {
-		return delegationOps
-	}
-
-	var (
-		sender    string
-		recipient string
-		amount    sdk.Coins
-	)
-	for _, ev := range log.Events {
-		if ev.Type == banktypes.EventTypeCoinSpent {
-			for _, attr := range ev.Attributes {
-				if attr.Key == banktypes.AttributeKeySpender {
-					sender = attr.Value
-				}
-
-				if attr.Key == sdk.AttributeKeyAmount {
-					amount = mustParseCoinsNormalized(attr.Value)
-				}
-			}
-		}
-
-		if ev.Type == banktypes.EventTypeCoinReceived {
-			for _, attr := range ev.Attributes {
-				if attr.Key == banktypes.AttributeKeyReceiver {
-					recipient = attr.Value
-				}
-			}
-		}
-	}
-	delegationOps = balanceTrackingOps(TransferOpType, newAccountID(sender), amount, newAccountID(recipient), status, index)
-	return appendOperationsAndUpdateIndex(ops, delegationOps, &index)
-}
-
-// Because there's no transfer event, and worse the `create_validator` event doesn't contain the delegators' address, just the validator.
-// A delegate message moves coins from an account to the staking module account - ideally there would be a transfer event in there, but there's not. Instead, I had to resort to parsing the delegate  and the message events to recreate the transfer
-func msgCreateValidatorToOperations(ops []*types.Operation, log sdk.ABCIMessageLog, status *string, index int64) []*types.Operation {
-	var createValidatorOps []*types.Operation
-
-	if len(log.Events) == 0 {
-		return createValidatorOps
-	}
-
-	var (
-		sender    string
-		recipient string
-		amount    sdk.Coins
-	)
-	for _, ev := range log.Events {
-		if ev.Type == banktypes.EventTypeCoinSpent {
-			for _, attr := range ev.Attributes {
-				if attr.Key == banktypes.AttributeKeySpender {
-					sender = attr.Value
-				}
-
-				if attr.Key == sdk.AttributeKeyAmount {
-					amount = mustParseCoinsNormalized(attr.Value)
-				}
-			}
-		}
-
-		if ev.Type == banktypes.EventTypeCoinReceived {
-			for _, attr := range ev.Attributes {
-				if attr.Key == banktypes.AttributeKeyReceiver {
-					recipient = attr.Value
-				}
-			}
-		}
-	}
-	createValidatorOps = balanceTrackingOps(TransferOpType, newAccountID(sender), amount, newAccountID(recipient), status, index)
-	return appendOperationsAndUpdateIndex(ops, createValidatorOps, &index)
 }
 
 func mustAccAddressFromBech32(addr string) sdk.AccAddress {
