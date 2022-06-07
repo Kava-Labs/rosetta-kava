@@ -23,14 +23,12 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
 var (
-	feeCollectorAddress    = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
-	unbondingModuleAddress = sdk.AccAddress(crypto.AddressHash([]byte(stakingtypes.NotBondedPoolName)))
+	feeCollectorAddress = sdk.AccAddress(crypto.AddressHash([]byte(authtypes.FeeCollectorName)))
 )
 
 // EventsToOperations returns rosetta operations from abci block events
@@ -106,24 +104,6 @@ func bankBurnEventToOperations(attributes map[string]string, status *string, ind
 	}
 
 	return accountBalanceOps(BurnOpType, amount, true, burner, status, index)
-}
-
-// an unbonding event does not emit a transfer event -- it only emits a coin spent and coin received event
-func completeUnbondingEventToOperations(attributes map[string]string, status *string, index int64) []*types.Operation {
-	recipient := &types.AccountIdentifier{
-		Address: attributes[stakingtypes.AttributeKeyDelegator],
-	}
-
-	amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
-	if err != nil {
-		panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
-	}
-
-	sender := &types.AccountIdentifier{
-		Address: unbondingModuleAddress.String(),
-	}
-
-	return balanceTrackingOps(TransferOpType, sender, amount, recipient, status, index)
 }
 
 // TxToOperations returns rosetta operations from a transaction
