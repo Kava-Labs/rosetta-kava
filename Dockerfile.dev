@@ -8,7 +8,7 @@ RUN apt-get update \
 RUN mkdir /app
 WORKDIR /app
 
-ARG kava_node_version=v0.17.4
+ARG kava_node_version=v0.17.5
 ENV KAVA_NODE_VERSION=$kava_node_version
 
 RUN git clone https://github.com/kava-labs/kava \
