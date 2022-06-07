@@ -393,8 +393,8 @@ func (c *Client) getOperationsForTransaction(
 		switch result.Code {
 		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
-		// For unauthorized and insufficient funds, we must check events in order to know if fee was paid or or not paid
-		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFunds.ABCICode():
+		// For unauthorized, insufficient funds, out of gas, we must check events in order to know if fee was paid or or not paid
+		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFunds.ABCICode(), sdkerrors.ErrOutOfGas.ABCICode():
 			feeStatus = FailureStatus
 
 			if containsFee(tx, result) {
