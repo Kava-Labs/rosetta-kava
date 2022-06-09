@@ -28,7 +28,7 @@ run-offline:
 
 .PHONY: run-testnet
 run-testnet:
-	MODE=online NETWORK=kava-testnet-14000 PORT=8000 KAVA_RPC_URL=https://rpc.data-testnet.kava.io:443 go run . run
+	MODE=online NETWORK=kava-testnet PORT=8000 KAVA_RPC_URL=https://rpc.data-testnet.kava.io:443 go run . run
 
 .PHONY: run-local
 run-local:
