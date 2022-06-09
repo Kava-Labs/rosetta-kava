@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2022-06-09
+
+### Added
+- Support Kava 10 Testnet with fixed network `kava-testnet`
+
 ## [1.0.0] - 2022-06-07
 
 ### Added
@@ -20,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed support for zero fee transactions
 
-[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v1.1.0...HEAD
 
+[1.1.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kava-labs/rosetta-kava/compare/v0.0.10...v1.0.0
