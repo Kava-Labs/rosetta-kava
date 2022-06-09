@@ -15,6 +15,9 @@ then
     kava-mainnet)
       GENESIS_URL=https://kava-genesis-files.s3.amazonaws.com/kava_2222-10/genesis.json
       ;;
+    kava-testnet)
+      GENESIS_URL=https://raw.githubusercontent.com/Kava-Labs/kava-testnets/master/16000/genesis.json
+      ;;
     kava-9)
       GENESIS_URL=https://kava-genesis-files.s3.amazonaws.com/kava-9/genesis.json
       ;;
