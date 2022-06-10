@@ -178,7 +178,7 @@ func (c *Client) Balance(
 		},
 		Balances: balances,
 		Metadata: map[string]interface{}{
-			"sequence": sequence,
+			"account_sequence": sequence,
 		},
 	}, nil
 }
