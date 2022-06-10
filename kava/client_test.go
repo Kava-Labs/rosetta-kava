@@ -304,7 +304,7 @@ func TestBalance_NoFilters(t *testing.T) {
 			nil,
 		)
 		balErr := errors.New("could not get coins for account")
-		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(nil, balErr)
+		mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(nil, uint64(0), balErr)
 
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 		assert.Nil(t, accountResponse)
@@ -329,7 +329,7 @@ func TestBalance_NoFilters(t *testing.T) {
 			nil,
 		)
 		coins := generateDefaultCoins()
-		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+		mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, uint64(0), nil)
 
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
 		require.NoError(t, err)
@@ -365,7 +365,7 @@ func TestBalance_BlockFilter(t *testing.T) {
 			nil,
 		)
 		coins := generateDefaultCoins()
-		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+		mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, uint64(0), nil)
 
 		blockFilter := &types.PartialBlockIdentifier{Index: &block.Index}
 		accountResponse, err := client.Balance(ctx, acc, blockFilter, nil)
@@ -397,7 +397,7 @@ func TestBalance_BlockFilter(t *testing.T) {
 			nil,
 		)
 		coins := generateDefaultCoins()
-		mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+		mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, uint64(0), nil)
 
 		blockFilter := &types.PartialBlockIdentifier{Hash: &block.Hash}
 		accountResponse, err := client.Balance(ctx, acc, blockFilter, nil)
@@ -436,7 +436,7 @@ func TestBalance_CurrencyFilter(t *testing.T) {
 		nil,
 	)
 	coins := generateDefaultCoins()
-	mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, nil)
+	mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(coins, uint64(0), nil)
 
 	t.Run("all supported coins are returned by default", func(t *testing.T) {
 		accountResponse, err := client.Balance(ctx, acc, nil, nil)
@@ -505,7 +505,7 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	mockRPCClient.On("Block", ctx, &resultBlockResults.Height).Return(resultBlock, nil)
 
 	mockBalanceService := &mocks.AccountBalanceService{}
-	mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(emptyAccountBalance, nil).Once()
+	mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(emptyAccountBalance, emptyTestAccount.GetSequence(), nil).Once()
 
 	mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, emptyTestAccount.Address), &resultBlock.Block.Header).Return(
 		mockBalanceService,
@@ -520,8 +520,9 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "SWP").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
+	assert.Equal(t, emptyTestAccount.GetSequence(), accountResponse.Metadata["account_sequence"])
 
-	mockBalanceService.On("GetCoinsForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(partialAccountBalance, nil).Once()
+	mockBalanceService.On("GetCoinsAndSequenceForSubAccount", ctx, (*types.SubAccountIdentifier)(nil)).Return(partialAccountBalance, partialTestAccount.GetSequence(), nil).Once()
 	mockBalanceFactory.On("Execute", ctx, mustAccAddrFromStr(t, partialTestAccount.Address), &resultBlock.Block.Header).Return(
 		mockBalanceService,
 		nil,
@@ -536,6 +537,7 @@ func TestBalance_DefaultZeroCurrency(t *testing.T) {
 	assert.NotEqual(t, "0", getBalance(accountResponse.Balances, "HARD").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "SWP").Value)
 	assert.Equal(t, "0", getBalance(accountResponse.Balances, "USDX").Value)
+	assert.Equal(t, partialTestAccount.GetSequence(), accountResponse.Metadata["account_sequence"])
 }
 
 func TestBlock_Info_NoTransactions(t *testing.T) {

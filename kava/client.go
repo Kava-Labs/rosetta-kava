@@ -164,7 +164,7 @@ func (c *Client) Balance(
 		return nil, err
 	}
 
-	coins, err := balanceService.GetCoinsForSubAccount(ctx, accountIdentifier.SubAccount)
+	coins, sequence, err := balanceService.GetCoinsAndSequenceForSubAccount(ctx, accountIdentifier.SubAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -177,6 +177,9 @@ func (c *Client) Balance(
 			Hash:  block.BlockID.Hash.String(),
 		},
 		Balances: balances,
+		Metadata: map[string]interface{}{
+			"account_sequence": sequence,
+		},
 	}, nil
 }
 

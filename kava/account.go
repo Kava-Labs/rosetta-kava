@@ -18,10 +18,10 @@ var unknownAddress = regexp.MustCompile("unknown address")
 
 // AccountBalanceService provides an interface fetch a balance from an account subtype
 type AccountBalanceService interface {
-	GetCoinsForSubAccount(
+	GetCoinsAndSequenceForSubAccount(
 		ctx context.Context,
 		subAccount *types.SubAccountIdentifier,
-	) (sdk.Coins, error)
+	) (sdk.Coins, uint64, error)
 }
 
 // BalanceServiceFactory provides an interface for creating a balance service for specifc a account and block
@@ -33,7 +33,7 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 		acc, err := rpc.Account(ctx, addr, blockHeader.Height)
 		if err != nil {
 			if unknownAddress.MatchString(err.Error()) {
-				return &nullBalance{}, nil
+				return &nullBalance{acc: acc}, nil
 			}
 
 			return nil, err
@@ -54,10 +54,16 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 }
 
 type nullBalance struct {
+	acc authtypes.AccountI
 }
 
-func (b *nullBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
-	return sdk.Coins{}, nil
+func (b *nullBalance) GetCoinsAndSequenceForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, sequence uint64, err error) {
+	if b.acc != nil {
+		sequence = b.acc.GetSequence()
+	}
+	coins = sdk.Coins{}
+
+	return
 }
 
 type rpcBaseBalance struct {
@@ -67,7 +73,9 @@ type rpcBaseBalance struct {
 	blockHeader *tmtypes.Header
 }
 
-func (b *rpcBaseBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
+func (b *rpcBaseBalance) GetCoinsAndSequenceForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, sequence uint64, err error) {
+	sequence = b.acc.GetSequence()
+
 	if subAccount == nil {
 		coins = b.bal
 		return
@@ -112,7 +120,9 @@ type rpcVestingBalance struct {
 	blockHeader *tmtypes.Header
 }
 
-func (b *rpcVestingBalance) GetCoinsForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, err error) {
+func (b *rpcVestingBalance) GetCoinsAndSequenceForSubAccount(ctx context.Context, subAccount *types.SubAccountIdentifier) (coins sdk.Coins, sequence uint64, err error) {
+	sequence = b.vacc.GetSequence()
+
 	if subAccount == nil {
 		coins = b.bal
 		return

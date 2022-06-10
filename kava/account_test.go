@@ -55,10 +55,11 @@ func TestRPCAccountBalance_NullAccount(t *testing.T) {
 	service, err := serviceFactory(ctx, addr, blockHeader)
 	assert.NoError(t, err)
 
-	balance, err := service.GetCoinsForSubAccount(context.Background(), &types.SubAccountIdentifier{Address: kava.AccLiquid})
+	balance, sequence, err := service.GetCoinsAndSequenceForSubAccount(context.Background(), &types.SubAccountIdentifier{Address: kava.AccLiquid})
 	assert.NoError(t, err)
 
 	assert.Equal(t, sdk.Coins{}, balance)
+	assert.Equal(t, uint64(0), sequence)
 }
 
 func TestRPCAccountBalance_BalanceError(t *testing.T) {
@@ -198,7 +199,8 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
 			acc := &authtypes.BaseAccount{
-				Address: addr.String(),
+				Address:  addr.String(),
+				Sequence: 100,
 			}
 
 			mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(acc, nil)
@@ -236,10 +238,11 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 				mockRPCClient.On("UnbondingDelegations", ctx, addr, blockHeader.Height).Return(nil, tc.unbondingErr)
 			}
 
-			coins, err := balanceService.GetCoinsForSubAccount(ctx, tc.subType)
+			coins, sequence, err := balanceService.GetCoinsAndSequenceForSubAccount(ctx, tc.subType)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedCoins, coins)
+				assert.Equal(t, acc.GetSequence(), sequence)
 			} else {
 				require.EqualError(t, err, tc.expectedErr.Error())
 				require.Equal(t, (sdk.Coins)(nil), coins)
@@ -536,7 +539,8 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			acc := &vestingtypes.PeriodicVestingAccount{
 				BaseVestingAccount: &vestingtypes.BaseVestingAccount{
 					BaseAccount: &authtypes.BaseAccount{
-						Address: addr.String(),
+						Address:  addr.String(),
+						Sequence: 101,
 					},
 					OriginalVesting:  tc.originalVesting,
 					DelegatedVesting: tc.delegatedVesting,
@@ -582,10 +586,11 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 				mockRPCClient.On("UnbondingDelegations", ctx, addr, blockHeader.Height).Return(nil, tc.unbondingErr)
 			}
 
-			coins, err := balanceService.GetCoinsForSubAccount(ctx, tc.subType)
+			coins, sequence, err := balanceService.GetCoinsAndSequenceForSubAccount(ctx, tc.subType)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedCoins, coins)
+				assert.Equal(t, acc.GetSequence(), sequence)
 			} else {
 				require.EqualError(t, err, tc.expectedErr.Error())
 				require.Equal(t, (sdk.Coins)(nil), coins)
