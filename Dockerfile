@@ -6,7 +6,7 @@ RUN apt-get update \
       && rm -rf /var/lib/apt/lists/*
 
 ARG kava_node_version=v0.17.5
-ARG kava_rosetta_version=v1.1.0
+ARG kava_rosetta_version=v1.2.0
 ENV KAVA_NODE_VERSION=$kava_node_version
 ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
 
