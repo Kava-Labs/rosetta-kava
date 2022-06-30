@@ -16,7 +16,6 @@ package services
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +24,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/configuration"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -364,12 +364,29 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			err = txBuilder.SetMsgs(msgs...)
 			require.NoError(t, err)
 			txBuilder.SetMemo(txBody.Memo)
-			err = txBuilder.SetSignatures([]signing.SignatureV2{}...)
-			require.NoError(t, err)
-			expectedTx := txBuilder.GetTx()
 
+			err = txBuilder.SetSignatures([]signing.SignatureV2{
+				{
+					PubKey: &secp256k1.PubKey{Key: make([]byte, secp256k1.PubKeySize)},
+					Data: &signing.SingleSignatureData{
+						SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+						Signature: nil,
+					},
+					Sequence: 11,
+				},
+			}...)
+			require.NoError(t, err)
+
+			expectedTx := txBuilder.GetTx()
 			encodedMaxFee, err := json.Marshal(tc.maxFee)
 			require.NoError(t, err)
+
+			account := &authtypes.BaseAccount{
+				AccountNumber: 10,
+				Sequence:      11,
+			}
+
+			mockClient.On("Account", ctx, fromAddr).Return(account, nil)
 
 			validOptions := map[string]interface{}{
 				"tx_body":                  string(encodedTxBody),
@@ -465,20 +482,13 @@ func TestConstructionMetadata_SignerData(t *testing.T) {
 		"suggested_fee_multiplier": float64(1),
 	}
 
-	accountPubKey := "AsAbWjsqD1ntOiVZCNRdAm1nrSP8rwZoNNin85jPaeaY"
-	pubKeyBytes, err := base64.StdEncoding.DecodeString(accountPubKey)
 	require.NoError(t, err)
 	accountAddr, err := sdk.AccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
 	require.NoError(t, err)
 
 	request := &types.ConstructionMetadataRequest{
-		Options: validOptions,
-		PublicKeys: []*types.PublicKey{
-			{
-				Bytes:     pubKeyBytes,
-				CurveType: types.Secp256k1,
-			},
-		},
+		Options:    validOptions,
+		PublicKeys: []*types.PublicKey{},
 	}
 
 	mockClient.On("EstimateGas", ctx, expectedTx, float64(0.1)).Return(uint64(100000), nil).Once()

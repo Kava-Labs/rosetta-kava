@@ -35,6 +35,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 )
 
+var simPubKey = make([]byte, secp256k1.PubKeySize)
+
 var requiredOptions = []string{
 	"tx_body",
 	"gas_adjustment",
@@ -67,48 +69,6 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 		return nil, wrapErr(ErrInvalidOptions, err)
 	}
 
-	var signers []signerInfo
-	var sigsV2 []signing.SignatureV2
-	for _, pubkey := range request.PublicKeys {
-		addr, rerr := getAddressFromPublicKey(pubkey)
-		if err != nil {
-			return nil, rerr
-		}
-
-		acc, err := s.client.Account(ctx, addr)
-		if err != nil {
-			return nil, wrapErr(ErrKava, err)
-		}
-
-		signers = append(signers, signerInfo{
-			AccountNumber:   acc.GetAccountNumber(),
-			AccountSequence: acc.GetSequence(),
-		})
-
-		tmpubkey, rerr := parsePublicKey(pubkey)
-		if rerr != nil {
-			return nil, rerr
-		}
-		sdkpubkey := secp256k1.PubKey{Key: tmpubkey}
-
-		signatureData := signing.SingleSignatureData{
-			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
-			Signature: nil,
-		}
-		sigV2 := signing.SignatureV2{
-			PubKey:   &sdkpubkey,
-			Data:     &signatureData,
-			Sequence: acc.GetSequence(),
-		}
-
-		sigsV2 = append(sigsV2, sigV2)
-	}
-
-	encodedSigners, err := json.Marshal(signers)
-	if err != nil {
-		return nil, wrapErr(ErrKava, err)
-	}
-
 	var msgs []sdk.Msg
 	for _, any := range options.txBody.Messages {
 		val := any.GetCachedValue()
@@ -120,6 +80,48 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 			return nil, wrapErr(ErrKava, errors.New("error decoding messages"))
 		}
 		msgs = append(msgs, msg)
+	}
+
+	var signers []signerInfo
+	var sigsV2 []signing.SignatureV2
+	seenSigners := make(map[string]bool)
+	for _, msg := range msgs {
+		for _, signerAddr := range msg.GetSigners() {
+			addr := signerAddr.String()
+
+			if !seenSigners[addr] {
+				seenSigners[addr] = true
+
+				acc, err := s.client.Account(ctx, signerAddr)
+				if err != nil {
+					return nil, wrapErr(ErrKava, err)
+				}
+
+				signers = append(signers, signerInfo{
+					AccountNumber:   acc.GetAccountNumber(),
+					AccountSequence: acc.GetSequence(),
+				})
+
+				sdkpubkey := secp256k1.PubKey{Key: simPubKey}
+
+				signatureData := signing.SingleSignatureData{
+					SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+					Signature: nil,
+				}
+				sigV2 := signing.SignatureV2{
+					PubKey:   &sdkpubkey,
+					Data:     &signatureData,
+					Sequence: acc.GetSequence(),
+				}
+
+				sigsV2 = append(sigsV2, sigV2)
+			}
+		}
+	}
+
+	encodedSigners, err := json.Marshal(signers)
+	if err != nil {
+		return nil, wrapErr(ErrKava, err)
 	}
 
 	txBuilder := s.encodingConfig.TxConfig.NewTxBuilder()
