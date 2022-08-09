@@ -42,6 +42,18 @@ then
       ;;
   esac
 
+  echo "initializing cosmovisor..."
+
+  if [ ! -d "/data/kava/cosmovisor" ]
+  then
+    cp -r /app/cosmovisor /data/kava/cosmovisor
+  fi
+
+  if [ ! -d "/data/kava/data" ]
+  then
+    mkdir /data/kava/data
+  fi
+
   echo "initializing config..."
 
   if [ ! -f "/data/kava/config/app.toml" ]
