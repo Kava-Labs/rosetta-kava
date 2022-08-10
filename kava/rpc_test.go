@@ -19,9 +19,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -46,7 +47,7 @@ func rpcTestServer(
 	rpcHandler func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse,
 ) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 
 		var request jsonrpctypes.RPCRequest
@@ -134,7 +135,7 @@ func TestHTTPClient_Account(t *testing.T) {
 
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
 	mockAccountPath := filepath.Join("test-fixtures", "vesting-account.json")
-	mockAccount, err := ioutil.ReadFile(mockAccountPath)
+	mockAccount, err := os.ReadFile(mockAccountPath)
 	require.NoError(t, err)
 
 	var accountRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
@@ -216,7 +217,7 @@ func TestHTTPClient_Delegated(t *testing.T) {
 
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
 	mockDelegationsPath := filepath.Join("test-fixtures", "delegations.json")
-	mockDelegations, err := ioutil.ReadFile(mockDelegationsPath)
+	mockDelegations, err := os.ReadFile(mockDelegationsPath)
 	require.NoError(t, err)
 
 	var delegationsRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
@@ -303,7 +304,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
 	mockUnbondingPath := filepath.Join("test-fixtures", "unbonding_delegations.json")
-	mockUnbonding, err := ioutil.ReadFile(mockUnbondingPath)
+	mockUnbonding, err := os.ReadFile(mockUnbondingPath)
 	require.NoError(t, err)
 
 	var unbondingRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
