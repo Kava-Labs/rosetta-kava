@@ -1,4 +1,4 @@
-ARG build_image=golang:1.17.11-bullseye
+ARG build_image=golang:1.17.13-bullseye
 FROM $build_image as kava-rosetta-build
 
 RUN apt-get update \
@@ -8,20 +8,34 @@ RUN apt-get update \
 RUN mkdir /app
 WORKDIR /app
 
-ARG kava_node_version=v0.17.5
-ENV KAVA_NODE_VERSION=$kava_node_version
+ARG cosmovisor_version=v1.1.0
+ENV COSMOVISOR_VERSION=$cosmovisor_version
+
+RUN git clone https://github.com/cosmos/cosmos-sdk \
+      && cd cosmos-sdk \
+      && git checkout cosmovisor/$COSMOVISOR_VERSION \
+      && make cosmovisor \
+      && mv /app/cosmos-sdk/cosmovisor/cosmovisor /go/bin
+
+ARG kava_genesis_version=v0.17.5
+ENV KAVA_GENESIS_VERSION=$kava_genesis_version
 
 RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
-      && git checkout $KAVA_NODE_VERSION \
+      && git checkout $KAVA_GENESIS_VERSION \
+      && make install \
+      && mkdir -p /app/cosmovisor/genesis/bin \
+      && mv /go/bin/kava /app/cosmovisor/genesis/bin
+
+ARG kava_rosetta_version=v1.3.0
+ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
+
+RUN git clone https://github.com/Kava-Labs/rosetta-kava.git \
+      && cd rosetta-kava \
+      && git checkout $KAVA_ROSETTA_VERSION \
       && make install
 
-COPY . rosetta-kava
-
-RUN cd rosetta-kava \
-  && make install
-
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get update \
       && apt-get install -y supervisor curl \
@@ -33,8 +47,9 @@ WORKDIR /app
 
 ENV PATH=$PATH:/app/bin
 
-# copy build binaries from build environemtn
-COPY --from=kava-rosetta-build /go/bin/kava /app/bin/kava
+# copy build binaries from build environment
+COPY --from=kava-rosetta-build /app/cosmovisor /app/cosmovisor
+COPY --from=kava-rosetta-build /go/bin/cosmovisor /app/bin/cosmovisor
 COPY --from=kava-rosetta-build /go/bin/rosetta-kava /app/bin/rosetta-kava
 
 # copy config templates to automate setup
