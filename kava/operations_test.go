@@ -16,9 +16,9 @@ package kava
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -853,7 +853,7 @@ func calculateCoins(log sdk.ABCIMessageLog) sdk.Coins {
 //nolint:golint,unused
 func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 	txResponse := sdk.TxResponse{}
-	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
+	bz, err := os.ReadFile(filepath.Join("test-fixtures", file))
 	if err != nil {
 		t.Fatalf("could not read %s: %v", file, err)
 	}
@@ -869,7 +869,7 @@ func readABCILogFromFile(t *testing.T, file string) sdk.ABCIMessageLog {
 //nolint:golint,unused
 func readMsgFromFile(t *testing.T, file string) sdk.Msg {
 	txResponse := sdk.TxResponse{}
-	bz, err := ioutil.ReadFile(filepath.Join("test-fixtures", file))
+	bz, err := os.ReadFile(filepath.Join("test-fixtures", file))
 	if err != nil {
 		t.Fatalf("could not read %s: %v", file, err)
 	}

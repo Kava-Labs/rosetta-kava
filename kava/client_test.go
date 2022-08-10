@@ -19,7 +19,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -1097,7 +1097,7 @@ func TestPostTx(t *testing.T) {
 	ctx := context.Background()
 	mockRPCClient, _, client := setupClient(t)
 
-	txjson, err := ioutil.ReadFile("test-fixtures/txs/msg-send.json")
+	txjson, err := os.ReadFile("test-fixtures/txs/msg-send.json")
 	require.NoError(t, err)
 
 	cdc := app.MakeEncodingConfig().Amino

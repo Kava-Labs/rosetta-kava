@@ -17,7 +17,7 @@ package services
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -73,7 +73,7 @@ func TestRouter_Offline(t *testing.T) {
 			res, err := http.Post(ts.URL+"/network/status", "application/json", request)
 			assert.NoError(t, err)
 
-			data, err := ioutil.ReadAll(res.Body)
+			data, err := io.ReadAll(res.Body)
 			assert.NoError(t, err)
 
 			var errResp types.Error

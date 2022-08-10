@@ -56,7 +56,7 @@ package services
 //			fmt.Sprintf("kava/test-fixtures/txs/%s", tc.testFixtureFile),
 //		)
 //		require.NoError(t, err)
-//		bz, err := ioutil.ReadFile(relPath)
+//		bz, err := os.ReadFile(relPath)
 //		require.NoError(t, err)
 //
 //		cdc := app.MakeEncodingConfig().Amino
