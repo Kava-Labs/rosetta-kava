@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2022-08-10
+
+### Changed
+- The docker images are now updated run kava with cosmosvisor and auto-upgrade during syncing.
+  Note: The docker images are configured to not download new binaries, so a new release must be
+  used for chain upgrades.  No binaries are downloaded on demand during syncing or live running.
+
+- There are now dockerfiles for each mainnet and testnet.  The kava node versions for each are incompatible.
+  We may re-align the images in the future to be compatible, but this will stay the same for v2.x.x versions.
+
+- Removed depricated ioutil module usage from source code.
+
+- Upgraded the docker images to use golang 1.17.13 by default, and ubuntu 22.04 LTS for the running base image.
+
 ## [1.3.0] - 2022-06-30
 
 ### Changed
@@ -35,8 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed support for zero fee transactions
 
-[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.0...HEAD
 
+[2.0.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.0.0...v1.1.0
