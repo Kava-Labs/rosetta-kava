@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2022-09-22
+
 ### Fixed
 
 - Fixed a panic when fetching a block that contains failed ethereum transactions due to out of gas, unauthorized, or insufficient funds
@@ -53,8 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed support for zero fee transactions
 
-[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.1...HEAD
 
+[2.0.1]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.1.0...v1.2.0
