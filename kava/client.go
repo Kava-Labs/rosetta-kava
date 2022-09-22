@@ -28,6 +28,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -479,6 +480,15 @@ func containsFee(
 			amount, err := sdk.ParseCoinsNormalized(attributes[sdk.AttributeKeyAmount])
 			if err != nil {
 				panic(fmt.Sprintf("could not parse coins: %s", attributes[sdk.AttributeKeyAmount]))
+			}
+
+			// Skip fee check for ethereum transactions as fee status is not used
+			if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
+				if opts := txWithExtensions.GetExtensionOptions(); len(opts) > 0 {
+					if opts[0].GetTypeUrl() == "/ethermint.evm.v1.ExtensionOptionsEthereumTx" {
+						return false
+					}
+				}
 			}
 
 			// Fee was paid
