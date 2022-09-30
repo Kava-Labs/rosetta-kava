@@ -18,7 +18,11 @@ RUN git clone https://github.com/cosmos/cosmos-sdk \
       && mv /app/cosmos-sdk/cosmovisor/cosmovisor /go/bin
 
 ARG kava_genesis_version=v0.17.5
+ARG kava_v0_19_0_upgrade_version=v0.19.0-testnet
+ARG kava_v0_19_1_upgrade_version=v0.19.1-testnet
 ENV KAVA_GENESIS_VERSION=$kava_genesis_version
+ENV KAVA_V0_19_0_UPGRADE_VERSION=$kava_v0_19_0_upgrade_version
+ENV KAVA_V0_19_1_UPGRADE_VERSION=$kava_v0_19_1_upgrade_version
 
 RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
@@ -26,6 +30,18 @@ RUN git clone https://github.com/kava-labs/kava \
       && make install \
       && mkdir -p /app/cosmovisor/genesis/bin \
       && mv /go/bin/kava /app/cosmovisor/genesis/bin
+
+RUN cd kava \
+      && git checkout $KAVA_V0_19_0_UPGRADE_VERSION \
+      && make install \
+      && mkdir -p /app/cosmovisor/upgrades/v0.19.0-testnet/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.19.0-testnet/bin
+
+RUN cd kava \
+      && git checkout $KAVA_V0_19_1_UPGRADE_VERSION \
+      && make install \
+      && mkdir -p /app/cosmovisor/upgrades/v0.19.1-testnet/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.19.1-testnet/bin
 
 COPY . rosetta-kava
 

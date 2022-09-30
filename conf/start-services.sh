@@ -47,6 +47,8 @@ then
   if [ ! -d "/data/kava/cosmovisor" ]
   then
     cp -r /app/cosmovisor /data/kava/cosmovisor
+  else
+    cp -Tr /app/cosmovisor/upgrades  /data/kava/cosmovisor/upgrades
   fi
 
   if [ ! -d "/data/kava/data" ]
