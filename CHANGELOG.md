@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a panic when fetching a block that contains failed ethereum transactions due to out of gas, unauthorized, or insufficient funds
 
+### Added
+
+- Support for kava-testnet v0.19.0 and v0.19.1 upgrades
+
 ## [2.0.0] - 2022-08-10
 
 ### Changed
