@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.5] - 2022-10-25
+
+### Changed
+
+- Update kava dependencies for v0.19.0 release
+- Require Go 1.18
+
 ## [2.0.2] - 2022-09-30
 
 ### Added
@@ -65,9 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed support for zero fee transactions
 
-[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.5...HEAD
 
-[2.0.1]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.1...v2.0.2
+[2.0.5]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.2...v2.0.5
+[2.0.2]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/kava-labs/rosetta-kava/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/kava-labs/rosetta-kava/compare/v1.2.0...v1.3.0
