@@ -1,4 +1,4 @@
-ARG build_image=golang:1.17.13-bullseye
+ARG build_image=golang:1.18.7-bullseye
 FROM $build_image as kava-rosetta-build
 
 RUN apt-get update \

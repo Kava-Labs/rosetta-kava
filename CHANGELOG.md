@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update kava dependencies for v0.19.0 release
+- Require Go 1.18
 
 ## [2.0.2] - 2022-09-30
 
