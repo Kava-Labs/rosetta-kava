@@ -339,13 +339,25 @@ func msgMultiSendToTransferOperations(msg *banktypes.MsgMultiSend, status *strin
 }
 
 func unflattenEvents(ev sdk.StringEvent, eventType string, numAttributes int) (events sdk.StringEvents) {
-	if len(ev.Attributes)%numAttributes != 0 {
-		panic(fmt.Sprintf("unexpected number of attributes in transfer event %s", ev.Attributes))
+	// drop authz_msg_index additions
+	attributes := []sdk.Attribute{}
+	for _, attribute := range ev.Attributes {
+		// remove authz_msg_index attributes
+		if attribute.Key == "authz_msg_index" {
+			continue
+		}
+
+		attributes = append(attributes, attribute)
 	}
-	numberOfEvents := len(ev.Attributes) / numAttributes
+
+	if len(attributes)%numAttributes != 0 {
+		panic(fmt.Sprintf("unexpected number of attributes in transfer event %s", attributes))
+	}
+
+	numberOfEvents := len(attributes) / numAttributes
 	for i := 0; i < numberOfEvents; i++ {
 		startingIndex := i * numAttributes
-		event := sdk.NewEvent(eventType, ev.Attributes[startingIndex:startingIndex+numAttributes]...)
+		event := sdk.NewEvent(eventType, attributes[startingIndex:startingIndex+numAttributes]...)
 		events = append(events, sdk.StringifyEvent(abci.Event(event)))
 	}
 	return events
