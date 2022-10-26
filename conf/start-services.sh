@@ -68,6 +68,11 @@ then
     cp "/app/templates/$NETWORK/config.toml" /data/kava/config/config.toml
   fi
 
+  if [ "$KAVA_DATABASE_BACKEND" = "rocksdb" ]
+  then
+    sed -in-place='' 's/db_backend = "goleveldb"/db_backend = "rocksdb"/g' /data/kava/config/config.toml
+  fi
+
   if [ ! -f "/data/kava/config/genesis.json" ]
   then
     echo "downloading genesis..."
