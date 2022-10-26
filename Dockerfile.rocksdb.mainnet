@@ -1,0 +1,97 @@
+ARG build_image=golang:1.18.7-bullseye
+FROM $build_image as kava-rosetta-build
+
+RUN apt-get update \
+      && apt-get install -y git make gcc libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev \
+      && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /app
+WORKDIR /app
+
+ARG rocksdb_version=v7.5.3
+ENV ROCKSDB_VERSION=$rocksdb_version
+
+RUN git clone https://github.com/facebook/rocksdb.git \
+      && cd rocksdb \
+      && git checkout $ROCKSDB_VERSION \
+      && make -j$(nproc) install-shared \
+      && ldconfig
+
+ARG cosmovisor_version=v1.1.0
+ENV COSMOVISOR_VERSION=$cosmovisor_version
+
+RUN git clone https://github.com/cosmos/cosmos-sdk \
+      && cd cosmos-sdk \
+      && git checkout cosmovisor/$COSMOVISOR_VERSION \
+      && make cosmovisor \
+      && mv /app/cosmos-sdk/cosmovisor/cosmovisor /go/bin
+
+ARG kava_database_backend=rocksdb
+ENV KAVA_DATABASE_BACKEND=$kava_database_backend
+
+ARG kava_genesis_version=nd-update-v17-to-cosmos-49
+ARG kava_v0_18_0_upgrade_version=v0.18.2
+ARG kava_v0_19_0_upgrade_version=v0.19.0
+ENV KAVA_GENESIS_VERSION=$kava_genesis_version
+ENV KAVA_V0_18_0_UPGRADE_VERSION=$kava_v0_18_0_upgrade_version
+ENV KAVA_V0_19_0_UPGRADE_VERSION=$kava_v0_19_0_upgrade_version
+
+RUN git clone https://github.com/kava-labs/kava \
+      && cd kava \
+      && git checkout $KAVA_GENESIS_VERSION \
+      && make install COSMOS_BUILD_OPTIONS=$KAVA_DATABASE_BACKEND \
+      && mkdir -p /app/cosmovisor/genesis/bin \
+      && mv /go/bin/kava /app/cosmovisor/genesis/bin
+
+RUN cd kava \
+      && git checkout $KAVA_V0_18_0_UPGRADE_VERSION \
+      && make install COSMOS_BUILD_OPTIONS=$KAVA_DATABASE_BACKEND \
+      && mkdir -p /app/cosmovisor/upgrades/v0.18.0/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.18.0/bin
+
+RUN cd kava \
+      && git checkout $KAVA_V0_19_0_UPGRADE_VERSION \
+      && make install COSMOS_BUILD_OPTIONS=$KAVA_DATABASE_BACKEND \
+      && mkdir -p /app/cosmovisor/upgrades/v0.19.0/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.19.0/bin
+
+ARG kava_rosetta_version=v2.0.6
+ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
+
+RUN git clone https://github.com/Kava-Labs/rosetta-kava.git \
+      && cd rosetta-kava \
+      && git checkout $KAVA_ROSETTA_VERSION \
+      && make install
+
+FROM ubuntu:22.04
+
+RUN apt-get update \
+      && apt-get install -y supervisor curl libsnappy1v5 libgflags2.2 zlib1g libbz2-1.0 lz4 zstd \
+      && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /app \
+      && mkdir /app/bin
+WORKDIR /app
+
+ENV PATH=$PATH:/app/bin
+
+# copy rocksdb shared objects
+COPY --from=kava-rosetta-build /usr/local/lib/ /usr/local/lib/
+RUN ldconfig
+
+# copy build binaries from build environment
+COPY --from=kava-rosetta-build /app/cosmovisor /app/cosmovisor
+COPY --from=kava-rosetta-build /go/bin/cosmovisor /app/bin/cosmovisor
+COPY --from=kava-rosetta-build /go/bin/rosetta-kava /app/bin/rosetta-kava
+
+# copy config templates to automate setup
+COPY --from=kava-rosetta-build /app/rosetta-kava/examples /app/templates
+
+# copy scripts to run services
+COPY --from=kava-rosetta-build /app/rosetta-kava/conf/start-services.sh /app/bin/start-services.sh
+COPY --from=kava-rosetta-build /app/rosetta-kava/conf/kill-supervisord.sh /app/bin/kill-supervisord.sh
+COPY --from=kava-rosetta-build /app/rosetta-kava/conf/supervisord.conf /etc/supervisor/conf.d/rosetta-kava.conf
+
+ENV KAVA_RPC_URL=http://localhost:26657
+
+CMD ["/app/bin/start-services.sh"]
