@@ -1,5 +1,8 @@
+ARG kava_database_backend=rocksdb
+
 ARG build_image=golang:1.18.7-bullseye
 FROM $build_image as kava-rosetta-build
+ARG kava_database_backend
 
 RUN apt-get update \
       && apt-get install -y git make gcc libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev \
@@ -61,6 +64,7 @@ RUN cd rosetta-kava \
   && make install
 
 FROM ubuntu:22.04
+ARG kava_database_backend
 
 RUN apt-get update \
       && apt-get install -y supervisor curl libsnappy1v5 libgflags2.2 zlib1g libbz2-1.0 lz4 zstd \
@@ -89,6 +93,7 @@ COPY --from=kava-rosetta-build /app/rosetta-kava/conf/start-services.sh /app/bin
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/kill-supervisord.sh /app/bin/kill-supervisord.sh
 COPY --from=kava-rosetta-build /app/rosetta-kava/conf/supervisord.conf /etc/supervisor/conf.d/rosetta-kava.conf
 
+ENV KAVA_DATABASE_BACKEND=$kava_database_backend
 ENV KAVA_RPC_URL=http://localhost:26657
 
 CMD ["/app/bin/start-services.sh"]
