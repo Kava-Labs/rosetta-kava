@@ -16,4 +16,4 @@ lastest_X_blocks=10
 start_idx=$(($end_idx - $lastest_X_blocks))
 
 echo "start check:data"
-./bin/rosetta-cli --configuration-file rosetta-cli-conf/kava-testnet/config.json check:data --start-block $start_idx --end-block $end_idx
+./bin/rosetta-cli --configuration-file rosetta-cli-conf/kava-testnet-ci/config.json check:data --start-block $start_idx --end-block $end_idx
