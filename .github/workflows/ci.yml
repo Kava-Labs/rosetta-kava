@@ -38,7 +38,7 @@ jobs:
       run: make test
 
     - name: Test Integration
-      run: KAVA_RPC_URL=http://50.16.212.18:26657 NETWORK=kava-mainnet PORT=4000 make test-integration
+      run: KAVA_RPC_URL=http://50.16.212.18:26658 NETWORK=kava-mainnet PORT=4000 make test-integration
 
   lint:
     name: lint
@@ -49,3 +49,30 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           args: --timeout 3m0s
+
+  Rosetta-Validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+
+    - name: Cache Go Modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Start Rosetta Server
+      run: .github/scripts/setup.sh
+      shell: bash
+
+    - name: Run Check:data test
+      run: .github/scripts/cli.sh
+      shell: bash
