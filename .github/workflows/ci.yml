@@ -73,6 +73,12 @@ jobs:
       run: .github/scripts/setup.sh
       shell: bash
 
-    - name: Run Check:data test
-      run: .github/scripts/cli.sh
+    - name: Run Check:construction test
+      run: .github/scripts/construction.sh
       shell: bash
+
+    # - name: Run Check:data test
+    #   run: .github/scripts/cli.sh
+    #   shell: bash
+
+    

@@ -24,8 +24,8 @@
    "clear_broadcasts": false,
    "constructor_dsl_file": "kava.ros",
    "end_conditions": {
-     "create_account": 10,
-     "transfer": 10
+     "create_account": 1,
+     "transfer": 1
    },
    "quiet": false,
    "initial_balance_fetch_disabled": false,
