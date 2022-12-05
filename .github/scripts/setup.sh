@@ -2,9 +2,7 @@
 
 MODE=online NETWORK=kava-testnet PORT=8000 KAVA_RPC_URL=http://50.16.212.18:26658 nohup go run . run > /dev/null 2>&1 &
 
-MODE=offline NETWORK=kava-testnet PORT=8001 KAVA_RPC_URL=http://50.16.212.18:26658 nohup go run . run > /dev/null 2>&1 &
-
-sleep 180
+sleep 120
 
 block_tip=($(curl -s --location --request POST 'http://localhost:8000/network/status' \
 --header 'Content-Type: application/json' \
