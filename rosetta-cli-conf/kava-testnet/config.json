@@ -15,7 +15,7 @@
  "log_configuration": false,
  "compression_disabled": false,
  "construction": {
-   "offline_url": "http://localhost:8000",
+   "offline_url": "http://localhost:8001",
    "max_offline_connections": 100,
    "force_retry": true,
    "stale_depth": 5,
