@@ -50,41 +50,16 @@ jobs:
         with:
           args: --timeout 3m0s
 
-  check-data-setup:
+  Rosetta-Validation:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{steps.setup_work.outputs.matrix}}
-      workload: ${{steps.set_blks_per_chunk.outputs.blks_per_chunk}}
+    timeout-minutes: 20
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-    - id: setup_work 
-      env:
-          START_INDEX: 1
-          BLKS_PER_CHUNK: 40000
-      run: echo "::set-output name=matrix::$(./scripts/setup.sh)"
-    - id: set_blks_per_chunk
-      run: echo "::set-output name=blks_per_chunk::40000"
+    - uses: actions/checkout@v3
 
-  check-data:
-    runs-on: ubuntu-latest
-    needs: check-data-setup
-    strategy:
-      matrix: 
-        range: ${{fromJson(needs.setup.outputs.matrix)}}
-    steps:
-    - run: |
-          echo ${{ matrix.range }}
-    - uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-    - name: run check:data on mainnet
-      env:
-        START_INDEX: ${{ matrix.range }}
-        COUNT: ${{ needs.setup.outputs.workload }}
-      run: ./scripts/cli.sh
+    - name: Start Rosetta Server
+      run: .github/scripts/setup.sh
+      shell: bash
+
+    - name: Run Check:data test
+      run: .github/scripts/cli.sh
+      shell: bash
