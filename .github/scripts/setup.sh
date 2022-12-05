@@ -4,13 +4,14 @@ MODE=online NETWORK=kava-testnet PORT=8000 KAVA_RPC_URL=http://50.16.212.18:2665
 
 sleep 30
 
-block_tip=($(curl -s --location --request POST 'http://localhost:8080/network/status' \
+block_tip=($(curl -s --location --request POST 'http://localhost:8000/network/status' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "network_identifier": {
-        "blockchain": "Ethereum",
-        "network": "Mainnet"
+        "blockchain": "Kava",
+        "network": "kava-testnet"
     }
 }' | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["current_block_identifier"]["index"])'))
 
 echo "latest block index is", $block_tip
+
