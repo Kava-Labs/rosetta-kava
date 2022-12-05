@@ -77,8 +77,8 @@ jobs:
       run: .github/scripts/construction.sh
       shell: bash
 
-    # - name: Run Check:data test
-    #   run: .github/scripts/cli.sh
-    #   shell: bash
+    - name: Run Check:data test
+      run: .github/scripts/cli.sh
+      shell: bash
 
     
