@@ -24,6 +24,7 @@ ARG kava_v0_19_2_upgrade_version=v0.19.2-testnet
 ARG kava_v0_19_3_upgrade_version=v0.19.3-testnet
 ARG kava_v0_19_4_upgrade_version=v0.19.4-testnet
 ARG kava_v0_19_5_upgrade_version=v0.19.5-testnet
+ARG kava_v0_20_0_upgrade_version=v0.20.0-alpha.0
 ENV KAVA_GENESIS_VERSION=$kava_genesis_version
 ENV KAVA_V0_19_0_UPGRADE_VERSION=$kava_v0_19_0_upgrade_version
 ENV KAVA_V0_19_1_UPGRADE_VERSION=$kava_v0_19_1_upgrade_version
@@ -31,6 +32,7 @@ ENV KAVA_V0_19_2_UPGRADE_VERSION=$kava_v0_19_2_upgrade_version
 ENV KAVA_V0_19_3_UPGRADE_VERSION=$kava_v0_19_3_upgrade_version
 ENV KAVA_V0_19_4_UPGRADE_VERSION=$kava_v0_19_4_upgrade_version
 ENV KAVA_V0_19_5_UPGRADE_VERSION=$kava_v0_19_5_upgrade_version
+ENV KAVA_V0_20_0_UPGRADE_VERSION=$kava_v0_20_0_upgrade_version
 
 RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
@@ -75,7 +77,13 @@ RUN cd kava \
       && mkdir -p /app/cosmovisor/upgrades/v0.19.5-testnet/bin \
       && mv /go/bin/kava /app/cosmovisor/upgrades/v0.19.5-testnet/bin
 
-ARG kava_rosetta_version=v2.0.6
+RUN cd kava \
+      && git checkout $KAVA_V0_20_0_UPGRADE_VERSION \
+      && make install \
+      && mkdir -p /app/cosmovisor/upgrades/v0.20.0-alpha.0/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.20.0-alpha.0/bin
+
+ARG kava_rosetta_version=v3.0.0-beta.1
 ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
 
 RUN git clone https://github.com/Kava-Labs/rosetta-kava.git \
