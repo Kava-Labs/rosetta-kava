@@ -1,73 +1,74 @@
 {
- "network": {
-  "blockchain": "Kava",
-  "network": "kava-testnet"
- },
- "online_url": "http://localhost:8000",
- "data_directory": "./rosetta-cli-conf/cache",
- "http_timeout": 30,
- "max_retries": 25,
- "retry_elapsed_time": 0,
- "max_online_connections": 120,
- "max_sync_concurrency": 5,
- "tip_delay": 30,
- "max_reorg_depth": 100,
- "log_configuration": false,
- "compression_disabled": false,
- "construction": {
-   "offline_url": "http://localhost:8001",
-   "max_offline_connections": 100,
-   "force_retry": true,
-   "stale_depth": 5,
-   "broadcast_limit": 5,
-   "ignore_broadcast_failures": false,
-   "clear_broadcasts": false,
-   "constructor_dsl_file": "kava.ros",
-   "end_conditions": {
-     "create_account": 10,
-     "transfer": 10
-   },
-   "quiet": false,
+  "network": {
+   "blockchain": "Kava",
+   "network": "kava-testnet"
+  },
+  "online_url": "http://localhost:8000",
+  "data_directory": "./rosetta-cli-conf/cache",
+  "http_timeout": 30,
+  "max_retries": 25,
+  "retry_elapsed_time": 0,
+  "max_online_connections": 120,
+  "max_sync_concurrency": 5,
+  "tip_delay": 30,
+  "max_reorg_depth": 100,
+  "log_configuration": false,
+  "compression_disabled": false,
+  "construction": {
+    "offline_url": "http://localhost:8001",
+    "max_offline_connections": 100,
+    "force_retry": true,
+    "stale_depth": 5,
+    "broadcast_limit": 5,
+    "ignore_broadcast_failures": false,
+    "clear_broadcasts": false,
+    "constructor_dsl_file": "kava.ros",
+    "end_conditions": {
+      "create_account": 10,
+      "transfer": 10
+    },
+    "quiet": false,
+    "initial_balance_fetch_disabled": false,
+    "prefunded_accounts": [
+     {
+       "privkey": "4138d62905f516574d1301c805136ef391221ee6541adcd6cedf0c3adb04e34a",
+       "account_identifier": {
+         "address": "kava173kayarl9c8tl0m673ppcwkgv8v7kw496pqfpd"
+       },
+       "curve_type": "secp256k1",
+       "currency":{
+         "symbol": "KAVA",
+         "decimals": 6
+       }
+     }
+   ]
+  },
+  "data": {
+   "active_reconciliation_concurrency": 16,
+   "inactive_reconciliation_concurrency": 4,
+   "inactive_reconciliation_frequency": 250,
+   "log_blocks": false,
+   "log_transactions": false,
+   "log_balance_changes": false,
+   "log_reconciliations": false,
+   "ignore_reconciliation_error": false,
+   "exempt_accounts": "exempt_accounts.json",
+   "bootstrap_balances": "bootstrap_balances.json",
+   "interesting_accounts": "",
+   "reconciliation_disabled": false,
+   "reconciliation_drain_disabled": false,
+   "balance_tracking_disabled": false,
+   "coin_tracking_disabled": false,
+   "status_port": 9090,
+   "results_output_file": "",
    "initial_balance_fetch_disabled": false,
-   "prefunded_accounts": [
-    {
-      "privkey": "4138d62905f516574d1301c805136ef391221ee6541adcd6cedf0c3adb04e34a",
-      "account_identifier": {
-        "address": "kava173kayarl9c8tl0m673ppcwkgv8v7kw496pqfpd"
-      },
-      "curve_type": "secp256k1",
-      "currency":{
-        "symbol": "KAVA",
-        "decimals": 6
-      }
-    }
-  ]
- },
- "data": {
-  "active_reconciliation_concurrency": 16,
-  "inactive_reconciliation_concurrency": 4,
-  "inactive_reconciliation_frequency": 250,
-  "log_blocks": false,
-  "log_transactions": false,
-  "log_balance_changes": false,
-  "log_reconciliations": false,
-  "ignore_reconciliation_error": false,
-  "exempt_accounts": "exempt_accounts.json",
-  "bootstrap_balances": "bootstrap_balances.json",
-  "interesting_accounts": "",
-  "reconciliation_disabled": false,
-  "reconciliation_drain_disabled": false,
-  "balance_tracking_disabled": false,
-  "coin_tracking_disabled": false,
-  "status_port": 9090,
-  "results_output_file": "",
-  "initial_balance_fetch_disabled": false,
-  "end_conditions": {
-   "reconciliation_coverage": {
-      "coverage": 0.95,
-      "from_tip": true,
-      "tip": true
-    }
+   "end_conditions": {
+    "reconciliation_coverage": {
+       "coverage": 0.95,
+       "from_tip": true,
+       "tip": true
+     }
+   }
   }
  }
-}
+ 
