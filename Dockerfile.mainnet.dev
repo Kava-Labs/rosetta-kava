@@ -1,4 +1,4 @@
-ARG build_image=golang:1.18.7-bullseye
+ARG build_image=golang:1.18.10-bullseye
 FROM $build_image as kava-rosetta-build
 
 RUN apt-get update \
@@ -20,11 +20,13 @@ RUN git clone https://github.com/cosmos/cosmos-sdk \
 ARG kava_genesis_version=v0.17.7
 ARG kava_v0_18_0_upgrade_version=v0.18.2
 ARG kava_v0_19_0_upgrade_version=v0.19.0
-ARG kava_v1_20_0_upgrade_version=v0.20.0
+ARG kava_v0_20_0_upgrade_version=v0.20.0
+ARG kava_v0_21_0_upgrade_version=v0.21.0
 ENV KAVA_GENESIS_VERSION=$kava_genesis_version
 ENV KAVA_V0_18_0_UPGRADE_VERSION=$kava_v0_18_0_upgrade_version
 ENV KAVA_V0_19_0_UPGRADE_VERSION=$kava_v0_19_0_upgrade_version
 ENV KAVA_V0_20_0_UPGRADE_VERSION=$kava_v0_20_0_upgrade_version
+ENV KAVA_V0_21_0_UPGRADE_VERSION=$kava_v0_21_0_upgrade_version
 
 RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
@@ -50,6 +52,12 @@ RUN cd kava \
       && make install \
       && mkdir -p /app/cosmovisor/upgrades/v0.20.0/bin \
       && mv /go/bin/kava /app/cosmovisor/upgrades/v0.20.0/bin
+
+RUN cd kava \
+      && git checkout $KAVA_V0_21_0_UPGRADE_VERSION \
+      && make install \
+      && mkdir -p /app/cosmovisor/upgrades/v0.21.0/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.21.0/bin
 
 COPY . rosetta-kava
 
