@@ -89,7 +89,7 @@ func TestConstructionDerive_InvalidPublicKey(t *testing.T) {
 
 	response, err := servicer.ConstructionDerive(ctx, request)
 	assert.Nil(t, response)
-	assert.Equal(t, wrapErr(ErrInvalidPublicKey, errors.New("invalid pub key length 22")), err)
+	assert.Equal(t, wrapErr(ErrInvalidPublicKey, errors.New("malformed public key: invalid length: 22")), err)
 }
 
 func TestConstructionDerive_PublicKeyValid(t *testing.T) {

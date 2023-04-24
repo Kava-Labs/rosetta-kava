@@ -131,7 +131,7 @@ func (b *rpcVestingBalance) GetCoinsAndSequenceForSubAccount(ctx context.Context
 	switch subAccount.Address {
 	case AccLiquid:
 		// TODO: this doesn't seem correct?  Can be negative??
-		coins = b.bal.Sub(b.vacc.LockedCoins(b.blockHeader.Time))
+		coins = b.bal.Sub(b.vacc.LockedCoins(b.blockHeader.Time)...)
 		//coins = b.vacc.SpendableCoins(b.blockHeader.Time)
 	case AccVesting:
 		coins = b.vacc.GetVestingCoins(b.blockHeader.Time)

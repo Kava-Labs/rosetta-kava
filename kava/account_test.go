@@ -320,7 +320,7 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:         &types.SubAccountIdentifier{Address: kava.AccLiquid},
 			baseCoins:       baseCoins,
 			originalVesting: originalVesting,
-			expectedCoins:   baseCoins.Sub(vestingPeriods[1].Amount),
+			expectedCoins:   baseCoins.Sub(vestingPeriods[1].Amount...),
 			blockTime:       time.Now(),
 		},
 		{
