@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"math"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,7 +68,7 @@ func (s *ConstructionAPIService) ConstructionPayloads(
 		return nil, wrapErr(ErrInvalidTx, err)
 	}
 
-	feeAmount := sdk.NewInt(int64(math.Ceil(metadata.gasPrice * float64(metadata.gasWanted))))
+	feeAmount := sdkmath.NewInt(int64(math.Ceil(metadata.gasPrice * float64(metadata.gasWanted))))
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("ukava", feeAmount)))
 	txBuilder.SetGasLimit(metadata.gasWanted)
 	txBuilder.SetMemo(metadata.memo)

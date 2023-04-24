@@ -27,6 +27,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/configuration"
 	"github.com/kava-labs/rosetta-kava/kava"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -144,7 +145,7 @@ func (s *ConstructionAPIService) ConstructionMetadata(
 
 	gasPrice := gasPriceFromMultiplier(options.suggestedFeeMultiplier)
 	feeAmount := gasPrice * float64(gasWanted)
-	suggestedFeeAmount := sdk.NewInt(int64(math.Ceil(feeAmount)))
+	suggestedFeeAmount := sdkmath.NewInt(int64(math.Ceil(feeAmount)))
 
 	if !options.maxFee.Empty() && suggestedFeeAmount.GT(options.maxFee.AmountOf("ukava")) {
 		suggestedFeeAmount = options.maxFee.AmountOf("ukava")

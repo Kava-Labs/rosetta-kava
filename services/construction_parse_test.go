@@ -22,8 +22,8 @@ package services
 //	require.NoError(t, err)
 //
 //	tx := auth.NewStdTx(
-//		[]sdk.Msg{bank.MsgSend{FromAddress: signerAccAddr, ToAddress: toAccAddress, Amount: sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000)))}},
-//		auth.NewStdFee(250001, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501)))),
+//		[]sdk.Msg{bank.MsgSend{FromAddress: signerAccAddr, ToAddress: toAccAddress, Amount: sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(1000000)))}},
+//		auth.NewStdFee(250001, sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(62501)))),
 //		[]auth.StdSignature{},
 //		"some memo",
 //	)
@@ -78,8 +78,8 @@ package services
 //	copy(pubkey[:], signerPubKey) // compressed public key
 //
 //	tx := auth.NewStdTx(
-//		[]sdk.Msg{bank.MsgSend{FromAddress: signerAccAddr, ToAddress: toAccAddress, Amount: sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000)))}},
-//		auth.NewStdFee(250001, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501)))),
+//		[]sdk.Msg{bank.MsgSend{FromAddress: signerAccAddr, ToAddress: toAccAddress, Amount: sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(1000000)))}},
+//		auth.NewStdFee(250001, sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(62501)))),
 //		[]auth.StdSignature{
 //			{
 //				PubKey:    pubkey,

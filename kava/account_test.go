@@ -9,6 +9,7 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 	mocks "github.com/kava-labs/rosetta-kava/kava/mocks"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -78,8 +79,8 @@ func TestRPCAccountBalance_BalanceError(t *testing.T) {
 
 func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 	coins := sdk.NewCoins(
-		sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)},
-		sdk.Coin{Denom: "hard", Amount: sdk.NewInt(500000)},
+		sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)},
+		sdk.Coin{Denom: "hard", Amount: sdkmath.NewInt(500000)},
 	)
 
 	testCases := []struct {
@@ -116,12 +117,12 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			subType:   &types.SubAccountIdentifier{Address: kava.AccLiquidDelegated},
 			baseCoins: coins,
 			delegatedCoins: []sdk.Coin{
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
 			},
 			expectedCoins: sdk.Coins{
-				{Denom: "ukava", Amount: sdk.NewInt(1500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(1500000)},
 			},
 		},
 		{
@@ -136,7 +137,7 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			subType:   &types.SubAccountIdentifier{Address: kava.AccVestingDelegated},
 			baseCoins: coins,
 			delegatedCoins: []sdk.Coin{
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
 			},
 			expectedCoins: sdk.Coins{},
 		},
@@ -145,12 +146,12 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			subType:   &types.SubAccountIdentifier{Address: kava.AccLiquidUnbonding},
 			baseCoins: coins,
 			unbondingCoins: []sdk.Coin{
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
 			},
 			expectedCoins: sdk.Coins{
-				{Denom: "ukava", Amount: sdk.NewInt(1500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(1500000)},
 			},
 		},
 		{
@@ -158,12 +159,12 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			subType:   &types.SubAccountIdentifier{Address: kava.AccLiquidUnbonding},
 			baseCoins: coins,
 			unbondingCoins: []sdk.Coin{
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
 			},
 			expectedCoins: sdk.Coins{
-				{Denom: "ukava", Amount: sdk.NewInt(1500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(1500000)},
 			},
 		},
 		{
@@ -178,7 +179,7 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			subType:   &types.SubAccountIdentifier{Address: kava.AccVestingUnbonding},
 			baseCoins: coins,
 			delegatedCoins: []sdk.Coin{
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
 			},
 			expectedCoins: sdk.Coins{},
 		},
@@ -187,7 +188,7 @@ func TestRPCAccountBalance_BaseAccount(t *testing.T) {
 			subType:   &types.SubAccountIdentifier{Address: "unknown"},
 			baseCoins: coins,
 			delegatedCoins: []sdk.Coin{
-				{Denom: "ukava", Amount: sdk.NewInt(500000)},
+				{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
 			},
 			expectedCoins: sdk.Coins{},
 		},
@@ -264,15 +265,15 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 		{
 			Length: 3600,
 			Amount: sdk.NewCoins(
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				sdk.Coin{Denom: "hard", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				sdk.Coin{Denom: "hard", Amount: sdkmath.NewInt(250000)},
 			),
 		},
 		{
 			Length: 3600,
 			Amount: sdk.NewCoins(
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)},
-				sdk.Coin{Denom: "hard", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+				sdk.Coin{Denom: "hard", Amount: sdkmath.NewInt(250000)},
 			),
 		},
 	}
@@ -285,8 +286,8 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 
 	// add some liquid coins to coins that are vesting
 	baseCoins := originalVesting.Add(sdk.NewCoins(
-		sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)},
-		sdk.Coin{Denom: "hard", Amount: sdk.NewInt(250000)},
+		sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)},
+		sdk.Coin{Denom: "hard", Amount: sdkmath.NewInt(250000)},
 	)...)
 
 	testCases := []struct {
@@ -336,16 +337,16 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:         &types.SubAccountIdentifier{Address: kava.AccLiquidDelegated},
 			baseCoins:       baseCoins,
 			originalVesting: originalVesting,
-			delegatedFree:   sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:   sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -353,15 +354,15 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccLiquidDelegated},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			expectedCoins: sdk.Coins{},
 			blockTime:     time.Now(),
@@ -371,13 +372,13 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccLiquidDelegated},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -385,17 +386,17 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccVestingDelegated},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(750000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(750000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -403,17 +404,17 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccVestingDelegated},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -421,13 +422,13 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccVestingDelegated},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(0)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(0)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -435,17 +436,17 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccLiquidUnbonding},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(750000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(750000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -453,17 +454,17 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccLiquidUnbonding},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
 			blockTime:     time.Now(),
 		},
 		{
@@ -471,15 +472,15 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccVestingUnbonding},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(500000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(500000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			expectedCoins: sdk.Coins{},
 			blockTime:     time.Now(),
@@ -489,17 +490,17 @@ func TestRPCAccountBalance_VestingAccount(t *testing.T) {
 			subType:          &types.SubAccountIdentifier{Address: kava.AccVestingUnbonding},
 			baseCoins:        baseCoins,
 			originalVesting:  originalVesting,
-			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
-			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(1000000)}),
+			delegatedFree:    sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
+			delegatedVesting: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(1000000)}),
 			unbondingCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
 			delegatedCoins: []sdk.Coin{
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
-				sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
+				sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)},
 			},
-			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(250000)}),
+			expectedCoins: sdk.NewCoins(sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(250000)}),
 			blockTime:     time.Now(),
 		},
 		{

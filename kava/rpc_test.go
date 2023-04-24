@@ -29,6 +29,7 @@ import (
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/kava-labs/kava/app"
@@ -534,9 +535,9 @@ func TestHTTPClient_Balance(t *testing.T) {
 	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
 
 	mockBalances := sdk.NewCoins(
-		sdk.NewCoin("ukava", sdk.NewInt(1e6)),
-		sdk.NewCoin("swp", sdk.NewInt(1e6)),
-		sdk.NewCoin("bnb", sdk.NewInt(1e8)),
+		sdk.NewCoin("ukava", sdkmath.NewInt(1e6)),
+		sdk.NewCoin("swp", sdkmath.NewInt(1e6)),
+		sdk.NewCoin("bnb", sdkmath.NewInt(1e8)),
 	)
 
 	mockBalancesResp := cdc.MustMarshalJSON(mockBalances)

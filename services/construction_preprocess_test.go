@@ -21,6 +21,7 @@ import (
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -206,15 +207,15 @@ func TestConstructionPreprocess_MaxFee(t *testing.T) {
 		},
 		{
 			maxFee:         []*types.Amount{{Value: "1000000", Currency: kava.Currencies["ukava"]}},
-			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(1000000), Denom: "ukava"}),
+			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdkmath.NewInt(1000000), Denom: "ukava"}),
 		},
 		{
 			maxFee:         []*types.Amount{{Value: "500000", Currency: kava.Currencies["ukava"]}},
-			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(500000), Denom: "ukava"}),
+			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdkmath.NewInt(500000), Denom: "ukava"}),
 		},
 		{
 			maxFee:         []*types.Amount{{Value: "600001", Currency: kava.Currencies["hard"]}},
-			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(600001), Denom: "hard"}),
+			expectedMaxFee: sdk.NewCoins(sdk.Coin{Amount: sdkmath.NewInt(600001), Denom: "hard"}),
 		},
 		{
 			maxFee: []*types.Amount{
@@ -223,9 +224,9 @@ func TestConstructionPreprocess_MaxFee(t *testing.T) {
 				{Value: "300003", Currency: kava.Currencies["usdx"]},
 			},
 			expectedMaxFee: sdk.NewCoins(
-				sdk.Coin{Amount: sdk.NewInt(100001), Denom: "ukava"},
-				sdk.Coin{Amount: sdk.NewInt(200002), Denom: "hard"},
-				sdk.Coin{Amount: sdk.NewInt(300003), Denom: "usdx"},
+				sdk.Coin{Amount: sdkmath.NewInt(100001), Denom: "ukava"},
+				sdk.Coin{Amount: sdkmath.NewInt(200002), Denom: "hard"},
+				sdk.Coin{Amount: sdkmath.NewInt(300003), Denom: "usdx"},
 			),
 		},
 	}
@@ -374,7 +375,7 @@ func TestConstructionPreprocess_TransferOperations(t *testing.T) {
 	toAddr, err := sdk.AccAddressFromBech32(toAddress)
 	require.NoError(t, err)
 
-	coinAmount, ok := sdk.NewIntFromString(amount)
+	coinAmount, ok := sdkmath.NewIntFromString(amount)
 	require.True(t, ok)
 
 	expectedMsgs := []sdk.Msg{
