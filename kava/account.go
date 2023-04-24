@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -131,7 +132,7 @@ func (b *rpcVestingBalance) GetCoinsAndSequenceForSubAccount(ctx context.Context
 	switch subAccount.Address {
 	case AccLiquid:
 		// TODO: this doesn't seem correct?  Can be negative??
-		coins = b.bal.Sub(b.vacc.LockedCoins(b.blockHeader.Time))
+		coins = b.bal.Sub(b.vacc.LockedCoins(b.blockHeader.Time)...)
 		//coins = b.vacc.SpendableCoins(b.blockHeader.Time)
 	case AccVesting:
 		coins = b.vacc.GetVestingCoins(b.blockHeader.Time)
@@ -167,9 +168,9 @@ func (b *rpcVestingBalance) delegated(ctx context.Context) (sdk.Coins, sdk.Coins
 	delegatedFree := b.vacc.GetDelegatedFree().AmountOf(stakingDenom)
 
 	// total number of staked and unbonding tokens considered to be liquid
-	totalFree := sdk.MinInt(totalStaked, delegatedFree)
+	totalFree := sdkmath.MinInt(totalStaked, delegatedFree)
 	// any coins that are not considered liquid, are vesting up to a maximum of delegated
-	stakedVesting := sdk.MinInt(totalStaked.Sub(totalFree), delegated)
+	stakedVesting := sdkmath.MinInt(totalStaked.Sub(totalFree), delegated)
 	// staked free coins are left over
 	stakedFree := delegated.Sub(stakedVesting)
 
@@ -188,7 +189,7 @@ func (b *rpcVestingBalance) unbonding(ctx context.Context) (sdk.Coins, sdk.Coins
 	unbonding := unbondingCoins.AmountOf(stakingDenom)
 	delegatedFree := b.vacc.GetDelegatedFree().AmountOf(stakingDenom)
 
-	unbondingFree := sdk.MinInt(delegatedFree, unbonding)
+	unbondingFree := sdkmath.MinInt(delegatedFree, unbonding)
 	unbondingVesting := unbonding.Sub(unbondingFree)
 
 	liquidCoins := sdk.NewCoins(newKavaCoin(unbondingFree))
@@ -224,20 +225,20 @@ func sumDelegations(delegations stakingtypes.DelegationResponses) sdk.Coins {
 }
 
 func sumUnbondingDelegations(unbondingDelegations stakingtypes.UnbondingDelegations) sdk.Coins {
-	totalBalance := sdk.ZeroInt()
+	totalBalance := sdkmath.ZeroInt()
 	for _, u := range unbondingDelegations {
 		for _, e := range u.Entries {
 			totalBalance = totalBalance.Add(e.Balance)
 		}
 	}
 
-	if totalBalance.GT(sdk.ZeroInt()) {
+	if totalBalance.GT(sdkmath.ZeroInt()) {
 		return sdk.NewCoins(newKavaCoin(totalBalance))
 	}
 
 	return sdk.Coins{}
 }
 
-func newKavaCoin(amount sdk.Int) sdk.Coin {
+func newKavaCoin(amount sdkmath.Int) sdk.Coin {
 	return sdk.Coin{Denom: stakingDenom, Amount: amount}
 }

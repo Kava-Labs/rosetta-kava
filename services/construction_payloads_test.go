@@ -23,6 +23,7 @@ import (
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -110,7 +111,7 @@ func TestConstructionPayloads(t *testing.T) {
 	assert.Equal(t, signerAddr, msgSend.FromAddress)
 	require.True(t, ok)
 	assert.Equal(t, uint64(250001), tx.GetGas())
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501))), tx.GetFee())
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(62501))), tx.GetFee())
 	require.True(t, ok)
 	assert.Equal(t, "some memo", tx.GetMemo())
 

@@ -31,9 +31,9 @@ package services
 //	toAccAddress, err := sdk.AccAddressFromBech32("kava1mq9qxlhze029lm0frzw2xr6hem8c3k9ts54w0w")
 //	require.NoError(t, err)
 //
-//	txBuilder.SetMsgs(&banktypes.MsgSend{FromAddress: signerAccAddr.String(), ToAddress: toAccAddress.String(), Amount: sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000)))})
+//	txBuilder.SetMsgs(&banktypes.MsgSend{FromAddress: signerAccAddr.String(), ToAddress: toAccAddress.String(), Amount: sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(1000000)))})
 //	txBuilder.SetGasLimit(250001)
-//	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(62501))))
+//	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(62501))))
 //	txBuilder.SetMemo("some memo")
 //
 //	tx := txBuilder.GetTx()

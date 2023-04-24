@@ -25,6 +25,7 @@ import (
 
 	"github.com/kava-labs/rosetta-kava/kava"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -214,7 +215,7 @@ func getMaxFeeAndEncodeOption(amounts []*types.Amount) (*string, *types.Error) {
 }
 
 func amountToCoin(amount *types.Amount) (sdk.Coin, *types.Error) {
-	value, ok := sdk.NewIntFromString(amount.Value)
+	value, ok := sdkmath.NewIntFromString(amount.Value)
 	if !ok {
 		return sdk.Coin{}, ErrInvalidCurrencyAmount
 	}

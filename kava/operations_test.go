@@ -26,9 +26,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -94,7 +95,7 @@ func generateCoins(denoms []string) sdk.Coins {
 	for _, denom := range denoms {
 		coins = append(coins, sdk.Coin{
 			Denom:  denom,
-			Amount: sdk.NewInt(int64(rand.Intn(1000 * 1e6))),
+			Amount: sdkmath.NewInt(int64(rand.Intn(1000 * 1e6))),
 		})
 	}
 
@@ -747,7 +748,7 @@ func assertTransferOpsBalanceTrack(
 				denom, ok := Denoms[symbol]
 				require.True(t, ok)
 
-				opCoins = opCoins.Add(sdk.NewCoin(denom, sdk.NewIntFromBigInt(value.Neg(value))))
+				opCoins = opCoins.Add(sdk.NewCoin(denom, sdkmath.NewIntFromBigInt(value.Neg(value))))
 			}
 			assert.True(t, opCoins.IsEqual(st.Balance))
 		}
@@ -777,7 +778,7 @@ func assertTransferOpsBalanceTrack(
 				denom, ok := Denoms[symbol]
 				require.True(t, ok)
 
-				opCoins = opCoins.Add(sdk.NewCoin(denom, sdk.NewIntFromBigInt(value)))
+				opCoins = opCoins.Add(sdk.NewCoin(denom, sdkmath.NewIntFromBigInt(value)))
 			}
 			assert.True(t, opCoins.IsEqual(rt.Balance))
 		}

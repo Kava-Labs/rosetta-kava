@@ -18,6 +18,7 @@ import (
 	"math/rand"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -33,12 +34,12 @@ func newTestAccount(t *testing.T) (*authtypes.BaseAccount, sdk.Coins) {
 			AccountNumber: 2,
 			Sequence:      5,
 		}, sdk.NewCoins(
-			sdk.NewCoin("ukava", sdk.NewInt(100)),
-			sdk.NewCoin("hard", sdk.NewInt(200)),
-			sdk.NewCoin("usdx", sdk.NewInt(300)),
-			sdk.NewCoin("bnb", sdk.NewInt(10)),
-			sdk.NewCoin("btcb", sdk.NewInt(1)),
-			sdk.NewCoin("busd", sdk.NewInt(1000)),
+			sdk.NewCoin("ukava", sdkmath.NewInt(100)),
+			sdk.NewCoin("hard", sdkmath.NewInt(200)),
+			sdk.NewCoin("usdx", sdkmath.NewInt(300)),
+			sdk.NewCoin("bnb", sdkmath.NewInt(10)),
+			sdk.NewCoin("btcb", sdkmath.NewInt(1)),
+			sdk.NewCoin("busd", sdkmath.NewInt(1000)),
 		)
 }
 
@@ -61,7 +62,7 @@ func newPartialTestAccount(t *testing.T) (*authtypes.BaseAccount, sdk.Coins) {
 		Address:       addr.String(),
 		AccountNumber: 4,
 		Sequence:      7,
-	}, sdk.NewCoins(sdk.NewCoin("hard", sdk.NewInt(10)))
+	}, sdk.NewCoins(sdk.NewCoin("hard", sdkmath.NewInt(10)))
 }
 
 func getBalance(balances []*types.Amount, symbol string) *types.Amount {
@@ -91,7 +92,7 @@ func generateCoins(denoms []string) sdk.Coins {
 	for _, denom := range denoms {
 		coins = append(coins, sdk.Coin{
 			Denom:  denom,
-			Amount: sdk.NewInt(int64(rand.Intn(1000 * 1e6))),
+			Amount: sdkmath.NewInt(int64(rand.Intn(1000 * 1e6))),
 		})
 	}
 

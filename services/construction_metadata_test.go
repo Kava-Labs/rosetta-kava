@@ -23,6 +23,7 @@ import (
 
 	"github.com/kava-labs/rosetta-kava/configuration"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,7 +88,7 @@ func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 	require.NoError(t, err)
 	toAddr, err := sdk.AccAddressFromBech32(toAddress)
 	require.NoError(t, err)
-	coinAmount, ok := sdk.NewIntFromString(amount)
+	coinAmount, ok := sdkmath.NewIntFromString(amount)
 	require.True(t, ok)
 
 	msgs := []sdk.Msg{
@@ -106,7 +107,7 @@ func TestConstructionMetadata_OptionsValidation_InvalidFields(t *testing.T) {
 	encodedTxBody, err := cdc.MarshalJSON(&txBody)
 	require.NoError(t, err)
 
-	maxFee := sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000)))
+	maxFee := sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(1000000)))
 	encodedMaxFee, err := json.Marshal(maxFee)
 	require.NoError(t, err)
 
@@ -197,7 +198,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 	require.NoError(t, err)
 	toAddr, err := sdk.AccAddressFromBech32(toAddress)
 	require.NoError(t, err)
-	coinAmount, ok := sdk.NewIntFromString(amount)
+	coinAmount, ok := sdkmath.NewIntFromString(amount)
 	require.True(t, ok)
 
 	msgs := []sdk.Msg{
@@ -216,7 +217,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 		maxFee                 sdk.Coins
 		expectedGasWanted      uint64
 		expectedGasPrice       float64
-		expectedFeeAmount      sdk.Int
+		expectedFeeAmount      sdkmath.Int
 	}{
 		{
 			name:                   "zero multiplier",
@@ -225,7 +226,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      85000,
 			expectedGasPrice:       float64(0.001),
-			expectedFeeAmount:      sdk.NewInt(85),
+			expectedFeeAmount:      sdkmath.NewInt(85),
 		},
 		{
 			name:                   "small multiplier",
@@ -234,7 +235,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      100001,
 			expectedGasPrice:       float64(0.00100004),
-			expectedFeeAmount:      sdk.NewInt(101),
+			expectedFeeAmount:      sdkmath.NewInt(101),
 		},
 		{
 			name:                   "multiplier under 1",
@@ -243,7 +244,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200000,
 			expectedGasPrice:       float64(0.003),
-			expectedFeeAmount:      sdk.NewInt(600),
+			expectedFeeAmount:      sdkmath.NewInt(600),
 		},
 		{
 			name:                   "multiplier equal to 1",
@@ -252,7 +253,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200000,
 			expectedGasPrice:       float64(0.005),
-			expectedFeeAmount:      sdk.NewInt(1000),
+			expectedFeeAmount:      sdkmath.NewInt(1000),
 		},
 		{
 			name:                   "suggested fee is rounded up",
@@ -261,7 +262,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200001,
 			expectedGasPrice:       float64(0.005),
-			expectedFeeAmount:      sdk.NewInt(1001),
+			expectedFeeAmount:      sdkmath.NewInt(1001),
 		},
 		{
 			name:                   "multiplier below 2",
@@ -270,7 +271,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      200001,
 			expectedGasPrice:       float64(0.032),
-			expectedFeeAmount:      sdk.NewInt(6401),
+			expectedFeeAmount:      sdkmath.NewInt(6401),
 		},
 		{
 			name:                   "multiplier equal to 2",
@@ -279,7 +280,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      500001,
 			expectedGasPrice:       float64(0.05),
-			expectedFeeAmount:      sdk.NewInt(25001),
+			expectedFeeAmount:      sdkmath.NewInt(25001),
 		},
 		{
 			name:                   "multiplier below 3",
@@ -288,7 +289,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      400001,
 			expectedGasPrice:       float64(0.07),
-			expectedFeeAmount:      sdk.NewInt(28001),
+			expectedFeeAmount:      sdkmath.NewInt(28001),
 		},
 		{
 			name:                   "multiplier equal to 3",
@@ -297,7 +298,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      100000,
 			expectedGasPrice:       float64(0.25),
-			expectedFeeAmount:      sdk.NewInt(25000),
+			expectedFeeAmount:      sdkmath.NewInt(25000),
 		},
 		{
 			name:                   "multiplier over 3",
@@ -306,43 +307,43 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 			maxFee:                 sdk.Coins{},
 			expectedGasWanted:      100000,
 			expectedGasPrice:       float64(0.25),
-			expectedFeeAmount:      sdk.NewInt(25000),
+			expectedFeeAmount:      sdkmath.NewInt(25000),
 		},
 		{
 			name:                   "max fee greater than suggested fee",
 			gasAdjustment:          0.1,
 			suggestedFeeMultiplier: 3.9,
-			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(30000))),
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(30000))),
 			expectedGasWanted:      100000,
 			expectedGasPrice:       float64(0.25),
-			expectedFeeAmount:      sdk.NewInt(25000),
+			expectedFeeAmount:      sdkmath.NewInt(25000),
 		},
 		{
 			name:                   "max fee equal to suggested fee",
 			gasAdjustment:          0.1,
 			suggestedFeeMultiplier: 3.9,
-			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(25000))),
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(25000))),
 			expectedGasWanted:      100000,
 			expectedGasPrice:       float64(0.25),
-			expectedFeeAmount:      sdk.NewInt(25000),
+			expectedFeeAmount:      sdkmath.NewInt(25000),
 		},
 		{
 			name:                   "max fee less than suggested fee",
 			gasAdjustment:          0.1,
 			suggestedFeeMultiplier: 3.9,
-			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(20000))),
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(20000))),
 			expectedGasWanted:      100000,
 			expectedGasPrice:       float64(0.2),
-			expectedFeeAmount:      sdk.NewInt(20000),
+			expectedFeeAmount:      sdkmath.NewInt(20000),
 		},
 		{
 			name:                   "max fee less than suggested fee, gas price capped",
 			gasAdjustment:          0.1,
 			suggestedFeeMultiplier: 3.9,
-			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(20000))),
+			maxFee:                 sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(20000))),
 			expectedGasWanted:      100001,
 			expectedGasPrice:       float64(0.19999800002),
-			expectedFeeAmount:      sdk.NewInt(20000),
+			expectedFeeAmount:      sdkmath.NewInt(20000),
 		},
 	}
 
@@ -451,7 +452,7 @@ func TestConstructionMetadata_SignerData(t *testing.T) {
 	require.NoError(t, err)
 	toAddr, err := sdk.AccAddressFromBech32(toAddress)
 	require.NoError(t, err)
-	coinAmount, ok := sdk.NewIntFromString(amount)
+	coinAmount, ok := sdkmath.NewIntFromString(amount)
 	require.True(t, ok)
 
 	msgs := []sdk.Msg{

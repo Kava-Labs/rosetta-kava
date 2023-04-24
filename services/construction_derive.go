@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -53,7 +53,7 @@ func parsePublicKey(pubKey *types.PublicKey) (secp256k1.PubKey, *types.Error) {
 		return tmPubKey, wrapErr(ErrPublicKeyNil, errors.New("nil public key"))
 	}
 
-	pk, err := btcec.ParsePubKey(pubKey.Bytes, btcec.S256())
+	pk, err := btcec.ParsePubKey(pubKey.Bytes)
 	if err != nil {
 		return tmPubKey, wrapErr(ErrInvalidPublicKey, err)
 	}

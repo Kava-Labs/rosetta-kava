@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +89,7 @@ func TestTransfer(t *testing.T) {
 	var maxFee sdk.Coins
 	err = json.Unmarshal([]byte(maxFeeEncoded), &maxFee)
 	require.NoError(t, err)
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(500001))), maxFee)
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(500001))), maxFee)
 
 	actualGasAdjusment, ok := preprocessResponse.Options["gas_adjustment"].(float64)
 	assert.True(t, ok)

@@ -27,9 +27,10 @@ import (
 	"github.com/kava-labs/rosetta-kava/kava"
 	mocks "github.com/kava-labs/rosetta-kava/kava/mocks"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	app "github.com/kava-labs/kava/app"
@@ -752,11 +753,11 @@ func TestBlock_Transactions(t *testing.T) {
 	err := txBuilder1.SetMsgs(&banktypes.MsgSend{
 		FromAddress: sdk.AccAddress("test from address").String(),
 		ToAddress:   sdk.AccAddress("test to address").String(),
-		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(100))},
+		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdkmath.NewInt(100))},
 	})
 	require.NoError(t, err)
 	txBuilder1.SetGasLimit(100000)
-	txBuilder1.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}})
+	txBuilder1.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(5000)}})
 	txBuilder1.SetMemo("mock transaction 1")
 
 	var rawMockTx1 tmtypes.Tx
@@ -773,11 +774,11 @@ func TestBlock_Transactions(t *testing.T) {
 	err = txBuilder2.SetMsgs(&banktypes.MsgSend{
 		FromAddress: sdk.AccAddress("test from address").String(),
 		ToAddress:   sdk.AccAddress("test to address").String(),
-		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdk.NewInt(200))},
+		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdkmath.NewInt(200))},
 	})
 	require.NoError(t, err)
 	txBuilder2.SetGasLimit(200000)
-	txBuilder2.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdk.NewInt(5000)}})
+	txBuilder2.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(5000)}})
 	txBuilder2.SetMemo("mock transaction 2")
 
 	var rawMockTx2 tmtypes.Tx
@@ -1054,12 +1055,12 @@ func TestEstimateGas(t *testing.T) {
 		&banktypes.MsgSend{
 			FromAddress: addr1.String(),
 			ToAddress:   addr2.String(),
-			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(1000000))),
+			Amount:      sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(1000000))),
 		},
 		&banktypes.MsgSend{
 			FromAddress: addr1.String(),
 			ToAddress:   addr2.String(),
-			Amount:      sdk.NewCoins(sdk.NewCoin("hard", sdk.NewInt(2000000))),
+			Amount:      sdk.NewCoins(sdk.NewCoin("hard", sdkmath.NewInt(2000000))),
 		},
 	}
 
