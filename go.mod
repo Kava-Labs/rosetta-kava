@@ -8,7 +8,7 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.7.9
 	github.com/cosmos/cosmos-sdk v0.46.11
 	github.com/fatih/color v1.13.0
-	github.com/kava-labs/kava v0.23.0-alpha.0
+	github.com/kava-labs/kava v0.23.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
 	github.com/tendermint/go-amino v0.16.0

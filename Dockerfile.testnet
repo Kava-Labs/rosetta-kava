@@ -107,7 +107,7 @@ RUN cd kava \
       && mkdir -p /app/cosmovisor/upgrades/v0.23.0-alpha.0/bin \
       && mv /go/bin/kava /app/cosmovisor/upgrades/v0.23.0-alpha.0/bin
 
-ARG kava_rosetta_version=v5.0.0-beta.2
+ARG kava_rosetta_version=v5.0.0
 ENV KAVA_ROSETTA_VERSION=$kava_rosetta_version
 
 RUN git clone https://github.com/Kava-Labs/rosetta-kava.git \
