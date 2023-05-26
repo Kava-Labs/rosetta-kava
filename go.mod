@@ -8,7 +8,7 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.7.9
 	github.com/cosmos/cosmos-sdk v0.46.11
 	github.com/fatih/color v1.13.0
-	github.com/kava-labs/kava v0.23.0
+	github.com/kava-labs/kava v0.23.1
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
 	github.com/tendermint/go-amino v0.16.0
@@ -46,7 +46,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogoproto v1.4.6 // indirect
 	github.com/cosmos/iavl v0.19.5 // indirect
-	github.com/cosmos/ibc-go/v6 v6.1.0 // indirect
+	github.com/cosmos/ibc-go/v6 v6.1.1 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
