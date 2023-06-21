@@ -8,7 +8,7 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.7.9
 	github.com/cosmos/cosmos-sdk v0.46.11
 	github.com/fatih/color v1.13.0
-	github.com/kava-labs/kava v0.23.1
+	github.com/kava-labs/kava v0.24.0-alpha.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
 	github.com/tendermint/go-amino v0.16.0
@@ -108,7 +108,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
-	github.com/linxGnu/grocksdb v1.7.14 // indirect
+	github.com/linxGnu/grocksdb v1.7.15 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
