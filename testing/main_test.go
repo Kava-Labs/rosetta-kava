@@ -35,9 +35,9 @@ import (
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	router "github.com/kava-labs/rosetta-kava/server"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	rpchttpclient "github.com/tendermint/tendermint/rpc/client/http"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	rpchttpclient "github.com/cometbft/cometbft/rpc/client/http"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 //

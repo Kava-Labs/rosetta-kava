@@ -24,7 +24,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmclient "github.com/tendermint/tendermint/rpc/client"
+	tmclient "github.com/cometbft/cometbft/rpc/client"
 )
 
 const (

@@ -34,10 +34,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
-	abci "github.com/tendermint/tendermint/abci/types"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 var noBlockResultsForHeight = regexp.MustCompile(`could not find results for height #(\d+)`)

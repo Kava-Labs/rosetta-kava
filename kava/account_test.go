@@ -17,7 +17,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmtypes "github.com/tendermint/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 func setupFactory(t *testing.T, blockTime time.Time) (sdk.AccAddress, *tmtypes.Header, *mocks.RPCClient, kava.BalanceServiceFactory) {
