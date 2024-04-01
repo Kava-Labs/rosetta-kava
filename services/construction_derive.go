@@ -24,7 +24,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 )
 
 // ConstructionDerive implements the /construction/derive endpoint.

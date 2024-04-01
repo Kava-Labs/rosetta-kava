@@ -26,6 +26,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/kava-labs/kava/app"
+	"github.com/kava-labs/kava/app/params"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,6 +36,14 @@ func setupConstructionAPIServicer() (*ConstructionAPIService, *mocks.Client) {
 	}
 	mockClient := &mocks.Client{}
 	encodingConfig := app.MakeEncodingConfig()
+	return NewConstructionAPIService(cfg, mockClient, encodingConfig), mockClient
+}
+
+func setupConstructionAPIServicerWithEncodingConfig(encodingConfig params.EncodingConfig) (*ConstructionAPIService, *mocks.Client) {
+	cfg := &configuration.Configuration{
+		Mode: configuration.Offline,
+	}
+	mockClient := &mocks.Client{}
 	return NewConstructionAPIService(cfg, mockClient, encodingConfig), mockClient
 }
 

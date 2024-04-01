@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 // ConstructionHash implements the /construction/hash endpoint.
