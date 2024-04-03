@@ -93,7 +93,12 @@ func newABCIQueryHandler(
 		result, err := json.Marshal(ctypes.ResultABCIQuery{Response: mockCalls[callIndex].responseQuery})
 		require.NoError(t, err)
 
-		return jsonrpctypes.RPCResponse{request.JSONRPC, request.ID, result, nil}
+		return jsonrpctypes.RPCResponse{
+			JSONRPC: request.JSONRPC,
+			ID:      request.ID,
+			Result:  result,
+			Error:   nil,
+		}
 	}
 }
 
