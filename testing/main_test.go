@@ -28,33 +28,31 @@ import (
 	"time"
 
 	rclient "github.com/coinbase/rosetta-sdk-go/client"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	rpchttpclient "github.com/cometbft/cometbft/rpc/client/http"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	router "github.com/kava-labs/rosetta-kava/server"
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
-	rpchttpclient "github.com/cometbft/cometbft/rpc/client/http"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
-//
 // Rosetta Server
-//
 var config *configuration.Configuration
 var server *httptest.Server
 
-//
 // Rosetta Client
-//
 var client *rclient.APIClient
 
-//
 // Tendermint RPC
-//
-var cdc *codec.LegacyAmino
+var cdc codec.Codec
+var interfaceRegistry codectypes.InterfaceRegistry
 var rpc rpcclient.Client
 
 // Test Settings
@@ -99,7 +97,8 @@ func TestMain(m *testing.M) {
 	)
 
 	encodingConfig := kava.MakeEncodingConfig()
-	cdc = encodingConfig.Amino
+	cdc = encodingConfig.Marshaler
+	interfaceRegistry = encodingConfig.InterfaceRegistry
 
 	client = rclient.NewAPIClient(clientConfig)
 
@@ -124,12 +123,12 @@ func GetAccount(address string, height int64) (authtypes.AccountI, error) {
 		return nil, err
 	}
 
-	bz, err := cdc.MarshalJSON(authtypes.QueryAccountRequest{Address: addr.String()})
+	bz, err := cdc.Marshal(&authtypes.QueryAccountRequest{Address: addr.String()})
 	if err != nil {
 		return nil, err
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
+	path := "/cosmos.auth.v1beta1.Query/Account"
 	opts := rpcclient.ABCIQueryOptions{Height: height, Prove: false}
 
 	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(context.Background(), path, bz, opts))
@@ -137,8 +136,14 @@ func GetAccount(address string, height int64) (authtypes.AccountI, error) {
 		return nil, err
 	}
 
+	var resp authtypes.QueryAccountResponse
+	err = cdc.Unmarshal(result, &resp)
+	if err != nil {
+		return nil, err
+	}
+
 	var account authtypes.AccountI
-	err = cdc.UnmarshalJSON(result, &account)
+	err = interfaceRegistry.UnpackAny(resp.Account, &account)
 	if err != nil {
 		return nil, err
 	}
@@ -148,26 +153,41 @@ func GetAccount(address string, height int64) (authtypes.AccountI, error) {
 
 // GetGalance returns the owned coins of an account at a specified height
 func GetBalance(address sdktypes.AccAddress, height int64) (sdktypes.Coins, error) {
-	bz, err := cdc.MarshalJSON(banktypes.NewQueryAllBalancesRequest(address, nil))
-	if err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("custom/%s/%s", banktypes.QuerierRoute, banktypes.QueryAllBalances)
+	path := "/cosmos.bank.v1beta1.Query/AllBalances"
 	opts := rpcclient.ABCIQueryOptions{Height: height, Prove: false}
-
-	result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(context.Background(), path, bz, opts))
-	if err != nil {
-		return nil, err
+	request := banktypes.QueryAllBalancesRequest{
+		Address:    address.String(),
+		Pagination: &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	var balance sdktypes.Coins
-	err = cdc.UnmarshalJSON(result, &balance)
-	if err != nil {
-		return nil, err
+	totalBalances := sdk.NewCoins()
+
+	for {
+		bz, err := cdc.Marshal(&request)
+		if err != nil {
+			return nil, err
+		}
+
+		result, err := ParseABCIResult(rpc.ABCIQueryWithOptions(context.Background(), path, bz, opts))
+		if err != nil {
+			return nil, err
+		}
+
+		var resp banktypes.QueryAllBalancesResponse
+		err = cdc.Unmarshal(result, &resp)
+		if err != nil {
+			return nil, err
+		}
+
+		totalBalances = totalBalances.Add(resp.Balances...)
+
+		if resp.Pagination.NextKey == nil {
+			break
+		}
+		request.Pagination.Key = resp.Pagination.NextKey
 	}
 
-	return balance, nil
+	return totalBalances, nil
 }
 
 func ParseABCIResult(result *ctypes.ResultABCIQuery, err error) ([]byte, error) {
