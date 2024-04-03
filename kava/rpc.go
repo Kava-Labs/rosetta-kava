@@ -90,7 +90,7 @@ func (c *HTTPClient) Account(ctx context.Context, addr sdk.AccAddress, height in
 	}
 
 	var account authtypes.AccountI
-	c.encodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account)
+	err = c.encodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *HTTPClient) Balance(ctx context.Context, addr sdk.AccAddress, height in
 		Pagination: &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	for true {
+	for {
 		bz, err := c.encodingConfig.Marshaler.Marshal(&request)
 		if err != nil {
 			return nil, err
@@ -146,7 +146,7 @@ func (c *HTTPClient) Delegations(ctx context.Context, addr sdk.AccAddress, heigh
 		Pagination:    &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	for true {
+	for {
 		bz, err := c.encodingConfig.Marshaler.Marshal(&request)
 		if err != nil {
 			return nil, err
@@ -184,7 +184,7 @@ func (c *HTTPClient) UnbondingDelegations(ctx context.Context, addr sdk.AccAddre
 		Pagination:    &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	for true {
+	for {
 		bz, err := c.encodingConfig.Marshaler.Marshal(&request)
 		if err != nil {
 			return nil, err

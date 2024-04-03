@@ -306,6 +306,7 @@ func TestHTTPClient_Balance(t *testing.T) {
 		Address:    testAddr.String(),
 		Pagination: &query.PageRequest{Key: []byte("request-page-2"), Limit: query.DefaultLimit},
 	})
+	require.NoError(t, err)
 	page2Response, err := codec.Marshal(&banktypes.QueryAllBalancesResponse{
 		Balances:   expectedBalance[2:4],
 		Pagination: &query.PageResponse{NextKey: []byte("request-page-3")},
@@ -316,6 +317,7 @@ func TestHTTPClient_Balance(t *testing.T) {
 		Address:    testAddr.String(),
 		Pagination: &query.PageRequest{Key: []byte("request-page-3"), Limit: query.DefaultLimit},
 	})
+	require.NoError(t, err)
 	page3Response, err := codec.Marshal(&banktypes.QueryAllBalancesResponse{
 		Balances:   expectedBalance[4:],
 		Pagination: &query.PageResponse{NextKey: nil},
@@ -403,6 +405,7 @@ func TestHTTPClient_Delegated(t *testing.T) {
 		DelegatorAddr: testAddr.String(),
 		Pagination:    &query.PageRequest{Key: []byte("request-page-2"), Limit: query.DefaultLimit},
 	})
+	require.NoError(t, err)
 	page2Response, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsResponse{
 		DelegationResponses: expectedDelegationResponses[2:4],
 		Pagination:          &query.PageResponse{NextKey: []byte("request-page-3")},
@@ -413,6 +416,7 @@ func TestHTTPClient_Delegated(t *testing.T) {
 		DelegatorAddr: testAddr.String(),
 		Pagination:    &query.PageRequest{Key: []byte("request-page-3"), Limit: query.DefaultLimit},
 	})
+	require.NoError(t, err)
 	page3Response, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsResponse{
 		DelegationResponses: expectedDelegationResponses[4:],
 		Pagination:          &query.PageResponse{NextKey: nil},
@@ -564,6 +568,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 		DelegatorAddr: testAddr.String(),
 		Pagination:    &query.PageRequest{Key: []byte("request-page-2"), Limit: query.DefaultLimit},
 	})
+	require.NoError(t, err)
 	page2Response, err := codec.Marshal(&stakingtypes.QueryDelegatorUnbondingDelegationsResponse{
 		UnbondingResponses: expectedUnbondingDelegations[2:4],
 		Pagination:         &query.PageResponse{NextKey: []byte("request-page-3")},
@@ -574,6 +579,7 @@ func TestHTTPClient_UnbondingDelegations(t *testing.T) {
 		DelegatorAddr: testAddr.String(),
 		Pagination:    &query.PageRequest{Key: []byte("request-page-3"), Limit: query.DefaultLimit},
 	})
+	require.NoError(t, err)
 	page3Response, err := codec.Marshal(&stakingtypes.QueryDelegatorUnbondingDelegationsResponse{
 		UnbondingResponses: expectedUnbondingDelegations[4:],
 		Pagination:         &query.PageResponse{NextKey: nil},
