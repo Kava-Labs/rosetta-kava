@@ -19,29 +19,83 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
+	"time"
 
+	app "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/rosetta-kava/kava"
+	"github.com/tendermint/go-amino"
 
-	sdkmath "cosmossdk.io/math"
+	abcitypes "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/bytes"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	jsonrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/kava-labs/kava/app"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	amino "github.com/tendermint/go-amino"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/bytes"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	jsonrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
+
+var testAddr = sdk.MustAccAddressFromBech32("kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq")
+var accountNotFound = fmt.Sprintf("rpc error: code = NotFound desc = account %s not found: key not found", testAddr.String())
+
+// abciRequestQuery ensures that height & data can properly
+// encode & decode across json rpc boundaries
+type abciRequestQuery struct {
+	Height string
+	Path   string
+	Data   bytes.HexBytes
+	Prove  bool
+}
+
+type jsonRPCHandler func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+
+// abciQueryCall provides an expectation and a response for an abci query
+// request done over tendermint abci
+type abciQueryCall struct {
+	expectedQuery abciRequestQuery
+	responseQuery abcitypes.ResponseQuery
+}
+
+// newABCIQueryHandler creates a handler with mockCalls provided in order
+// they should happen.
+func newABCIQueryHandler(
+	t *testing.T,
+	mockCalls []abciQueryCall,
+) jsonRPCHandler {
+	callIndex := 0
+
+	return func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
+		if callIndex >= len(mockCalls) {
+			t.Errorf("unexpected number of calls")
+		}
+		defer func() { callIndex++ }()
+
+		require.Equal(t, "abci_query", request.Method)
+
+		var requestQuery abciRequestQuery
+		err := json.Unmarshal(request.Params, &requestQuery)
+		require.NoError(t, err)
+
+		require.Equal(t, mockCalls[callIndex].expectedQuery, requestQuery)
+
+		result, err := json.Marshal(ctypes.ResultABCIQuery{Response: mockCalls[callIndex].responseQuery})
+		require.NoError(t, err)
+
+		return jsonrpctypes.RPCResponse{request.JSONRPC, request.ID, result, nil}
+	}
+}
 
 func rpcTestServer(
 	t *testing.T,
@@ -62,7 +116,8 @@ func rpcTestServer(
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(b)
+		_, err = w.Write(b)
+		require.NoError(t, err)
 	}))
 }
 
@@ -127,263 +182,414 @@ func TestHTTPClient_BlockByHash(t *testing.T) {
 	block, err = client.BlockByHash(context.Background(), testHash)
 	assert.Error(t, err)
 	assert.Nil(t, block)
-	assert.EqualError(t, err, "RPC error 1 - invalid hash")
+	assert.ErrorContains(t, err, "invalid hash")
 }
 
 func TestHTTPClient_Account(t *testing.T) {
-	cdc := amino.NewCodec()
-	height := int64(100)
+	encodingConfig := app.MakeEncodingConfig()
+	codec := encodingConfig.Marshaler
 
-	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
-	mockAccountPath := filepath.Join("test-fixtures", "vesting-account.json")
-	mockAccount, err := os.ReadFile(mockAccountPath)
+	testAccount, _ := newTestAccount(t)
+	anyAccount, err := codectypes.NewAnyWithValue(testAccount)
 	require.NoError(t, err)
 
-	var accountRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
+	response := authtypes.QueryAccountResponse{
+		Account: anyAccount,
+	}
+	responseData, err := codec.Marshal(&response)
+	require.NoError(t, err)
 
-	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		assert.Equal(t, "abci_query", request.Method)
+	height := int64(101)
+	requestData, err := codec.Marshal(&authtypes.QueryAccountRequest{Address: testAddr.String()})
+	require.NoError(t, err)
 
-		var params struct {
-			Path   string
-			Data   bytes.HexBytes
-			Height string
-			Prove  bool
-		}
+	requestQuery := abciRequestQuery{
+		Height: strconv.FormatInt(height, 10),
+		Path:   "/cosmos.auth.v1beta1.Query/Account",
+		Data:   requestData,
+		Prove:  false,
+	}
 
-		err := json.Unmarshal(request.Params, &params)
-		require.NoError(t, err)
+	fmt.Println(string(requestData))
 
-		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
+	responseQuery := abcitypes.ResponseQuery{
+		Height: height,
+		Value:  responseData,
+	}
 
-		return accountRPCResponse(request)
-	})
-	defer ts.Close()
+	mockCalls := []abciQueryCall{
+		{
+			expectedQuery: requestQuery,
+			responseQuery: responseQuery,
+		},
+	}
 
+	ts := rpcTestServer(t, newABCIQueryHandler(t, mockCalls))
 	client, err := kava.NewHTTPClient(ts.URL)
 	require.NoError(t, err)
 
-	addr, err := sdk.AccAddressFromBech32(testAddr)
+	account, err := client.Account(context.Background(), testAddr, height)
+	require.NoError(t, err)
+	require.Equal(t, testAccount, account)
+}
+
+func TestHTTPClient_Account_NotFound(t *testing.T) {
+	encodingConfig := app.MakeEncodingConfig()
+	codec := encodingConfig.Marshaler
+
+	height := int64(101)
+	requestData, err := codec.Marshal(&authtypes.QueryAccountRequest{Address: testAddr.String()})
 	require.NoError(t, err)
 
-	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		abciResult := ctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
-				Value: mockAccount,
-			},
-		}
-
-		data, err := cdc.MarshalJSON(&abciResult)
-		require.NoError(t, err)
-
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage(data),
-		}
+	requestQuery := abciRequestQuery{
+		Height: strconv.FormatInt(height, 10),
+		Path:   "/cosmos.auth.v1beta1.Query/Account",
+		Data:   requestData,
+		Prove:  false,
 	}
-	acc, err := client.Account(context.Background(), addr, height)
-	assert.NoError(t, err)
-	assert.NotNil(t, acc)
 
-	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Error: &jsonrpctypes.RPCError{
-				Code:    1,
-				Message: "invalid account",
-			},
-		}
+	responseQuery := abcitypes.ResponseQuery{
+		Height: height,
+		Code:   22,
+		Log:    accountNotFound,
 	}
-	acc, err = client.Account(context.Background(), addr, height)
-	assert.Nil(t, acc)
-	assert.EqualError(t, err, "RPC error 1 - invalid account")
 
-	accountRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage("{}"),
-		}
+	mockCalls := []abciQueryCall{
+		{
+			expectedQuery: requestQuery,
+			responseQuery: responseQuery,
+		},
 	}
-	acc, err = client.Account(context.Background(), addr, height)
-	assert.Nil(t, acc)
-	assert.Contains(t, err.Error(), "UnmarshalJSON")
+
+	ts := rpcTestServer(t, newABCIQueryHandler(t, mockCalls))
+	client, err := kava.NewHTTPClient(ts.URL)
+	require.NoError(t, err)
+
+	account, err := client.Account(context.Background(), testAddr, height)
+	require.ErrorContains(t, err, "not found")
+	require.Nil(t, account)
+}
+
+func TestHTTPClient_Balance(t *testing.T) {
+	encodingConfig := app.MakeEncodingConfig()
+	codec := encodingConfig.Marshaler
+
+	height := int64(102)
+	heightStr := strconv.FormatInt(height, 10)
+	queryPath := "/cosmos.bank.v1beta1.Query/AllBalances"
+
+	expectedBalance := sdk.NewCoins(
+		sdk.NewCoin("bnb", sdk.NewInt(1000000)),
+		sdk.NewCoin("btcb", sdk.NewInt(2000000)),
+		sdk.NewCoin("hard", sdk.NewInt(3000000)),
+		sdk.NewCoin("swp", sdk.NewInt(4000000)),
+		sdk.NewCoin("ukava", sdk.NewInt(5000000)),
+	)
+
+	page1Request, err := codec.Marshal(&banktypes.QueryAllBalancesRequest{
+		Address:    testAddr.String(),
+		Pagination: &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
+	})
+	require.NoError(t, err)
+	page1Response, err := codec.Marshal(&banktypes.QueryAllBalancesResponse{
+		Balances:   expectedBalance[:2],
+		Pagination: &query.PageResponse{NextKey: []byte("request-page-2")},
+	})
+	require.NoError(t, err)
+
+	page2Request, err := codec.Marshal(&banktypes.QueryAllBalancesRequest{
+		Address:    testAddr.String(),
+		Pagination: &query.PageRequest{Key: []byte("request-page-2"), Limit: query.DefaultLimit},
+	})
+	page2Response, err := codec.Marshal(&banktypes.QueryAllBalancesResponse{
+		Balances:   expectedBalance[2:4],
+		Pagination: &query.PageResponse{NextKey: []byte("request-page-3")},
+	})
+	require.NoError(t, err)
+
+	page3Request, err := codec.Marshal(&banktypes.QueryAllBalancesRequest{
+		Address:    testAddr.String(),
+		Pagination: &query.PageRequest{Key: []byte("request-page-3"), Limit: query.DefaultLimit},
+	})
+	page3Response, err := codec.Marshal(&banktypes.QueryAllBalancesResponse{
+		Balances:   expectedBalance[4:],
+		Pagination: &query.PageResponse{NextKey: nil},
+	})
+	require.NoError(t, err)
+
+	mockCalls := []abciQueryCall{
+		{abciRequestQuery{heightStr, queryPath, page1Request, false}, abcitypes.ResponseQuery{Height: height, Value: page1Response}},
+		{abciRequestQuery{heightStr, queryPath, page2Request, false}, abcitypes.ResponseQuery{Height: height, Value: page2Response}},
+		{abciRequestQuery{heightStr, queryPath, page3Request, false}, abcitypes.ResponseQuery{Height: height, Value: page3Response}},
+	}
+
+	ts := rpcTestServer(t, newABCIQueryHandler(t, mockCalls))
+	client, err := kava.NewHTTPClient(ts.URL)
+	require.NoError(t, err)
+
+	balance, err := client.Balance(context.Background(), testAddr, height)
+	require.NoError(t, err)
+	require.Equal(t, expectedBalance, balance)
 }
 
 func TestHTTPClient_Delegated(t *testing.T) {
-	cdc := amino.NewCodec()
-	height := int64(100)
+	encodingConfig := app.MakeEncodingConfig()
+	codec := encodingConfig.Marshaler
 
-	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
-	mockDelegationsPath := filepath.Join("test-fixtures", "delegations.json")
-	mockDelegations, err := os.ReadFile(mockDelegationsPath)
+	height := int64(103)
+	heightStr := strconv.FormatInt(height, 10)
+	queryPath := "/cosmos.staking.v1beta1.Query/DelegatorDelegations"
+
+	expectedDelegationResponses := stakingtypes.DelegationResponses{
+		{
+			Delegation: stakingtypes.Delegation{
+				DelegatorAddress: testAddr.String(),
+				ValidatorAddress: "kavavaloper1ppj7c8tqt2e3rzqtmztsmd6ea6u3nz6qggcp5e",
+				Shares:           sdk.MustNewDecFromStr("0.000073454065009902"),
+			},
+			Balance: sdk.NewCoin("ukava", sdk.NewInt(0)),
+		},
+		{
+			Delegation: stakingtypes.Delegation{
+				DelegatorAddress: testAddr.String(),
+				ValidatorAddress: "kavavaloper1zw8ce44kdqzfu0r2t9qwr75gqdcarclf9fj9lt",
+				Shares:           sdk.MustNewDecFromStr("19399980.000000000000000000"),
+			},
+			Balance: sdk.NewCoin("ukava", sdk.NewInt(19399980)),
+		},
+		{
+			Delegation: stakingtypes.Delegation{
+				DelegatorAddress: testAddr.String(),
+				ValidatorAddress: "kavavaloper1ffcujj05v6220ccxa6qdnpz3j48ng024ykh2df",
+				Shares:           sdk.MustNewDecFromStr("13301323.130293333267920034"),
+			},
+			Balance: sdk.NewCoin("ukava", sdk.NewInt(13299993)),
+		},
+		{
+			Delegation: stakingtypes.Delegation{
+				DelegatorAddress: testAddr.String(),
+				ValidatorAddress: "kavavaloper10m3hjapny44txmgr47rf277364htgqpr646cty",
+				Shares:           sdk.MustNewDecFromStr("0.908355880844728396"),
+			},
+			Balance: sdk.NewCoin("ukava", sdk.NewInt(0)),
+		},
+		{
+			Delegation: stakingtypes.Delegation{
+				DelegatorAddress: testAddr.String(),
+				ValidatorAddress: "kavavaloper1ceun2qqw65qce5la33j8zv8ltyyaqqfctl35n4",
+				Shares:           sdk.MustNewDecFromStr("9600953.092623759678779246"),
+			},
+			Balance: sdk.NewCoin("ukava", sdk.NewInt(9599993)),
+		},
+	}
+
+	page1Request, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: testAddr.String(),
+		Pagination:    &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
+	})
+	require.NoError(t, err)
+	page1Response, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsResponse{
+		DelegationResponses: expectedDelegationResponses[:2],
+		Pagination:          &query.PageResponse{NextKey: []byte("request-page-2")},
+	})
 	require.NoError(t, err)
 
-	var delegationsRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
-
-	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		assert.Equal(t, "abci_query", request.Method)
-		return delegationsRPCResponse(request)
+	page2Request, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: testAddr.String(),
+		Pagination:    &query.PageRequest{Key: []byte("request-page-2"), Limit: query.DefaultLimit},
 	})
-	defer ts.Close()
+	page2Response, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsResponse{
+		DelegationResponses: expectedDelegationResponses[2:4],
+		Pagination:          &query.PageResponse{NextKey: []byte("request-page-3")},
+	})
+	require.NoError(t, err)
 
+	page3Request, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: testAddr.String(),
+		Pagination:    &query.PageRequest{Key: []byte("request-page-3"), Limit: query.DefaultLimit},
+	})
+	page3Response, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsResponse{
+		DelegationResponses: expectedDelegationResponses[4:],
+		Pagination:          &query.PageResponse{NextKey: nil},
+	})
+	require.NoError(t, err)
+
+	mockCalls := []abciQueryCall{
+		{abciRequestQuery{heightStr, queryPath, page1Request, false}, abcitypes.ResponseQuery{Height: height, Value: page1Response}},
+		{abciRequestQuery{heightStr, queryPath, page2Request, false}, abcitypes.ResponseQuery{Height: height, Value: page2Response}},
+		{abciRequestQuery{heightStr, queryPath, page3Request, false}, abcitypes.ResponseQuery{Height: height, Value: page3Response}},
+	}
+
+	ts := rpcTestServer(t, newABCIQueryHandler(t, mockCalls))
 	client, err := kava.NewHTTPClient(ts.URL)
 	require.NoError(t, err)
 
-	addr, err := sdk.AccAddressFromBech32(testAddr)
+	delegationResponses, err := client.Delegations(context.Background(), testAddr, height)
 	require.NoError(t, err)
-
-	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		var params struct {
-			Path   string
-			Data   bytes.HexBytes
-			Height string
-			Prove  bool
-		}
-
-		err := json.Unmarshal(request.Params, &params)
-		require.NoError(t, err)
-
-		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
-
-		var queryParams stakingtypes.QueryDelegatorParams
-		err = cdc.UnmarshalJSON(params.Data, &queryParams)
-		require.NoError(t, err)
-
-		assert.Equal(t, addr, queryParams.DelegatorAddr)
-
-		abciResult := ctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
-				Value: mockDelegations,
-			},
-		}
-
-		data, err := cdc.MarshalJSON(&abciResult)
-		require.NoError(t, err)
-
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage(data),
-		}
-	}
-	delegations, err := client.Delegations(context.Background(), addr, height)
-	assert.NoError(t, err)
-	assert.NotNil(t, delegations)
-
-	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Error: &jsonrpctypes.RPCError{
-				Code:    1,
-				Message: "something went wrong",
-			},
-		}
-	}
-	delegations, err = client.Delegations(context.Background(), addr, height)
-	assert.Nil(t, delegations)
-	assert.EqualError(t, err, "RPC error 1 - something went wrong")
-
-	delegationsRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage("{}"),
-		}
-	}
-	delegations, err = client.Delegations(context.Background(), addr, height)
-	assert.Nil(t, delegations)
-	assert.Contains(t, err.Error(), "UnmarshalJSON")
+	require.Equal(t, expectedDelegationResponses, delegationResponses)
 }
 
 func TestHTTPClient_UnbondingDelegations(t *testing.T) {
-	cdc := amino.NewCodec()
-	height := int64(100)
+	encodingConfig := app.MakeEncodingConfig()
+	codec := encodingConfig.Marshaler
 
-	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
-	mockUnbondingPath := filepath.Join("test-fixtures", "unbonding_delegations.json")
-	mockUnbonding, err := os.ReadFile(mockUnbondingPath)
+	completionTime := time.Now()
+
+	height := int64(104)
+	heightStr := strconv.FormatInt(height, 10)
+	queryPath := "/cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations"
+
+	expectedUnbondingDelegations := stakingtypes.UnbondingDelegations{
+		{
+			DelegatorAddress: testAddr.String(),
+			ValidatorAddress: "kavavaloper1ppj7c8tqt2e3rzqtmztsmd6ea6u3nz6qggcp5e",
+			Entries: []stakingtypes.UnbondingDelegationEntry{
+				{
+					CreationHeight:          50,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(1000000),
+					Balance:                 sdk.NewInt(1000000),
+					UnbondingId:             1,
+					UnbondingOnHoldRefCount: 1,
+				},
+				{
+					CreationHeight:          51,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(2000000),
+					Balance:                 sdk.NewInt(2000000),
+					UnbondingId:             2,
+					UnbondingOnHoldRefCount: 2,
+				},
+			},
+		},
+		{
+			DelegatorAddress: testAddr.String(),
+			ValidatorAddress: "kavavaloper1zw8ce44kdqzfu0r2t9qwr75gqdcarclf9fj9lt",
+			Entries: []stakingtypes.UnbondingDelegationEntry{
+				{
+					CreationHeight:          52,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(1000000),
+					Balance:                 sdk.NewInt(2000000),
+					UnbondingId:             3,
+					UnbondingOnHoldRefCount: 0,
+				},
+			},
+		},
+		{
+			DelegatorAddress: testAddr.String(),
+			ValidatorAddress: "kavavaloper1ffcujj05v6220ccxa6qdnpz3j48ng024ykh2df",
+			Entries: []stakingtypes.UnbondingDelegationEntry{
+				{
+					CreationHeight:          54,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(2000000),
+					Balance:                 sdk.NewInt(3000000),
+					UnbondingId:             4,
+					UnbondingOnHoldRefCount: 0,
+				},
+				{
+					CreationHeight:          55,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(1000000),
+					Balance:                 sdk.NewInt(1000000),
+					UnbondingId:             5,
+					UnbondingOnHoldRefCount: 1,
+				},
+				{
+					CreationHeight:          56,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(2000000),
+					Balance:                 sdk.NewInt(2000000),
+					UnbondingId:             6,
+					UnbondingOnHoldRefCount: 2,
+				},
+			},
+		},
+		{
+			DelegatorAddress: testAddr.String(),
+			ValidatorAddress: "kavavaloper10m3hjapny44txmgr47rf277364htgqpr646cty",
+			Entries: []stakingtypes.UnbondingDelegationEntry{
+				{
+					CreationHeight:          57,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(1000000),
+					Balance:                 sdk.NewInt(1000000),
+					UnbondingId:             7,
+					UnbondingOnHoldRefCount: 1,
+				},
+				{
+					CreationHeight:          58,
+					CompletionTime:          completionTime,
+					InitialBalance:          sdk.NewInt(2000000),
+					Balance:                 sdk.NewInt(2000000),
+					UnbondingId:             8,
+					UnbondingOnHoldRefCount: 2,
+				},
+			},
+		},
+		{
+			DelegatorAddress: testAddr.String(),
+			ValidatorAddress: "kavavaloper1ceun2qqw65qce5la33j8zv8ltyyaqqfctl35n4",
+			Entries: []stakingtypes.UnbondingDelegationEntry{
+				{
+					CreationHeight:          59,
+					CompletionTime:          time.Now().Add(24 * time.Hour),
+					InitialBalance:          sdk.NewInt(1000000),
+					Balance:                 sdk.NewInt(1000000),
+					UnbondingId:             9,
+					UnbondingOnHoldRefCount: 10,
+				},
+			},
+		},
+	}
+
+	page1Request, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: testAddr.String(),
+		Pagination:    &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
+	})
+	require.NoError(t, err)
+	page1Response, err := codec.Marshal(&stakingtypes.QueryDelegatorUnbondingDelegationsResponse{
+		UnbondingResponses: expectedUnbondingDelegations[:2],
+		Pagination:         &query.PageResponse{NextKey: []byte("request-page-2")},
+	})
 	require.NoError(t, err)
 
-	var unbondingRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
-
-	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		assert.Equal(t, "abci_query", request.Method)
-		return unbondingRPCResponse(request)
+	page2Request, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: testAddr.String(),
+		Pagination:    &query.PageRequest{Key: []byte("request-page-2"), Limit: query.DefaultLimit},
 	})
-	defer ts.Close()
+	page2Response, err := codec.Marshal(&stakingtypes.QueryDelegatorUnbondingDelegationsResponse{
+		UnbondingResponses: expectedUnbondingDelegations[2:4],
+		Pagination:         &query.PageResponse{NextKey: []byte("request-page-3")},
+	})
+	require.NoError(t, err)
 
+	page3Request, err := codec.Marshal(&stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: testAddr.String(),
+		Pagination:    &query.PageRequest{Key: []byte("request-page-3"), Limit: query.DefaultLimit},
+	})
+	page3Response, err := codec.Marshal(&stakingtypes.QueryDelegatorUnbondingDelegationsResponse{
+		UnbondingResponses: expectedUnbondingDelegations[4:],
+		Pagination:         &query.PageResponse{NextKey: nil},
+	})
+	require.NoError(t, err)
+
+	mockCalls := []abciQueryCall{
+		{abciRequestQuery{heightStr, queryPath, page1Request, false}, abcitypes.ResponseQuery{Height: height, Value: page1Response}},
+		{abciRequestQuery{heightStr, queryPath, page2Request, false}, abcitypes.ResponseQuery{Height: height, Value: page2Response}},
+		{abciRequestQuery{heightStr, queryPath, page3Request, false}, abcitypes.ResponseQuery{Height: height, Value: page3Response}},
+	}
+
+	ts := rpcTestServer(t, newABCIQueryHandler(t, mockCalls))
 	client, err := kava.NewHTTPClient(ts.URL)
 	require.NoError(t, err)
 
-	addr, err := sdk.AccAddressFromBech32(testAddr)
+	unbondingDelegations, err := client.UnbondingDelegations(context.Background(), testAddr, height)
 	require.NoError(t, err)
 
-	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		var params struct {
-			Path   string
-			Data   bytes.HexBytes
-			Height string
-			Prove  bool
-		}
-
-		err := json.Unmarshal(request.Params, &params)
-		require.NoError(t, err)
-
-		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
-
-		var queryParams stakingtypes.QueryDelegatorParams
-		err = cdc.UnmarshalJSON(params.Data, &queryParams)
-		require.NoError(t, err)
-
-		assert.Equal(t, addr, queryParams.DelegatorAddr)
-
-		abciResult := ctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
-				Value: mockUnbonding,
-			},
-		}
-
-		data, err := cdc.MarshalJSON(&abciResult)
-		require.NoError(t, err)
-
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage(data),
-		}
-	}
-	unbonding, err := client.UnbondingDelegations(context.Background(), addr, height)
-	assert.NoError(t, err)
-	assert.NotNil(t, unbonding)
-
-	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Error: &jsonrpctypes.RPCError{
-				Code:    1,
-				Message: "something went wrong",
-			},
-		}
-	}
-	unbonding, err = client.UnbondingDelegations(context.Background(), addr, height)
-	assert.Nil(t, unbonding)
-	assert.EqualError(t, err, "RPC error 1 - something went wrong")
-
-	unbondingRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage("{}"),
-		}
-	}
-	unbonding, err = client.UnbondingDelegations(context.Background(), addr, height)
-	assert.Nil(t, unbonding)
-	assert.Contains(t, err.Error(), "UnmarshalJSON")
+	// use go-cmp due to marshal & unmarshal of timestamps
+	require.True(t, cmp.Equal(expectedUnbondingDelegations, unbondingDelegations))
 }
 
 func TestHTTPClient_SimulateTx(t *testing.T) {
@@ -427,7 +633,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 		require.NoError(t, err)
 
 		abciResult := ctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
+			Response: abcitypes.ResponseQuery{
 				Value: respValue,
 			},
 		}
@@ -457,11 +663,11 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 	}
 	simResp, err = client.SimulateTx(context.Background(), testTx)
 	assert.Nil(t, simResp)
-	assert.EqualError(t, err, "RPC error 1 - something went wrong")
+	assert.ErrorContains(t, err, "something went wrong")
 
 	simulateResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
 		abciResult := ctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
+			Response: abcitypes.ResponseQuery{
 				Value: []byte("invalid"),
 			},
 		}
@@ -482,7 +688,7 @@ func TestHTTPClient_SimulateTx(t *testing.T) {
 
 func TestParseABCIResult(t *testing.T) {
 	mockOKResponse := &ctypes.ResultABCIQuery{
-		Response: abci.ResponseQuery{
+		Response: abcitypes.ResponseQuery{
 			Code:  uint32(0),
 			Log:   "",
 			Value: []byte("{}"),
@@ -490,7 +696,7 @@ func TestParseABCIResult(t *testing.T) {
 	}
 
 	mockNotOKResponse := &ctypes.ResultABCIQuery{
-		Response: abci.ResponseQuery{
+		Response: abcitypes.ResponseQuery{
 			Code:  uint32(1),
 			Log:   "internal error",
 			Value: []byte("{}"),
@@ -498,7 +704,7 @@ func TestParseABCIResult(t *testing.T) {
 	}
 
 	mockNilByteResponse := &ctypes.ResultABCIQuery{
-		Response: abci.ResponseQuery{
+		Response: abcitypes.ResponseQuery{
 			Code:  uint32(0),
 			Log:   "",
 			Value: []byte(nil),
@@ -526,90 +732,4 @@ func TestParseABCIResult(t *testing.T) {
 	data, err = kava.ParseABCIResult(mockNilByteResponse, nil)
 	assert.Equal(t, []byte{}, data)
 	assert.Nil(t, err)
-}
-
-func TestHTTPClient_Balance(t *testing.T) {
-	cdc := amino.NewCodec()
-	height := int64(100)
-
-	testAddr := "kava1vlpsrmdyuywvaqrv7rx6xga224sqfwz3fyfhwq"
-
-	mockBalances := sdk.NewCoins(
-		sdk.NewCoin("ukava", sdkmath.NewInt(1e6)),
-		sdk.NewCoin("swp", sdkmath.NewInt(1e6)),
-		sdk.NewCoin("bnb", sdkmath.NewInt(1e8)),
-	)
-
-	mockBalancesResp := cdc.MustMarshalJSON(mockBalances)
-
-	var balanceRPCResponse func(jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse
-
-	ts := rpcTestServer(t, func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		assert.Equal(t, "abci_query", request.Method)
-
-		var params struct {
-			Path   string
-			Data   bytes.HexBytes
-			Height string
-			Prove  bool
-		}
-
-		err := json.Unmarshal(request.Params, &params)
-		require.NoError(t, err)
-
-		assert.Equal(t, strconv.FormatInt(height, 10), params.Height)
-		return balanceRPCResponse(request)
-	})
-	defer ts.Close()
-
-	client, err := kava.NewHTTPClient(ts.URL)
-	require.NoError(t, err)
-
-	addr, err := sdk.AccAddressFromBech32(testAddr)
-	require.NoError(t, err)
-
-	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		abciResult := ctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
-				Value: mockBalancesResp,
-			},
-		}
-
-		data, err := cdc.MarshalJSON(&abciResult)
-		require.NoError(t, err)
-
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage(data),
-		}
-	}
-	bal, err := client.Balance(context.Background(), addr, height)
-	assert.NoError(t, err)
-	assert.NotNil(t, bal)
-
-	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Error: &jsonrpctypes.RPCError{
-				Code:    1,
-				Message: "balance not found",
-			},
-		}
-	}
-	bal, err = client.Balance(context.Background(), addr, height)
-	assert.Nil(t, bal)
-	assert.EqualError(t, err, "RPC error 1 - balance not found")
-
-	balanceRPCResponse = func(request jsonrpctypes.RPCRequest) jsonrpctypes.RPCResponse {
-		return jsonrpctypes.RPCResponse{
-			JSONRPC: request.JSONRPC,
-			ID:      request.ID,
-			Result:  json.RawMessage("{}"),
-		}
-	}
-	bal, err = client.Balance(context.Background(), addr, height)
-	assert.Nil(t, bal)
-	assert.Contains(t, err.Error(), "UnmarshalJSON")
 }

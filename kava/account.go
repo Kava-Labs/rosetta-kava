@@ -15,7 +15,7 @@ import (
 
 const stakingDenom = "ukava"
 
-var unknownAddress = regexp.MustCompile("unknown address")
+var addressNotFound = regexp.MustCompile("not found")
 
 // AccountBalanceService provides an interface fetch a balance from an account subtype
 type AccountBalanceService interface {
@@ -33,7 +33,7 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 	return func(ctx context.Context, addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
 		acc, err := rpc.Account(ctx, addr, blockHeader.Height)
 		if err != nil {
-			if unknownAddress.MatchString(err.Error()) {
+			if addressNotFound.MatchString(err.Error()) {
 				return &nullBalance{acc: acc}, nil
 			}
 

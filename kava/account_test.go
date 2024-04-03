@@ -11,13 +11,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 func setupFactory(t *testing.T, blockTime time.Time) (sdk.AccAddress, *tmtypes.Header, *mocks.RPCClient, kava.BalanceServiceFactory) {
@@ -50,14 +50,14 @@ func TestRPCAccountBalance_NullAccount(t *testing.T) {
 	ctx := context.Background()
 	addr, blockHeader, mockRPCClient, serviceFactory := setupFactory(t, time.Now())
 
-	accErr := errors.New("unknown address kava1abc...")
+	accErr := errors.New(accountNotFound)
 	mockRPCClient.On("Account", ctx, addr, blockHeader.Height).Return(nil, accErr)
 
 	service, err := serviceFactory(ctx, addr, blockHeader)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	balance, sequence, err := service.GetCoinsAndSequenceForSubAccount(context.Background(), &types.SubAccountIdentifier{Address: kava.AccLiquid})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, sdk.Coins{}, balance)
 	assert.Equal(t, uint64(0), sequence)
