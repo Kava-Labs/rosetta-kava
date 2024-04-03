@@ -26,11 +26,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cometbft/cometbft/crypto"
 )
 
 var requiredMetadata = []string{
@@ -116,6 +116,8 @@ func (s *ConstructionAPIService) ConstructionPayloads(
 			chainID = "kava_2222-10"
 		case "kava-testnet":
 			chainID = "kava_2221-16000"
+		case "kava-localnet":
+			chainID = "kavalocalnet_8888-1"
 		}
 
 		signerData := authsigning.SignerData{
