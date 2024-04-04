@@ -36,13 +36,13 @@ import (
 	app "github.com/kava-labs/kava/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/bytes"
-	"github.com/tendermint/tendermint/p2p"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
-	tmstate "github.com/tendermint/tendermint/state"
-	tmtypes "github.com/tendermint/tendermint/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/bytes"
+	"github.com/cometbft/cometbft/p2p"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	tmstate "github.com/cometbft/cometbft/state"
+	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 const (

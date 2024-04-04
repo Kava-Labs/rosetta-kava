@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/cometbft/cometbft/crypto"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"

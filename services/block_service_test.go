@@ -26,8 +26,8 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
-	tmstate "github.com/tendermint/tendermint/state"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	tmstate "github.com/cometbft/cometbft/state"
 )
 
 func TestBlockService_Offline(t *testing.T) {

@@ -6,16 +6,16 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 const stakingDenom = "ukava"
 
-var unknownAddress = regexp.MustCompile("unknown address")
+var addressNotFound = regexp.MustCompile("not found")
 
 // AccountBalanceService provides an interface fetch a balance from an account subtype
 type AccountBalanceService interface {
@@ -33,7 +33,7 @@ func NewRPCBalanceFactory(rpc RPCClient) BalanceServiceFactory {
 	return func(ctx context.Context, addr sdk.AccAddress, blockHeader *tmtypes.Header) (AccountBalanceService, error) {
 		acc, err := rpc.Account(ctx, addr, blockHeader.Height)
 		if err != nil {
-			if unknownAddress.MatchString(err.Error()) {
+			if addressNotFound.MatchString(err.Error()) {
 				return &nullBalance{acc: acc}, nil
 			}
 

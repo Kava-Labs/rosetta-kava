@@ -17,21 +17,21 @@ package kava
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	"github.com/cometbft/cometbft/libs/bytes"
+	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	tmhttp "github.com/cometbft/cometbft/rpc/client/http"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
-	"github.com/tendermint/tendermint/libs/bytes"
-	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
-	tmhttp "github.com/tendermint/tendermint/rpc/client/http"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 )
 
 // HTTPClient extends the tendermint http client to enable finding blocks by hash
@@ -71,20 +71,26 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 
 // Account returns the Account for a given address
 func (c *HTTPClient) Account(ctx context.Context, addr sdk.AccAddress, height int64) (authtypes.AccountI, error) {
-	bz, err := c.cdc.MarshalJSON(authtypes.QueryAccountRequest{Address: addr.String()})
+	bz, err := c.encodingConfig.Marshaler.Marshal(&authtypes.QueryAccountRequest{Address: addr.String()})
 	if err != nil {
 		return nil, err
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", authtypes.QuerierRoute, authtypes.QueryAccount)
+	path := "/cosmos.auth.v1beta1.Query/Account"
 
 	data, err := c.abciQuery(ctx, path, bz, height)
 	if err != nil {
 		return nil, err
 	}
 
+	var resp authtypes.QueryAccountResponse
+	err = c.encodingConfig.Marshaler.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, err
+	}
+
 	var account authtypes.AccountI
-	err = c.cdc.UnmarshalJSON(data, &account)
+	err = c.encodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account)
 	if err != nil {
 		return nil, err
 	}
@@ -94,69 +100,113 @@ func (c *HTTPClient) Account(ctx context.Context, addr sdk.AccAddress, height in
 
 // Balance returns the Balance for a given address
 func (c *HTTPClient) Balance(ctx context.Context, addr sdk.AccAddress, height int64) (sdk.Coins, error) {
-	// legacy querier does not paginate -- Pagination parameter set to nil to ignore
-	bz, err := c.cdc.MarshalJSON(banktypes.NewQueryAllBalancesRequest(addr, nil))
-	if err != nil {
-		return nil, err
+	path := "/cosmos.bank.v1beta1.Query/AllBalances"
+	totalBalances := sdk.NewCoins()
+
+	request := banktypes.QueryAllBalancesRequest{
+		Address:    addr.String(),
+		Pagination: &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", banktypes.QuerierRoute, banktypes.QueryAllBalances)
+	for {
+		bz, err := c.encodingConfig.Marshaler.Marshal(&request)
+		if err != nil {
+			return nil, err
+		}
 
-	data, err := c.abciQuery(ctx, path, bz, height)
-	if err != nil {
-		return nil, err
+		data, err := c.abciQuery(ctx, path, bz, height)
+		if err != nil {
+			return nil, err
+		}
+
+		var resp banktypes.QueryAllBalancesResponse
+		err = c.encodingConfig.Marshaler.Unmarshal(data, &resp)
+		if err != nil {
+			return nil, err
+		}
+
+		totalBalances = totalBalances.Add(resp.Balances...)
+
+		if resp.Pagination.NextKey == nil {
+			break
+		}
+		request.Pagination.Key = resp.Pagination.NextKey
 	}
 
-	var balance sdk.Coins
-	err = c.cdc.UnmarshalJSON(data, &balance)
-	if err != nil {
-		return nil, err
-	}
-
-	return balance, nil
+	return totalBalances, nil
 }
 
 // Delegations returns the delegations for an acc address
 func (c *HTTPClient) Delegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.DelegationResponses, error) {
-	bz, err := c.cdc.MarshalJSON(stakingtypes.NewQueryDelegatorParams(addr))
-	if err != nil {
-		return nil, err
+	path := "/cosmos.staking.v1beta1.Query/DelegatorDelegations"
+	delegationResponses := stakingtypes.DelegationResponses{}
+
+	request := stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: addr.String(),
+		Pagination:    &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", stakingtypes.QuerierRoute, stakingtypes.QueryDelegatorDelegations)
+	for {
+		bz, err := c.encodingConfig.Marshaler.Marshal(&request)
+		if err != nil {
+			return nil, err
+		}
 
-	data, err := c.abciQuery(ctx, path, bz, height)
-	if err != nil {
-		return nil, err
+		data, err := c.abciQuery(ctx, path, bz, height)
+		if err != nil {
+			return nil, err
+		}
+
+		var resp stakingtypes.QueryDelegatorDelegationsResponse
+		err = c.encodingConfig.Marshaler.Unmarshal(data, &resp)
+		if err != nil {
+			return nil, err
+		}
+
+		delegationResponses = append(delegationResponses, resp.DelegationResponses...)
+
+		if resp.Pagination.NextKey == nil {
+			break
+		}
+		request.Pagination.Key = resp.Pagination.NextKey
 	}
 
-	var delegations stakingtypes.DelegationResponses
-	err = c.cdc.UnmarshalJSON(data, &delegations)
-	if err != nil {
-		return nil, err
-	}
-
-	return delegations, nil
+	return delegationResponses, nil
 }
 
 // UnbondingDelegations returns the unbonding delegations for an address
 func (c *HTTPClient) UnbondingDelegations(ctx context.Context, addr sdk.AccAddress, height int64) (stakingtypes.UnbondingDelegations, error) {
-	bz, err := c.cdc.MarshalJSON(stakingtypes.NewQueryDelegatorParams(addr))
-	if err != nil {
-		return nil, err
+	path := "/cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations"
+	unbondingDelegations := stakingtypes.UnbondingDelegations{}
+
+	request := stakingtypes.QueryDelegatorUnbondingDelegationsRequest{
+		DelegatorAddr: addr.String(),
+		Pagination:    &query.PageRequest{Key: nil, Limit: query.DefaultLimit},
 	}
 
-	path := fmt.Sprintf("custom/%s/%s", stakingtypes.QuerierRoute, stakingtypes.QueryDelegatorUnbondingDelegations)
+	for {
+		bz, err := c.encodingConfig.Marshaler.Marshal(&request)
+		if err != nil {
+			return nil, err
+		}
 
-	data, err := c.abciQuery(ctx, path, bz, height)
-	if err != nil {
-		return nil, err
-	}
+		data, err := c.abciQuery(ctx, path, bz, height)
+		if err != nil {
+			return nil, err
+		}
 
-	var unbondingDelegations stakingtypes.UnbondingDelegations
-	err = c.cdc.UnmarshalJSON(data, &unbondingDelegations)
-	if err != nil {
-		return nil, err
+		var resp stakingtypes.QueryDelegatorUnbondingDelegationsResponse
+		err = c.encodingConfig.Marshaler.Unmarshal(data, &resp)
+		if err != nil {
+			return nil, err
+		}
+
+		unbondingDelegations = append(unbondingDelegations, resp.UnbondingResponses...)
+
+		if resp.Pagination.NextKey == nil {
+			break
+		}
+		request.Pagination.Key = resp.Pagination.NextKey
 	}
 
 	return unbondingDelegations, nil

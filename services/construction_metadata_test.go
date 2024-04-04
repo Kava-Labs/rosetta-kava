@@ -349,7 +349,7 @@ func TestConstructionMetadata_GasAndFee(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			servicer, mockClient := setupConstructionAPIServicer()
+			servicer, mockClient := setupConstructionAPIServicerWithEncodingConfig(encodingConfig)
 			servicer.config.Mode = configuration.Online
 			ctx := context.Background()
 
