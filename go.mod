@@ -2,8 +2,6 @@ module github.com/kava-labs/rosetta-kava
 
 go 1.21
 
-toolchain go1.21.8
-
 require (
 	cosmossdk.io/math v1.3.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
@@ -12,7 +10,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.10
 	github.com/fatih/color v1.13.0
 	github.com/google/go-cmp v0.6.0
-	github.com/kava-labs/kava v0.19.0-rc0.0.20240329180552-7ca43024e4d1
+	github.com/kava-labs/kava v0.26.0-alpha.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tendermint/go-amino v0.16.0
@@ -60,7 +58,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.10 // indirect
 	github.com/cosmos/iavl v0.20.1 // indirect
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7 v7.1.3 // indirect
-	github.com/cosmos/ibc-go/v7 v7.3.1 // indirect
+	github.com/cosmos/ibc-go/v7 v7.4.0 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.1 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
