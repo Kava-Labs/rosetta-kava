@@ -10,7 +10,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.10
 	github.com/fatih/color v1.13.0
 	github.com/google/go-cmp v0.6.0
-	github.com/kava-labs/kava v0.26.0-alpha.0
+	github.com/kava-labs/kava v0.26.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tendermint/go-amino v0.16.0

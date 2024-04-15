@@ -24,6 +24,7 @@ ARG kava_v0_21_0_upgrade_version=v0.21.0
 ARG kava_v0_23_0_upgrade_version=v0.23.1
 ARG kava_v0_24_0_upgrade_version=v0.24.0
 ARG kava_v0_25_0_upgrade_version=v0.25.0
+ARG kava_v0_26_0_upgrade_version=v0.26.0
 
 ENV KAVA_GENESIS_VERSION=$kava_genesis_version
 ENV KAVA_V0_18_0_UPGRADE_VERSION=$kava_v0_18_0_upgrade_version
@@ -32,6 +33,7 @@ ENV KAVA_V0_21_0_UPGRADE_VERSION=$kava_v0_21_0_upgrade_version
 ENV KAVA_V0_23_0_UPGRADE_VERSION=$kava_v0_23_0_upgrade_version
 ENV KAVA_V0_24_0_UPGRADE_VERSION=$kava_v0_24_0_upgrade_version
 ENV KAVA_V0_25_0_UPGRADE_VERSION=$kava_v0_25_0_upgrade_version
+ENV KAVA_V0_26_0_UPGRADE_VERSION=$kava_v0_26_0_upgrade_version
 
 RUN git clone https://github.com/kava-labs/kava \
       && cd kava \
@@ -75,6 +77,12 @@ RUN cd kava \
       && make install \
       && mkdir -p /app/cosmovisor/upgrades/v0.25.0/bin \
       && mv /go/bin/kava /app/cosmovisor/upgrades/v0.25.0/bin
+
+RUN cd kava \
+      && git checkout $KAVA_V0_26_0_UPGRADE_VERSION \
+      && make install \
+      && mkdir -p /app/cosmovisor/upgrades/v0.26.0/bin \
+      && mv /go/bin/kava /app/cosmovisor/upgrades/v0.26.0/bin
 
 COPY . rosetta-kava
 
