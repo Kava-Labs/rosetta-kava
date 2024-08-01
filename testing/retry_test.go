@@ -20,6 +20,7 @@ package testing
 import (
 	"context"
 	"math/rand"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -32,6 +33,10 @@ var lessOrEqualCurrentHeight = regexp.MustCompile(`height \d+ must be less than 
 func TestBlockRetry(t *testing.T) {
 	if config.Mode.String() == "offline" {
 		t.Skip("offline: skipping block retry test")
+	}
+
+	if os.Getenv("SKIP_LIVE_NODE_TESTS") == "true" {
+		t.Skip("skipping block retry test: it's designed to be run against a live (mainnet) node")
 	}
 
 	numJobs := 10
