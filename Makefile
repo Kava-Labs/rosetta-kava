@@ -34,6 +34,10 @@ run-testnet:
 run-local:
 	MODE=online NETWORK=kava-localnet PORT=8000 KAVA_RPC_URL=http://localhost:26657 go run . run
 
+.PHONY: run-local-offline
+run-local-offline:
+	MODE=offline NETWORK=kava-localnet PORT=8001 KAVA_RPC_URL=http://localhost:26657 go run . run
+
 .PHONY: test
 test:
 	go test -v ./...

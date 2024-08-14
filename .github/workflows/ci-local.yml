@@ -1,0 +1,79 @@
+name: Run Tests Against Local Kava Network
+
+on:
+  push:
+    branches: [ master, process_kava_dispatch ]
+  # repository_dispatch event will be sent by kava on every kava commit
+  repository_dispatch:
+
+jobs:
+  setup-and-run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout rosetta-kava
+        uses: actions/checkout@v4
+        with:
+          path: rosetta-kava
+
+      # TODO(yevhenii): consider reusing already built kava docker image instead of rebuilding it
+      - name: Checkout kava
+        uses: actions/checkout@v4
+        with:
+          repository: Kava-Labs/kava
+          path: kava
+
+      - name: Checkout kvtool
+        uses: actions/checkout@v4
+        with:
+          repository: Kava-Labs/kvtool
+          path: kvtool
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: rosetta-kava/go.mod
+
+      - name: Cache Go Modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('./rosetta-kava/**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build kava docker image
+        run: make docker-build
+        working-directory: ./kava
+
+      - name: Install kvtool
+        run: make install
+        working-directory: ./kvtool
+
+      - name: Run kava docker container
+        run: KAVA_TAG=local kvtool t bootstrap
+
+      - name: Wait until kava node is ready to serve traffic
+        run: bash ${GITHUB_WORKSPACE}/rosetta-kava/.github/scripts/wait-for-node-init.sh
+
+      - name: Run integration tests
+        run: KAVA_RPC_URL=http://localhost:26657 NETWORK=kava-local PORT=4000 SKIP_LIVE_NODE_TESTS=true make test-integration
+        working-directory: ./rosetta-kava
+
+      - name: Download coinbase rosetta-cli
+        run: "curl -sSfL https://raw.githubusercontent.com/coinbase/rosetta-cli/master/scripts/install.sh | sh -s"
+        working-directory: ./rosetta-kava
+
+      - name: Start rosetta server
+        run: .github/scripts/kava-localnet-ci/setup.sh
+        shell: bash
+        working-directory: ./rosetta-kava
+
+      - name: Run check:construction test
+        run: .github/scripts/kava-localnet-ci/construction.sh
+        shell: bash
+        working-directory: ./rosetta-kava
+
+      - name: Run check:data test
+        run: .github/scripts/kava-localnet-ci/cli.sh
+        shell: bash
+        working-directory: ./rosetta-kava
