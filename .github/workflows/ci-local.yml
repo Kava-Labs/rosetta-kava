@@ -1,10 +1,21 @@
 name: Run Tests Against Local Kava Network
 
+# There are 2 triggers for this workflow:
+# - workflow was triggered by repository_dispatch event which was sent by kava repo, in that case tests will be run against
+#   specified version of kava (github.event.client_payload.ref) and default branch of rosetta
+# - workflow was triggered by commit in rosetta-kava repo, in that case tests will be run against
+#   default branch of kava and specified version of rosetta (github.ref)
 on:
-  push:
-    branches: [ master, process_kava_dispatch ]
-  # repository_dispatch event will be sent by kava on every kava commit
+  # repository_dispatch event will be sent by kava on every kava commit to master
   repository_dispatch:
+    types: [ run-rosetta-tests ]
+  # run CI on any push to the master branch
+  push:
+    branches: [ master ]
+  # run CI on pull requests to master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   setup-and-run-tests:
@@ -20,7 +31,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Kava-Labs/kava
+          # There are 2 cases here:
+          # - workflow was triggered by repository_dispatch event which was sent by kava repo, in that case we're using
+          #   kava version provided in event: github.event.client_payload.ref
+          # - workflow was triggered by commit in rosetta-kava repo, in that case github.event.client_payload.ref will be empty
+          #   and default branch will be used instead
+          ref: ${{ github.event.client_payload.ref }}
           path: kava
+
+      - name: Print rosetta version
+        run: |
+          git branch
+          git rev-parse HEAD
+        working-directory: ./rosetta-kava
+
+      - name: Print kava version
+        run: |
+          git branch
+          git rev-parse HEAD
+        working-directory: ./kava
 
       - name: Checkout kvtool
         uses: actions/checkout@v4
