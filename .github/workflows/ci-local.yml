@@ -106,3 +106,12 @@ jobs:
         run: .github/scripts/kava-localnet-ci/cli.sh
         shell: bash
         working-directory: ./rosetta-kava
+
+      - name: Send slack notification if job failed
+        uses: slackapi/slack-github-action@v1.26.0
+        if: ${{ failure() }}
+        with:
+          channel-id: ${{ vars.SLACK_CHANNEL_ID }}
+          slack-message: "Rosetta-kava CI failed, details: https://github.com/Kava-Labs/rosetta-kava/actions/runs/${{github.run_id}}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_ALERTS_BOT_TOKEN }}
