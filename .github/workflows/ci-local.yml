@@ -38,6 +38,7 @@ jobs:
           #   and default branch will be used instead
           ref: ${{ github.event.client_payload.ref }}
           path: kava
+          submodules: 'true'
 
       - name: Print rosetta version
         run: |
@@ -50,12 +51,6 @@ jobs:
           git branch
           git rev-parse HEAD
         working-directory: ./kava
-
-      - name: Checkout kvtool
-        uses: actions/checkout@v4
-        with:
-          repository: Kava-Labs/kvtool
-          path: kvtool
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -76,7 +71,7 @@ jobs:
 
       - name: Install kvtool
         run: make install
-        working-directory: ./kvtool
+        working-directory: ./kava/tests/e2e/kvtool
 
       - name: Run kava docker container
         run: KAVA_TAG=local kvtool t bootstrap
@@ -87,6 +82,21 @@ jobs:
       - name: Run integration tests
         run: KAVA_RPC_URL=http://localhost:26657 NETWORK=kava-local PORT=4000 SKIP_LIVE_NODE_TESTS=true make test-integration
         working-directory: ./rosetta-kava
+
+      # Run kava e2e tests to simulate load before running "rosetta-cli check:data"
+      # Tests are run against already running kava node, details: https://github.com/Kava-Labs/kava/blob/master/tests/e2e/.env.live-network-example
+      - name: Run kava e2e tests
+        run: make test-e2e
+        working-directory: ./kava
+        env:
+          # E2E_RUN_KVTOOL_NETWORKS must be false to trigger run on live network
+          E2E_RUN_KVTOOL_NETWORKS: false
+          # Configure the endpoints for connecting to the running network here.
+          E2E_KAVA_RPC_URL: "http://localhost:26657"
+          E2E_KAVA_GRPC_URL: "http://localhost:9090"
+          E2E_KAVA_EVM_RPC_URL: "http://localhost:8545"
+          # E2E_INCLUDE_IBC_TESTS is not currently supported for running tests against a live network.
+          E2E_INCLUDE_IBC_TESTS: false
 
       - name: Download coinbase rosetta-cli
         run: "curl -sSfL https://raw.githubusercontent.com/coinbase/rosetta-cli/master/scripts/install.sh | sh -s"
@@ -109,7 +119,9 @@ jobs:
 
       - name: Send slack notification if job failed
         uses: slackapi/slack-github-action@v1.26.0
-        if: ${{ failure() }}
+        # send slack notification only if workflow was triggered by repository_dispatch event
+        # if it was triggered by commit to rosetta-kava repo - there is no point to alert, it's visible in rosetta-kava CI
+        if: ${{ failure() && github.event_name == 'repository_dispatch' }}
         with:
           channel-id: ${{ vars.SLACK_CHANNEL_ID }}
           slack-message: "Rosetta-kava CI failed, details: https://github.com/Kava-Labs/rosetta-kava/actions/runs/${{github.run_id}}"

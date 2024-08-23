@@ -9,8 +9,7 @@ end_idx=($(curl -s --location --request POST 'http://localhost:8000/network/stat
     }
 }' | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["current_block_identifier"]["index"])'))
 
-latest_X_blocks=10
-start_idx=$(($end_idx - $latest_X_blocks))
+start_idx=1
 
 echo "start check:data"
 echo "start_idx: $start_idx"
