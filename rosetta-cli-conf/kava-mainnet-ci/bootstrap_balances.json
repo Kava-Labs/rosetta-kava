@@ -1,0 +1,92 @@
+[
+  {
+    "account_identifier": {
+      "address":"kava1tygms3xhhs3yv487phx3dw4a95jn7t7lawprey"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "2009330115376"
+  },
+  {
+    "account_identifier": {
+      "address":"kava17xpfvakm2amg962yls6f84z3kell8c5lvvhaa6"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "5000"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "7092167014564"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"HARD",
+      "decimals":6
+    },
+    "value": "77495545031555"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1cj7njkw2g9fqx4e768zc75dp9sks8u9znxrf0w"
+    },
+    "currency":{
+      "symbol":"SWP",
+      "decimals":6
+    },
+    "value": "118904294906784"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1a575m9wg78pzr4phguc6pdlztd568qmxdml5ry"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "32412329"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1a575m9wg78pzr4phguc6pdlztd568qmxdml5ry"
+    },
+    "currency":{
+      "symbol":"HARD",
+      "decimals":6
+    },
+    "value": "1212166"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1a575m9wg78pzr4phguc6pdlztd568qmxdml5ry"
+    },
+    "currency":{
+      "symbol":"SWP",
+      "decimals":6
+    },
+    "value": "2139677473"
+  },
+  {
+    "account_identifier": {
+      "address":"kava1v858wrcs9xt2h435kar87vxar86mu2fvearprd"
+    },
+    "currency":{
+      "symbol":"KAVA",
+      "decimals":6
+    },
+    "value": "13480"
+  }
+]
