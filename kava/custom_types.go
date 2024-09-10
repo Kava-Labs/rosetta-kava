@@ -9,6 +9,10 @@ type ClientStateI interface {
 	proto.Message
 }
 
+type ConsensusStateI interface {
+	proto.Message
+}
+
 // ClientState defines a solo machine client that tracks the current consensus
 // state and if the client is frozen.
 type ClientState struct {

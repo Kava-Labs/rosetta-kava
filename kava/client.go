@@ -57,6 +57,11 @@ func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Cli
 		(*ClientStateI)(nil),
 		&ClientState{},
 	)
+	encodingConfig.InterfaceRegistry.RegisterInterface(
+		"ibc.lightclients.solomachine.v2.ConsensusState",
+		(*ConsensusStateI)(nil),
+		&ConsensusState{},
+	)
 
 	return &Client{
 		rpc:            rpc,
