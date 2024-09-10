@@ -32,7 +32,6 @@ func (*ClientState) ProtoMessage()    {}
 func (*ClientState) Descriptor() ([]byte, []int) {
 	return fileDescriptor_141333b361aae010, []int{0}
 }
-
 func (*ClientState) XXX_MessageName() string { return "ibc.lightclients.solomachine.v2.ClientState" }
 
 // ConsensusState defines a solo machine consensus state. The sequence of a
@@ -51,7 +50,9 @@ type ConsensusState struct {
 func (m *ConsensusState) Reset()         { *m = ConsensusState{} }
 func (m *ConsensusState) String() string { return proto.CompactTextString(m) }
 func (*ConsensusState) ProtoMessage()    {}
-
+func (*ConsensusState) Descriptor() ([]byte, []int) {
+	return fileDescriptor_141333b361aae010, []int{1}
+}
 func (*ConsensusState) XXX_MessageName() string {
 	return "ibc.lightclients.solomachine.v2.ConsensusState"
 }
