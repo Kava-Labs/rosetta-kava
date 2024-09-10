@@ -48,6 +48,10 @@ func (m *ConsensusState) Reset()         { *m = ConsensusState{} }
 func (m *ConsensusState) String() string { return proto.CompactTextString(m) }
 func (*ConsensusState) ProtoMessage()    {}
 
+func (*ConsensusState) XXX_MessageName() string {
+	return "ibc.lightclients.solomachine.v2.ConsensusState"
+}
+
 var fileDescriptor_141333b361aae010 = []byte{
 	// 1370 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0x5f, 0x8f, 0xdb, 0x44,
