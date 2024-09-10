@@ -22,9 +22,10 @@ type ClientState struct {
 	AllowUpdateAfterProposal bool `protobuf:"varint,4,opt,name=allow_update_after_proposal,json=allowUpdateAfterProposal,proto3" json:"allow_update_after_proposal,omitempty" yaml:"allow_update_after_proposal"`
 }
 
-func (m *ClientState) Reset()         { *m = ClientState{} }
-func (m *ClientState) String() string { return proto.CompactTextString(m) }
-func (*ClientState) ProtoMessage()    {}
+func (m *ClientState) Reset()                { *m = ClientState{} }
+func (m *ClientState) String() string        { return proto.CompactTextString(m) }
+func (*ClientState) ProtoMessage()           {}
+func (*ClientState) XXX_MessageName() string { return "ibc.lightclients.solomachine.v2.ClientState" }
 
 // ConsensusState defines a solo machine consensus state. The sequence of a
 // consensus state is contained in the "height" key used in storing the
