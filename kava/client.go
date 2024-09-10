@@ -26,18 +26,21 @@ import (
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
-	abci "github.com/cometbft/cometbft/abci/types"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+
+	migrations_v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
 )
 
 var noBlockResultsForHeight = regexp.MustCompile(`could not find results for height #(\d+)`)
@@ -52,6 +55,16 @@ type Client struct {
 // NewClient initialized a new Client with the provided rpc client
 func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
 	encodingConfig := kava.MakeEncodingConfig()
+	encodingConfig.InterfaceRegistry.RegisterInterface(
+		"ibc.lightclients.solomachine.v2.ClientState",
+		(*exported.ClientState)(nil),
+		&migrations_v7.ClientState{},
+	)
+	encodingConfig.InterfaceRegistry.RegisterInterface(
+		"ibc.lightclients.solomachine.v2.ConsensusState",
+		(*exported.ConsensusState)(nil),
+		&migrations_v7.ConsensusState{},
+	)
 
 	return &Client{
 		rpc:            rpc,
