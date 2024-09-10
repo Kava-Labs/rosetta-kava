@@ -36,8 +36,11 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
+
+	migrations_v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
 )
 
 var noBlockResultsForHeight = regexp.MustCompile(`could not find results for height #(\d+)`)
@@ -54,13 +57,13 @@ func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Cli
 	encodingConfig := kava.MakeEncodingConfig()
 	encodingConfig.InterfaceRegistry.RegisterInterface(
 		"ibc.lightclients.solomachine.v2.ClientState",
-		(*ClientStateI)(nil),
-		&ClientState{},
+		(*exported.ClientState)(nil),
+		&migrations_v7.ClientState{},
 	)
 	encodingConfig.InterfaceRegistry.RegisterInterface(
 		"ibc.lightclients.solomachine.v2.ConsensusState",
-		(*ConsensusStateI)(nil),
-		&ConsensusState{},
+		(*exported.ConsensusState)(nil),
+		&migrations_v7.ConsensusState{},
 	)
 
 	return &Client{
