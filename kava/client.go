@@ -26,6 +26,10 @@ import (
 	"time"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -34,10 +38,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
-	abci "github.com/cometbft/cometbft/abci/types"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 var noBlockResultsForHeight = regexp.MustCompile(`could not find results for height #(\d+)`)
@@ -395,7 +395,10 @@ func (c *Client) getOperationsForTransaction(
 
 	if result.Codespace == sdkerrors.RootCodespace {
 		switch result.Code {
-		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
+		case sdkerrors.ErrInvalidSequence.ABCICode(),
+			sdkerrors.ErrInsufficientFee.ABCICode(),
+			sdkerrors.ErrTxTimeoutHeight.ABCICode(),
+			sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
 		// For unauthorized, insufficient funds, out of gas, we must check events in order to know if fee was paid or or not paid
 		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFunds.ABCICode(), sdkerrors.ErrOutOfGas.ABCICode():
