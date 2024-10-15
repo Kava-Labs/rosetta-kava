@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -59,6 +60,10 @@ func TestAccountBalanceOffline(t *testing.T) {
 func TestAccountBalanceOnlineRetry(t *testing.T) {
 	if config.Mode.String() == "offline" {
 		t.Skip("skipping account online test")
+	}
+
+	if os.Getenv("SKIP_RESOURCE_INTENSIVE_TESTS") == "true" {
+		t.Skip("skipping account balance online retry test: it's resource intensive and produces a lot of requests to the node")
 	}
 
 	numJobs := 10

@@ -39,6 +39,10 @@ func TestBlockRetry(t *testing.T) {
 		t.Skip("skipping block retry test: it's designed to be run against a live (mainnet) node")
 	}
 
+	if os.Getenv("SKIP_RESOURCE_INTENSIVE_TESTS") == "true" {
+		t.Skip("skipping block retry test: it's resource intensive and produces a lot of requests to the node")
+	}
+
 	numJobs := 10
 	jobCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
