@@ -37,8 +37,9 @@ jobs:
     - name: Test Unit
       run: make test
 
-    - name: Test Integration
-      run: KAVA_RPC_URL=http://50.16.212.18:26658 NETWORK=kava-mainnet PORT=4000 make test-integration
+    # TODO(yevhenii): point KAVA_RPC_URL to running kava node and uncomment
+    # - name: Test Integration
+    #  run: KAVA_RPC_URL=http://50.16.212.18:26658 NETWORK=kava-mainnet PORT=4000 make test-integration
 
   lint:
     name: lint
@@ -50,35 +51,35 @@ jobs:
         with:
           args: --timeout 3m0s
 
-  Rosetta-Validation:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.21
-
-    - name: Cache Go Modules
-      uses: actions/cache@v2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
-    - name: Start Rosetta Server
-      run: .github/scripts/setup.sh
-      shell: bash
-
-    - name: Run Check:construction test
-      run: .github/scripts/construction.sh
-      shell: bash
-
-    - name: Run Check:data test
-      run: .github/scripts/cli.sh
-      shell: bash
-
-    
+#  TODO(yevhenii): this is deprecated and doesn't work, remove? It also depends on the http://50.16.212.18:26658 node,
+#  which doesn't work at the moment.
+#  Rosetta-Validation:
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 15
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - name: Set up Go
+#      uses: actions/setup-go@v2
+#      with:
+#        go-version: 1.21
+#
+#    - name: Cache Go Modules
+#      uses: actions/cache@v2
+#      with:
+#        path: ~/go/pkg/mod
+#        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+#        restore-keys: |
+#          ${{ runner.os }}-go-
+#
+#    - name: Start Rosetta Server
+#      run: .github/scripts/setup.sh
+#      shell: bash
+#
+#    - name: Run Check:construction test
+#      run: .github/scripts/construction.sh
+#      shell: bash
+#
+#    - name: Run Check:data test
+#      run: .github/scripts/cli.sh
+#      shell: bash
