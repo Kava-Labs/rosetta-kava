@@ -37,9 +37,8 @@ jobs:
     - name: Test Unit
       run: make test
 
-    # TODO(yevhenii): point KAVA_RPC_URL to running kava node and uncomment
-    # - name: Test Integration
-    #  run: KAVA_RPC_URL=http://50.16.212.18:26658 NETWORK=kava-mainnet PORT=4000 make test-integration
+    - name: Test Integration
+      run: KAVA_RPC_URL=https://rpc.data.infra.kava.io:443 NETWORK=kava-mainnet PORT=4000 SKIP_RESOURCE_INTENSIVE_TESTS=true make test-integration
 
   lint:
     name: lint
