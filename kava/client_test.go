@@ -29,13 +29,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/coinbase/rosetta-sdk-go/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	app "github.com/kava-labs/kava/app"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/bytes"
 	"github.com/cometbft/cometbft/p2p"
@@ -43,6 +36,14 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
 	tmstate "github.com/cometbft/cometbft/state"
 	tmtypes "github.com/cometbft/cometbft/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	app "github.com/kava-labs/kava/app"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -889,6 +890,89 @@ func TestBlock_Transactions(t *testing.T) {
 	assert.Panics(t, func() {
 		_, _ = client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
 	})
+}
+
+func TestBlock_TxTimeoutHeight(t *testing.T) {
+	ctx := context.Background()
+	mockRPCClient, _, client := setupClient(t)
+	encodingConfig := app.MakeEncodingConfig()
+
+	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
+	err := txBuilder.SetMsgs(&banktypes.MsgSend{
+		FromAddress: sdk.AccAddress("test from address").String(),
+		ToAddress:   sdk.AccAddress("test to address").String(),
+		Amount:      sdk.Coins{sdk.NewCoin("ukava", sdkmath.NewInt(100))},
+	})
+	require.NoError(t, err)
+	txBuilder.SetGasLimit(100000)
+	txBuilder.SetFeeAmount(sdk.Coins{sdk.Coin{Denom: "ukava", Amount: sdkmath.NewInt(5000)}})
+	txBuilder.SetMemo("tx timeout height")
+
+	var rawMockTx tmtypes.Tx
+	rawMockTx, err = encodingConfig.TxConfig.TxEncoder()(txBuilder.GetTx())
+	require.NoError(t, err)
+	mockDeliverTx := &abci.ResponseDeliverTx{
+		Code:      sdkerrors.ErrTxTimeoutHeight.ABCICode(),
+		Log:       sdkerrors.ErrTxTimeoutHeight.Error(),
+		Codespace: sdkerrors.RootCodespace,
+	}
+
+	parentBlockIdentifier := &types.BlockIdentifier{
+		Index: 99,
+		Hash:  "8EA67B6F7927DB941F86501D1757AC6804C1D21B7A75B9DA3F16A3C81C397E50",
+	}
+	parentHashBytes, err := hex.DecodeString(parentBlockIdentifier.Hash)
+	require.NoError(t, err)
+
+	blockIdentifier := &types.BlockIdentifier{
+		Index: 100,
+		Hash:  "D92BDF0B5EDB04434B398A59B2FD4ED3D52B4820A18DAC7311EBDF5D37467E75",
+	}
+	blockTime := time.Now()
+	hashBytes, err := hex.DecodeString(blockIdentifier.Hash)
+	require.NoError(t, err)
+
+	mockRawTransactions := []tmtypes.Tx{rawMockTx}
+	mockResultBlock := &ctypes.ResultBlock{
+		BlockID: tmtypes.BlockID{
+			Hash: hashBytes,
+		},
+		Block: &tmtypes.Block{
+			Header: tmtypes.Header{
+				Height: blockIdentifier.Index,
+				Time:   blockTime,
+				LastBlockID: tmtypes.BlockID{
+					Hash: parentHashBytes,
+				},
+			},
+			Data: tmtypes.Data{
+				Txs: mockRawTransactions,
+			},
+		},
+	}
+
+	mockDeliverTxs := []*abci.ResponseDeliverTx{mockDeliverTx}
+	mockResultBlockResults := &ctypes.ResultBlockResults{
+		TxsResults:       mockDeliverTxs,
+		BeginBlockEvents: []abci.Event{abci.Event{}},
+		EndBlockEvents:   []abci.Event{abci.Event{}},
+	}
+
+	mockRPCClient.On("Block", ctx, &blockIdentifier.Index).Return(mockResultBlock, nil).Once()
+	mockRPCClient.On("BlockResults", ctx, &blockIdentifier.Index).Return(mockResultBlockResults, nil).Once()
+
+	blockResponse, err := client.Block(ctx, &types.PartialBlockIdentifier{Index: &blockIdentifier.Index})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(blockResponse.Block.Transactions))
+
+	// it should be 1 tx with 4 ops - 2 fee ops and 2 transfer ops
+	tx := blockResponse.Block.Transactions[0]
+	assert.Equal(t, len(tx.Operations), 4)
+
+	// all 4 ops should be with failure status, because tx failed TxTimeoutHeight AnteHandler and fee is not charged in such case
+	for _, operation := range tx.Operations {
+		assert.Equal(t, kava.FailureStatus, *operation.Status)
+	}
 }
 
 func TestBlock_BlockResultsRetry(t *testing.T) {

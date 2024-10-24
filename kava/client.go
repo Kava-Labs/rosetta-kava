@@ -36,11 +36,10 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	migrations_v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
-
-	migrations_v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
 )
 
 var noBlockResultsForHeight = regexp.MustCompile(`could not find results for height #(\d+)`)
@@ -408,7 +407,10 @@ func (c *Client) getOperationsForTransaction(
 
 	if result.Codespace == sdkerrors.RootCodespace {
 		switch result.Code {
-		case sdkerrors.ErrInvalidSequence.ABCICode(), sdkerrors.ErrInsufficientFee.ABCICode(), sdkerrors.ErrWrongSequence.ABCICode():
+		case sdkerrors.ErrInvalidSequence.ABCICode(),
+			sdkerrors.ErrInsufficientFee.ABCICode(),
+			sdkerrors.ErrTxTimeoutHeight.ABCICode(),
+			sdkerrors.ErrWrongSequence.ABCICode():
 			feeStatus = FailureStatus
 		// For unauthorized, insufficient funds, out of gas, we must check events in order to know if fee was paid or or not paid
 		case sdkerrors.ErrUnauthorized.ABCICode(), sdkerrors.ErrInsufficientFunds.ABCICode(), sdkerrors.ErrOutOfGas.ABCICode():
