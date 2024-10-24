@@ -25,8 +25,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    - name: Lint
-      run: go install golang.org/x/lint/golint@latest && make lint
+#    Golint is deprecated
+#    - name: Lint
+#      run: go install golang.org/x/lint/golint@latest && make lint
 
     - name: Build
       run: make build
