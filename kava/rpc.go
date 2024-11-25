@@ -60,6 +60,11 @@ func NewHTTPClient(remote string) (*HTTPClient, error) {
 	}
 
 	encodingConfig := kava.MakeEncodingConfig()
+	encodingConfig.InterfaceRegistry.RegisterInterface(
+		"ibc.lightclients.solomachine.v2.ClientState",
+		(*ClientStateI)(nil),
+		&ClientState{},
+	)
 
 	return &HTTPClient{
 		HTTP:           http,
