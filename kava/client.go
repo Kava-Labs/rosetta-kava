@@ -36,6 +36,8 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	migrations_v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	kava "github.com/kava-labs/kava/app"
 	"github.com/kava-labs/kava/app/params"
 )
@@ -52,6 +54,16 @@ type Client struct {
 // NewClient initialized a new Client with the provided rpc client
 func NewClient(rpc RPCClient, balanceServiceFactory BalanceServiceFactory) (*Client, error) {
 	encodingConfig := kava.MakeEncodingConfig()
+	encodingConfig.InterfaceRegistry.RegisterInterface(
+		"ibc.lightclients.solomachine.v2.ClientState",
+		(*exported.ClientState)(nil),
+		&migrations_v7.ClientState{},
+	)
+	encodingConfig.InterfaceRegistry.RegisterInterface(
+		"ibc.lightclients.solomachine.v2.ConsensusState",
+		(*exported.ConsensusState)(nil),
+		&migrations_v7.ConsensusState{},
+	)
 
 	return &Client{
 		rpc:            rpc,
