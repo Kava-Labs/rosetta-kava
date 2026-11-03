@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kava-labs/rosetta-kava/clientid"
 	"github.com/kava-labs/rosetta-kava/configuration"
 	"github.com/kava-labs/rosetta-kava/kava"
 	"github.com/kava-labs/rosetta-kava/services"
@@ -46,7 +47,7 @@ const (
 
 // NewRouter returns an rossetta server handler with assertion, logging and cors support
 func NewRouter(config *configuration.Configuration) (http.Handler, error) {
-	http, err := kava.NewHTTPClient(config.KavaRPCURL)
+	http, err := kava.NewHTTPClient(config.KavaRPCURL, kava.WithClientID(config.ClientID))
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not initialize http client", err)
 	}
@@ -73,7 +74,8 @@ func NewRouter(config *configuration.Configuration) (http.Handler, error) {
 
 	router := services.NewBlockchainRouter(config, client, asserter)
 
-	loggedRouter := sdkserver.LoggerMiddleware(router)
+	clientIDRouter := clientid.Middleware(config.ClientID, router)
+	loggedRouter := sdkserver.LoggerMiddleware(clientIDRouter)
 	corsRouter := sdkserver.CorsMiddleware(loggedRouter)
 
 	return corsRouter, nil

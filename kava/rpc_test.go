@@ -24,10 +24,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
 	app "github.com/kava-labs/kava/app"
+	"github.com/kava-labs/rosetta-kava/clientid"
 	"github.com/kava-labs/rosetta-kava/kava"
 	"github.com/tendermint/go-amino"
 
@@ -743,4 +745,48 @@ func TestParseABCIResult(t *testing.T) {
 	data, err = kava.ParseABCIResult(mockNilByteResponse, nil)
 	assert.Equal(t, []byte{}, data)
 	assert.Nil(t, err)
+}
+
+func TestHTTPClient_ClientID(t *testing.T) {
+	var mu sync.Mutex
+	var received []string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		received = append(received, r.Header.Get("x-client-id"))
+		mu.Unlock()
+		http.Error(w, "unavailable", http.StatusServiceUnavailable)
+	}))
+	defer ts.Close()
+
+	cfg := clientid.Config{Header: "x-client-id", Default: "example-rosetta"}
+	client, err := kava.NewHTTPClient(ts.URL, kava.WithClientID(cfg))
+	require.NoError(t, err)
+
+	// Inside a request: the request's value.
+	_, _ = client.Status(clientid.WithRequestValue(context.Background(), "caller-a"))
+	// Inside a request without the header: none.
+	_, _ = client.Status(clientid.WithRequestValue(context.Background(), ""))
+	// Outside a request: the default.
+	_, _ = client.Status(context.Background())
+
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []string{"caller-a", "", "example-rosetta"}, received)
+}
+
+func TestHTTPClient_NoClientID(t *testing.T) {
+	var got http.Header
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Clone()
+		http.Error(w, "unavailable", http.StatusServiceUnavailable)
+	}))
+	defer ts.Close()
+
+	client, err := kava.NewHTTPClient(ts.URL)
+	require.NoError(t, err)
+
+	_, _ = client.Status(clientid.WithRequestValue(context.Background(), "caller-a"))
+
+	_, present := got["X-Client-Id"]
+	assert.False(t, present)
 }

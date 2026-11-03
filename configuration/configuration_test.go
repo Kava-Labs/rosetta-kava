@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/kava-labs/rosetta-kava/clientid"
+
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -161,4 +163,55 @@ func TestConfigLoader(t *testing.T) {
 	assert.NoError(t, err)
 	loader := &EnvLoader{}
 	assert.Equal(t, loader.Get(testVarName), testVarVal)
+}
+
+func TestLoadConfig_ClientID(t *testing.T) {
+	baseEnv := func(extra map[string]string) map[string]string {
+		env := map[string]string{
+			ModeEnv:       Online.String(),
+			NetworkEnv:    "kava-testnet-9999",
+			PortEnv:       "8000",
+			KavaRPCURLEnv: "https://rpc.testnet.kava.io:443",
+		}
+		for k, v := range extra {
+			env[k] = v
+		}
+		return env
+	}
+
+	tests := map[string]struct {
+		Env         map[string]string
+		Expected    clientid.Config
+		ExpectedErr string
+	}{
+		"unset is off": {
+			Env:      baseEnv(nil),
+			Expected: clientid.Config{},
+		},
+		"header and default": {
+			Env:      baseEnv(map[string]string{ClientIDHeaderEnv: "X-Client-ID", ClientIDDefaultEnv: "example-rosetta"}),
+			Expected: clientid.Config{Header: "x-client-id", Default: "example-rosetta"},
+		},
+		"default without header": {
+			Env:         baseEnv(map[string]string{ClientIDDefaultEnv: "example-rosetta"}),
+			ExpectedErr: "without a header name",
+		},
+		"refused header": {
+			Env:         baseEnv(map[string]string{ClientIDHeaderEnv: "content-type"}),
+			ExpectedErr: "not allowed",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			cfg, err := LoadConfig(&testEnvLoader{Env: tc.Env})
+			if tc.ExpectedErr != "" {
+				assert.ErrorContains(t, err, tc.ExpectedErr)
+				assert.ErrorContains(t, err, ClientIDHeaderEnv)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.Expected, cfg.ClientID)
+		})
+	}
 }

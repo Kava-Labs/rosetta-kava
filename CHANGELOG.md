@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Optional client ID header on Kava RPC calls (`CLIENT_ID_HEADER`, `CLIENT_ID_DEFAULT`): a request's client ID is forwarded to the node calls made while serving it
+
 ## [2.0.6] - 2022-10-26
 
 ### Changed
