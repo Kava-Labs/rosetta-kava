@@ -23,6 +23,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/kava-labs/rosetta-kava/clientid"
 	"github.com/kava-labs/rosetta-kava/kava"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -58,6 +59,14 @@ const (
 
 	// KavaRPCURLEnv specifies the environment variable to read server port from
 	KavaRPCURLEnv = "KAVA_RPC_URL"
+
+	// ClientIDHeaderEnv specifies the environment variable to read the client ID
+	// header name from. Unset turns client ID forwarding off.
+	ClientIDHeaderEnv = "CLIENT_ID_HEADER"
+
+	// ClientIDDefaultEnv specifies the environment variable to read the client ID
+	// sent on node calls made outside an incoming request
+	ClientIDDefaultEnv = "CLIENT_ID_DEFAULT"
 )
 
 // ModeFromString returns a Mode from a string value
@@ -98,6 +107,7 @@ type Configuration struct {
 	NetworkIdentifier *types.NetworkIdentifier
 	Port              int
 	KavaRPCURL        string
+	ClientID          clientid.Config
 }
 
 // LoadConfig loads keys from a provided loader and returns a
@@ -142,10 +152,16 @@ func LoadConfig(loader ConfigLoader) (*Configuration, error) {
 		return nil, fmt.Errorf("%s must be set", KavaRPCURLEnv)
 	}
 
+	clientID, err := clientid.ParseConfig(loader.Get(ClientIDHeaderEnv), loader.Get(ClientIDDefaultEnv))
+	if err != nil {
+		return nil, fmt.Errorf("%w: check %s and %s", err, ClientIDHeaderEnv, ClientIDDefaultEnv)
+	}
+
 	return &Configuration{
 		Mode:              mode,
 		NetworkIdentifier: networkIdentifier,
 		Port:              portNum,
 		KavaRPCURL:        kavaRPCURL,
+		ClientID:          clientID,
 	}, nil
 }

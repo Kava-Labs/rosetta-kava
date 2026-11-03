@@ -63,6 +63,23 @@ To run in offline mode:
 docker run -it -e "MODE=offline" -e "NETWORK=kava-testnet" -e "PORT=8000" -p 8000:8000 rosetta-kava-testnet
 ```
 
+### Client ID header
+
+`rosetta-kava` can send a client ID header on its calls to the Kava RPC node, for operators that run it behind a node gateway that attributes or requires a client ID. The feature is off unless `CLIENT_ID_HEADER` is set.
+
+| Variable | Description |
+| --- | --- |
+| `CLIENT_ID_HEADER` | Header name, for example `x-client-id`. Node calls made while serving a request carry that request's value of the header. A request without the header sends none. |
+| `CLIENT_ID_DEFAULT` | Optional. Value sent on node calls made outside an incoming request. Requires `CLIENT_ID_HEADER`. |
+
+```
+docker run -it -e "MODE=online" -e "NETWORK=kava-mainnet" -e "PORT=8000" -e "KAVA_RPC_URL=https://rpc.example.com:443" -e "CLIENT_ID_HEADER=x-client-id" -p 8000:8000 rosetta-kava-mainnet
+```
+
+Only that one header is forwarded. Header names that would break the node call (`host`, `content-length`, `content-type`, `transfer-encoding`, `connection`, `upgrade`, `accept`, `sec-websocket-*`) are refused at startup. Header values are never logged.
+
+The header is for attribution, not authorization: callers should be authenticated before they reach `rosetta-kava`.
+
 # Swagger
 
 Swagger requires a running rosetta-kava service on port 8000.

@@ -18,6 +18,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/kava-labs/rosetta-kava/clientid"
+
 	"github.com/cometbft/cometbft/libs/bytes"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmhttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -42,12 +44,33 @@ type HTTPClient struct {
 	encodingConfig params.EncodingConfig
 }
 
+// HTTPClientOption configures an HTTPClient
+type HTTPClientOption func(*httpClientOptions)
+
+type httpClientOptions struct {
+	clientID clientid.Config
+}
+
+// WithClientID adds the client ID header to node RPC calls, as described in
+// the clientid package. A zero Config leaves calls unchanged.
+func WithClientID(cfg clientid.Config) HTTPClientOption {
+	return func(o *httpClientOptions) {
+		o.clientID = cfg
+	}
+}
+
 // NewHTTPClient returns a new HTTPClient with additional capabilities
-func NewHTTPClient(remote string) (*HTTPClient, error) {
+func NewHTTPClient(remote string, opts ...HTTPClientOption) (*HTTPClient, error) {
+	var options httpClientOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	client, err := tmclient.DefaultHTTPClient(remote)
 	if err != nil {
 		return nil, err
 	}
+	client.Transport = clientid.Transport(options.clientID, client.Transport)
 
 	http, err := tmhttp.NewWithClient(remote, "/websocket", client)
 	if err != nil {
